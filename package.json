@@ -1,0 +1,13 @@
+{
+  "name": "slowburn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Slow Burn — couples intimacy program (native iOS via Capacitor)",
+  "dependencies": {
+    "@capacitor/core": "latest",
+    "@capacitor/ios": "latest"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "latest"
+  }
+}

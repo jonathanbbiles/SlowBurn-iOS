@@ -1,0 +1,7 @@
+{
+  "appId": "com.jonathanbiles.slowburn",
+  "appName": "Slow Burn",
+  "webDir": "www",
+  "backgroundColor": "#FFF8F1",
+  "ios": { "contentInset": "always" }
+}

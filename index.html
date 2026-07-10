@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#FFF8F1" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Slow Burn" />
+<title>Slow Burn</title>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@600;700&family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page:#3A0E2E;--page-2:#5A1440;--app-bg:#FFF8F1;--surface:#FFFFFF;--surface-2:#FFF1F7;
+    --primary:#FF42B3;--primary-d:#E42E9A;--plum:#F94F5C;--plum-d:#E23B49;--rose:#FF8FC7;
+    --ink:#3A0E2E;--muted:#9A7E8E;--muted-2:#C0A9B4;--line:#F3DDEA;--line-2:#EBCADD;
+    --sage:#6E8B6E;--sage-bg:#EAF3EA;--gold:#FFC94D;--shadow:0 18px 50px rgba(58,14,46,.32);
+    --display:"Anton","Oswald",system-ui,sans-serif;
+    --serif:"Oswald",system-ui,sans-serif;
+    --script:"Caveat",cursive;
+    --sans:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--sans);background:radial-gradient(1200px 700px at 50% -10%,var(--page-2),var(--page));
+    min-height:100vh;color:var(--ink);display:flex;flex-direction:column;align-items:center;padding:16px 14px 40px}
+
+  .proto-bar{width:100%;max-width:900px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+    justify-content:space-between;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;padding:11px 15px;color:#EADFD6;backdrop-filter:blur(6px)}
+  .pb-title{font-weight:600;font-size:13px;display:flex;align-items:center;gap:9px}
+  .pb-dot{width:9px;height:9px;border-radius:50%;background:var(--rose);box-shadow:0 0 0 4px rgba(217,158,134,.18)}
+  .pb-dot.live{background:#5fce8f;box-shadow:0 0 0 4px rgba(95,206,143,.18);animation:pulse 1.8s infinite}
+  .pb-dot.off{background:#c98a6f;box-shadow:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .pb-sub{color:#B8A89F;font-weight:400;font-size:12px}
+  .pb-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .view-label{font-size:12px;color:#B8A89F}
+  .seg{display:inline-flex;background:rgba(0,0,0,.22);border-radius:11px;padding:3px}
+  .seg button{border:0;background:transparent;color:#CDBDB4;font-family:var(--sans);font-size:13px;font-weight:600;
+    padding:7px 14px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:7px}
+  .seg button .who-dot{width:8px;height:8px;border-radius:50%}
+  .seg button[data-view="A"] .who-dot{background:var(--primary)}
+  .seg button[data-view="B"] .who-dot{background:var(--plum)}
+  .seg button.on{background:#F3E7DD;color:#3A2C24}
+  .btn-ghost-lite{background:transparent;border:1px solid rgba(255,255,255,.18);color:#D7C8BF;border-radius:10px;
+    padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+  .btn-ghost-lite:hover{background:rgba(255,255,255,.07)}
+
+  .phone{width:392px;max-width:100%;height:812px;background:#120c12;border-radius:46px;padding:12px;box-shadow:var(--shadow);position:relative}
+  .screen{position:relative;width:100%;height:100%;background:var(--app-bg);border-radius:36px;overflow:hidden;display:flex;flex-direction:column}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:26px;background:#120c12;border-bottom-left-radius:16px;border-bottom-right-radius:16px;z-index:40}
+  .view{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+  .view::-webkit-scrollbar{width:0}
+  .pad{padding:26px 22px 30px}
+  .pad-tab{padding:22px 20px 112px}
+
+  h1,h2,h3{font-family:var(--serif);font-weight:700;color:var(--ink);margin:0;letter-spacing:.02em;text-transform:uppercase}
+  .display{font-family:var(--display);font-size:30px;line-height:1.02;letter-spacing:.02em;font-weight:400;text-transform:uppercase}
+  .script{font-family:var(--script);text-transform:none;font-weight:700}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--primary);font-weight:700;font-family:var(--sans)}
+  .lead{font-size:15px;line-height:1.55;color:var(--muted)}
+  .tiny{font-size:12px;color:var(--muted-2)}
+  p{margin:0}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--primary);color:#fff;border:0;
+    border-radius:15px;padding:16px 20px;font-family:var(--sans);font-size:15.5px;font-weight:650;cursor:pointer;transition:.16s;
+    box-shadow:0 10px 22px -10px rgba(255,66,179,.75)}
+  .btn:hover{background:var(--primary-d)}
+  .btn:disabled{background:#D8C6BC;color:#fff;box-shadow:none;cursor:not-allowed}
+  .btn-plum{background:var(--plum);box-shadow:0 10px 22px -10px rgba(249,79,92,.7)}
+  .btn-plum:hover{background:var(--plum-d)}
+  .btn-soft{background:var(--surface);color:var(--ink);border:1.5px solid var(--line-2);box-shadow:none;font-weight:600}
+  .btn-soft:hover{background:var(--surface-2)}
+  .link{background:none;border:0;color:var(--primary);font-family:var(--sans);font-size:13.5px;font-weight:600;cursor:pointer;padding:6px;text-decoration:none}
+  .row{display:flex;gap:10px}.row>.btn{width:auto;flex:1}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 2px 10px rgba(80,50,40,.03)}
+  .card+.card{margin-top:14px}
+  .card-soft{background:var(--surface-2);border:1px solid var(--line);border-radius:18px;padding:16px}
+  .card-tap{cursor:pointer;transition:.15s}.card-tap:hover{border-color:var(--line-2)}
+
+  .welcome{height:100%;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(120% 85% at 50% 0%,#FFF8F1 0%,#FDE6C7 42%,#FBD0E2 100%)}
+  .mark{width:58px;height:58px;border-radius:18px;background:linear-gradient(150deg,var(--primary),var(--plum));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px -10px rgba(249,79,92,.6)}
+  .mark svg{width:30px;height:30px}
+  .flame-emblem{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+
+  .callout{background:var(--sage-bg);border:1px solid #D5E2D0;border-radius:16px;padding:16px;color:#3c5238;font-size:13.5px;line-height:1.5}
+  .check-row{display:flex;gap:12px;align-items:flex-start;padding:14px 4px;cursor:pointer}
+  .cbox{flex:none;width:24px;height:24px;border-radius:8px;border:2px solid var(--line-2);background:var(--surface);display:flex;align-items:center;justify-content:center;transition:.15s;margin-top:1px}
+  .cbox.on{background:var(--primary);border-color:var(--primary)}
+  .cbox svg{width:14px;height:14px;opacity:0}.cbox.on svg{opacity:1}
+  .ctext{font-size:13.5px;line-height:1.5;color:var(--ink)}
+
+  .field{width:100%;border:1.5px solid var(--line-2);border-radius:13px;padding:14px;font-family:var(--sans);font-size:16px;color:var(--ink);background:var(--surface)}
+  .field:focus{outline:none;border-color:var(--rose)}
+  .field.code{letter-spacing:.22em;text-transform:uppercase;font-weight:700;text-align:center;font-family:var(--serif);font-size:22px;color:var(--plum)}
+  .qrbox{display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;min-height:170px}
+  .qrbox img,.qrbox canvas{border-radius:6px}
+  .codepill{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:.14em;color:var(--plum);text-align:center}
+  .opt{display:flex;gap:14px;align-items:center;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:18px;cursor:pointer;transition:.15s}
+  .opt:hover{border-color:var(--rose)}
+  .opt .oic{flex:none;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--line)}
+  .opt .ttl{font-family:var(--serif);font-size:16px;font-weight:600}
+  .opt .dsc{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+
+  .apphead{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 8px}
+  .apphead .greet{font-size:12.5px;color:var(--muted)}
+  .apphead .who{font-family:var(--serif);font-size:20px}
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .pill .g{width:8px;height:8px;border-radius:50%;background:var(--sage)}
+  .pill .g.off{background:var(--muted-2)}
+  .avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+  .avatar.A{background:linear-gradient(150deg,var(--primary),var(--rose))}
+  .avatar.B{background:linear-gradient(150deg,var(--plum),#9E7690)}
+
+  .rail{display:flex;align-items:center;gap:6px;margin:14px 0 2px}
+  .rail .seg-b{height:6px;border-radius:4px;flex:1;background:var(--line-2)}
+  .rail .seg-b.done{background:var(--primary)}
+  .rail .seg-b.cur{background:linear-gradient(90deg,var(--primary),var(--rose))}
+
+  .stage-item{display:flex;gap:14px;align-items:center;padding:15px 16px;background:var(--surface);border:1px solid var(--line);border-radius:18px;cursor:pointer;transition:.15s}
+  .stage-item+.stage-item{margin-top:11px}
+  .stage-item:hover{border-color:var(--line-2)}
+  .stage-item.locked{opacity:.62;cursor:default;background:var(--surface-2)}
+  .st-num{flex:none;width:40px;height:40px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:17px;font-weight:600;color:var(--plum)}
+  .stage-item.done .st-num{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .stage-item.cur .st-num{background:linear-gradient(150deg,var(--primary),var(--rose));color:#fff;border-color:transparent}
+  .st-body{flex:1;min-width:0}
+  .st-title{font-family:var(--serif);font-size:16px;font-weight:600}
+  .st-sub{font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .st-tag{flex:none}
+  .badge{flex:none;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:999px}
+  .badge.cur{background:#F6E4DC;color:var(--primary-d)}
+  .badge.done{background:var(--sage-bg);color:#4c6b48}
+
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+  .chip{border:1.5px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:999px;padding:10px 15px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:.14s;user-select:none}
+  .chip:hover{border-color:var(--rose)}
+  .chip.sel{background:var(--primary);border-color:var(--primary);color:#fff}
+  .chip.readonly{cursor:default}
+  .chip.match{background:var(--sage-bg);border-color:#CFE0C9;color:#3f5c3a}
+
+  textarea.note{width:100%;border:1.5px solid var(--line-2);border-radius:14px;padding:14px;font-family:var(--sans);font-size:16px;color:var(--ink);background:var(--surface);resize:none;min-height:90px;line-height:1.5}
+  textarea.note:focus{outline:none;border-color:var(--rose)}
+  .lock-note{display:flex;align-items:center;gap:7px;color:var(--muted-2);font-size:11.5px;margin-top:7px}
+
+  .timer{font-family:var(--serif);font-size:44px;font-weight:600;color:var(--plum);text-align:center;letter-spacing:.02em}
+  .step{display:flex;gap:13px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:0}
+  .step .dot{flex:none;width:24px;height:24px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--plum)}
+  .step .stx{font-size:13.5px;line-height:1.5;color:var(--ink)}
+
+  .gate{background:linear-gradient(160deg,#FBF4EE,#F6E9DF);border:1px solid var(--line-2);border-radius:20px;padding:20px}
+  .gate .g-icon{width:44px;height:44px;border-radius:13px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .status-line{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;padding:9px 0}
+  .s-dot{width:10px;height:10px;border-radius:50%}.s-dot.on{background:var(--sage)}.s-dot.off{background:var(--line-2)}
+
+  .tabs{position:absolute;left:0;right:0;bottom:0;height:82px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;padding:8px 8px calc(20px + env(safe-area-inset-bottom));z-index:30}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:none;cursor:pointer;color:var(--muted-2);font-family:var(--sans);font-size:10.5px;font-weight:600}
+  .tab svg{width:23px;height:23px}
+  .tab.on{color:var(--primary)}
+  .notif{position:absolute;top:9px;right:calc(50% - 22px);width:8px;height:8px;border-radius:50%;background:var(--primary);border:2px solid #fff}
+
+  .divider{height:1px;background:var(--line);margin:18px 0}
+  .mt6{margin-top:6px}.mt10{margin-top:10px}.mt14{margin-top:14px}.mt18{margin-top:18px}.mt24{margin-top:24px}
+  .center{text-align:center}
+  .foot-legal{font-size:10.5px;color:var(--muted-2);text-align:center;line-height:1.5;padding:14px 10px 4px}
+  .kv{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .kv:last-child{border-bottom:0}.kv .k{color:var(--muted)}.kv .v{font-weight:600}
+  .toast{position:absolute;left:16px;right:16px;bottom:96px;background:var(--ink);color:#F5ECE4;border-radius:14px;padding:13px 16px;font-size:13px;font-weight:500;box-shadow:0 12px 30px rgba(0,0,0,.3);opacity:0;transform:translateY(10px);transition:.25s;z-index:50;text-align:center}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .back{background:none;border:0;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;padding:4px 0;font-family:var(--sans)}
+  .livebar{display:flex;align-items:center;gap:8px;justify-content:center;background:#EAF0E8;border:1px solid #D5E2D0;color:#3f5c3a;font-size:12px;font-weight:600;padding:8px;border-radius:12px}
+  .livebar.off{background:#F6ECE6;border-color:#EAD6CB;color:#8a6552}
+
+  @media(max-width:480px){
+    html{height:100%}
+    body{padding:0;background:var(--app-bg);display:flex;flex-direction:column;align-items:stretch;
+      min-height:100vh;height:100vh;height:100svh;overflow:hidden}
+    .proto-bar{margin:0;border-radius:0;border:0;border-bottom:1px solid var(--line);position:relative;z-index:60;
+      padding:7px 12px;background:var(--surface);color:var(--ink);flex:none;max-width:100%;
+      padding-top:calc(7px + env(safe-area-inset-top))}
+    .proto-bar .pb-title{color:var(--ink);font-size:12px}
+    .pb-sub{display:none}
+    .pb-dot{box-shadow:none}
+    .seg{background:var(--surface-2)}
+    .seg button{color:var(--muted)}
+    .seg button.on{background:var(--primary);color:#fff}
+    .btn-ghost-lite{border-color:var(--line-2);color:var(--muted)}
+    .phone{width:100%;max-width:100%;flex:1;min-height:0;height:auto;border-radius:0;padding:0;box-shadow:none;
+      background:var(--app-bg);display:flex;flex-direction:column}
+    .screen{border-radius:0;flex:1;min-height:0;height:auto}
+    .notch{display:none}
+    .view{min-height:0}
+    .pad{padding-top:calc(26px + env(safe-area-inset-top))}
+    .apphead{padding-top:calc(16px + env(safe-area-inset-top))}
+    .pad-tab{padding-bottom:calc(98px + env(safe-area-inset-bottom))}
+  }
+</style>
+</head>
+<body>
+  <div id="protobar" class="proto-bar"></div>
+  <div class="phone"><div class="screen"><div class="notch"></div><div class="view" id="root"></div><div id="toast" class="toast"></div></div></div>
+
+<script>
+/* ============================================================
+   Slow Burn — phone client (solo mode + live two-device pairing)
+   ============================================================ */
+const STAGES=[
+ {id:1,title:"Foundations",sub:"Non-genital touch",weeks:"Week 1",mins:"20–30 min",
+  intent:"Rebuild ease with touch — no pressure, no performance, no destination.",
+  steps:["Choose an unhurried, private time. Phones away. One partner receives, the other gives.",
+    "The giver touches the receiver’s hands, arms, back, shoulders, legs and face — exploring texture, temperature and pressure out of their own curiosity.",
+    "Breasts and genitals are off-limits at this stage. There is no goal of arousal.",
+    "The receiver simply notices sensation, and only speaks up if something feels uncomfortable.",
+    "After 10–15 minutes, switch roles."],
+  focus:"Notice, don’t perform.",bounds:"Off-limits this stage: breasts, genitals, intercourse."},
+ {id:2,title:"Trading Touch",sub:"Guided turns",weeks:"Week 2",mins:"25–35 min",
+  intent:"Learn each other’s preferences through clear turns and gentle hand-guidance.",
+  steps:["Continue non-genital touch, taking clear turns as giver and receiver.",
+    "The receiver may place a hand over the giver’s to show ‘slower’, ‘softer’, ‘here’ — without words if you prefer.",
+    "Stay with sensation rather than trying to create a reaction.","Swap roles at the halfway point."],
+  focus:"Show, don’t direct.",bounds:"Still non-genital. No expectation of arousal."},
+ {id:3,title:"Whole-Body Mapping",sub:"Including — without demand",weeks:"Weeks 3–4",mins:"30–40 min",
+  intent:"Touch may now include the whole body, kept exploratory rather than goal-oriented.",
+  steps:["Touch can now include breasts and genitals as part of full-body exploration.",
+    "This is still non-demand: the aim is sensation and curiosity, not arousal or orgasm.",
+    "If either partner becomes goal-focused or anxious, gently return to neutral areas, then resume.",
+    "Keep taking turns; keep the pace slow."],
+  focus:"Curiosity over outcome.",bounds:"Arousal is welcome if it arises, but it is never the goal. No intercourse."},
+ {id:4,title:"Mutual Touch",sub:"Giving and receiving together",weeks:"Week 5",mins:"30–40 min",
+  intent:"Both partners give and receive at the same time, staying with sensation.",
+  steps:["Move to touching each other simultaneously.",
+    "Notice how it feels to attend to your own sensations and your partner’s at once.",
+    "If it becomes performance-focused, pause and return to taking turns.",
+    "Close with a few quiet minutes simply resting in contact."],
+  focus:"Shared, unhurried attention.",bounds:"Continue without expectation of intercourse or climax."},
+ {id:5,title:"Sensual Integration",sub:"Movement & closeness",weeks:"Weeks 6–7",mins:"35–45 min",
+  intent:"Introduce gentle movement and bodies coming together, still without demand.",
+  steps:["Add gentle movement and, if both welcome it, positions that bring your bodies close.",
+    "There is no expectation of penetration or climax — these may or may not happen.",
+    "At any point either partner may return to earlier, simpler touch. That is success, not a setback.",
+    "If a pain condition or medical concern is present, follow your clinician’s guidance for this stage."],
+  focus:"Together, without a finish line.",bounds:"Clinician-guided if pain, recovery, or a medical condition is involved."},
+ {id:6,title:"Integration & Maintenance",sub:"Keeping it alive",weeks:"Ongoing",mins:"Flexible",
+  intent:"Fold non-demand touch into a sustainable rhythm you both look forward to.",
+  steps:["Choose a realistic cadence — a weekly ritual, or whatever fits your life.",
+    "Keep the principles: unhurried, non-demand, sensation over outcome.",
+    "Return to any earlier stage whenever you want a reset.",
+    "Revisit the check-ins now and then to notice what’s changed."],
+  focus:"A practice, not a project.",bounds:"Revisit earlier stages freely — progress isn’t a straight line."}
+];
+const GOOD=["Feeling unhurried","Being touched slowly","Eye contact","Full attention","Warmth & closeness","Laughing together","Feeling safe","The pace we set"];
+const MORE=["More time","A slower pace","More talking","Less talking","Softer touch","Firmer touch","A calmer setting","Starting earlier"];
+
+function freshState(){
+  return {screen:"welcome",tab:"today",ack:false,
+    mode:null,           // null | 'solo' | 'live'
+    view:"A",            // solo toggle
+    myRole:"A",          // live
+    names:{A:"Sam",B:"Alex"},
+    code:"",pairPhase:"choose",pending:null,
+    mq:null,connected:false,partnerOnline:false,
+    stageOpen:null,session:null,form:{good:new Set(),more:new Set(),note:""},
+    nextSession:"not-set",
+    data:{A:{ready:{},sessions:{},debrief:{}},B:{ready:{},sessions:{},debrief:{}}}
+  };
+}
+let S=freshState();
+
+/* ---- roles / names ---- */
+function activeRole(){ return S.mode==="live"?S.myRole:S.view; }
+function partnerRole(){ return activeRole()==="A"?"B":"A"; }
+function me(){ return S.data[activeRole()]; }
+function other(){ return S.data[partnerRole()]; }
+function meName(){ return S.names[activeRole()]||"You"; }
+function otherName(){ return S.names[partnerRole()]||"your partner"; }
+function firstName(n){ return (n||"").split(" ")[0]; }
+
+/* ---- derived ---- */
+function maxUnlocked(){let n=1;for(let s=1;s<=6;s++){if(S.data.A.ready[s]&&S.data.B.ready[s])n=Math.max(n,s+1);}return Math.min(n,6);}
+function totalSessions(w){let n=0;for(let s=1;s<=6;s++)n+=(S.data[w].sessions[s]||0);return n;}
+function hasNewMatch(){for(let s=1;s<=6;s++){if(S.data.A.debrief[s]&&S.data.B.debrief[s])return true;}return false;}
+function esc(t){return (t||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function genCode(){const a="ACDEFHJKLMNPRTUWXY34679";let c="SB";for(let i=0;i<4;i++)c+=a[Math.floor(Math.random()*a.length)];return c;}
+
+/* ============================================================
+   LIVE PAIRING — public MQTT relay over WSS (no account, works
+   on any static host: sharemyhtml, tiiny.host, WP Engine, etc.).
+   Private free-text notes are NEVER transmitted. Only readiness,
+   session counts, and chip selections sync. In production this
+   becomes a private backend that computes matches server-side so
+   raw selections never leave a device.
+   ============================================================ */
+const RELAY="wss://broker.emqx.io:8084/mqtt";
+function extractChips(deb){const o={};for(let s=1;s<=6;s++){if(deb[s])o[s]={good:deb[s].good||[],more:deb[s].more||[]};}return o;}
+function publishState(){
+  if(S.mode!=="live"||!S.mq||!S.connected) return;
+  const mine=me();
+  S.mq.publish("slowburn/"+S.code+"/s/"+S.myRole,
+    JSON.stringify({role:S.myRole,name:S.names[S.myRole],ready:mine.ready,sessions:mine.sessions,chips:extractChips(mine.debrief)}),
+    {retain:true,qos:0});
+}
+function connectLive(role,name,code){
+  S.mode="live";S.myRole=role;S.code=code;if(name)S.names[role]=name;
+  if(!window.mqtt){liveFail();return;}
+  const base="slowburn/"+code;
+  let opened=false,client;
+  try{
+    client=mqtt.connect(RELAY,{clientId:"sb_"+Math.random().toString(16).slice(2),clean:true,
+      connectTimeout:6000,reconnectPeriod:4000,keepalive:30,
+      will:{topic:base+"/p/"+role,payload:"0",retain:true,qos:0}});
+  }catch(e){liveFail();return;}
+  S.mq=client;
+  const to=setTimeout(()=>{if(!opened){try{client.end(true);}catch(e){}liveFail();}},8000);
+  client.on("connect",()=>{
+    opened=true;clearTimeout(to);S.connected=true;
+    client.subscribe(base+"/s/+");client.subscribe(base+"/p/+");
+    client.publish(base+"/p/"+role,"1",{retain:true,qos:0});
+    publishState();
+    if(S.pairPhase==="join"){S.screen="app";S.tab="today";}
+    render();
+  });
+  client.on("message",(t,payload)=>{
+    const p=t.split("/"),kind=p[2],r=p[3];
+    if(r===S.myRole)return;
+    if(kind==="p"){S.partnerOnline=payload.toString()==="1";render();return;}
+    if(kind==="s"){let m;try{m=JSON.parse(payload.toString());}catch(e){return;}applyPartner(m);}
+  });
+  client.on("error",()=>{});
+}
+function applyPartner(m){
+  const pr=partnerRole();
+  S.data[pr].ready=m.ready||{};S.data[pr].sessions=m.sessions||{};
+  const deb={},ch=m.chips||{};for(const k in ch)deb[k]={good:ch[k].good||[],more:ch[k].more||[]};
+  S.data[pr].debrief=deb;if(m.name)S.names[pr]=m.name;
+  S.partnerOnline=true;render();
+}
+function liveFail(){
+  // Relay unreachable (offline / blocked network) → graceful solo fallback.
+  S.mode="solo";S.mq=null;S.connected=false;S.screen="app";S.tab="today";
+  toast("Couldn’t reach the live relay — running in solo mode.");render();
+}
+function leaveLive(){try{if(S.mq){S.mq.publish("slowburn/"+S.code+"/p/"+S.myRole,"0",{retain:true});S.mq.end(true);}}catch(e){}S.mq=null;}
+
+/* ---- icons ---- */
+const I={
+ flame:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-1.5.6-2.8 1.3-3.7C8.9 10 9 11 10 11.5 9.2 9 12 6.5 12 3Z" fill="#fff"/></svg>',
+ check:'<svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.2 4.2L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ today:'<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+ program:'<svg viewBox="0 0 24 24" fill="none"><path d="M6 4.5h9l3 3v12H6V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12h6M9 15.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+ chat:'<svg viewBox="0 0 24 24" fill="none"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10l-4 3.5V15.5H6.5a2 2 0 0 1-2-2v-7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ heart:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-7-9.3A3.7 3.7 0 0 1 12 8.2 3.7 3.7 0 0 1 19 10.7C19 15.6 12 20 12 20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ lock:'<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" stroke="#A99A94" stroke-width="1.7"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#A99A94" stroke-width="1.7"/></svg>',
+ shield:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l7 2.5v5c0 4.5-3 8-7 9.5-4-1.5-7-5-7-9.5v-5l7-2.5Z" stroke="#6E4B63" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#6E4B63" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ spark:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v6M12 14v6M4 12h6M14 12h6" stroke="#6E4B63" stroke-width="1.7" stroke-linecap="round"/></svg>',
+ phone:'<svg viewBox="0 0 24 24" fill="none"><rect x="7" y="3" width="10" height="18" rx="2.4" stroke="#B85C41" stroke-width="1.7"/><path d="M11 18h2" stroke="#B85C41" stroke-width="1.7" stroke-linecap="round"/></svg>',
+ link:'<svg viewBox="0 0 24 24" fill="none"><path d="M9 12h6M8.5 8H7a4 4 0 0 0 0 8h1.5M15.5 8H17a4 4 0 0 1 0 8h-1.5" stroke="#6E4B63" stroke-width="1.7" stroke-linecap="round"/></svg>',
+ solo:'<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="#8B7B76" stroke-width="1.7"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0" stroke="#8B7B76" stroke-width="1.7" stroke-linecap="round"/></svg>'
+};
+
+/* ============================================================ SCREENS ============================================================ */
+function screenWelcome(){
+  return `<div class="welcome">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:30px">
+      <div class="flame-emblem">
+        <div class="mark">${I.flame}</div>
+        <div><div class="eyebrow">A guided intimacy program</div>
+        <h1 class="display" style="margin-top:10px;font-size:54px">Slow Burn</h1>
+        <div class="script" style="font-size:28px;color:var(--plum);margin-top:0;transform:rotate(-3deg)">for the two of you &#9829;</div>
+        <p class="lead" style="margin-top:14px;max-width:280px">A structured, clinician-informed program you move through together — one unhurried step at a time.</p></div>
+      </div></div>
+    <div class="pad" style="padding-top:0">
+      <button class="btn" data-action="go" data-to="disclaimer">Begin</button>
+      <div class="center mt14"><span class="tiny">Built on Sensate Focus · used by sex therapists since 1970</span></div>
+      <div class="center mt6"><a class="link" href="https://www.jessicaleighbiles.com" target="_blank" rel="noopener noreferrer" style="font-size:12px">Created with Jessica Leigh Biles &#8599;</a></div>
+    </div></div>`;
+}
+function screenDisclaimer(){
+  return `<div class="pad">
+    <div class="mark" style="width:46px;height:46px;border-radius:14px;background:#fff;border:1px solid var(--line)">${I.shield}</div>
+    <h2 class="display" style="font-size:25px;margin-top:16px">Before we begin</h2>
+    <p class="lead mt10">A few things to understand. Please read carefully.</p>
+    <div class="callout mt18">Slow Burn is a <b>wellness and education program</b>. It is <b>not medical advice</b>, diagnosis, or treatment, and it is not a substitute for care from a qualified clinician.</div>
+    <div class="card-soft mt14"><p style="font-size:13.5px;line-height:1.6;color:var(--ink)">If either partner is managing pain during intimacy, a medical condition, a recent surgery or recovery, or a history of trauma, please work with a licensed clinician — a sex therapist or pelvic-floor physical therapist — before or alongside this program.</p></div>
+    <div class="check-row" data-action="toggle-ack"><div class="cbox ${S.ack?'on':''}">${I.check}</div>
+      <div class="ctext">I understand Slow Burn is an educational wellness tool, not medical advice, and I’ll consult a clinician for any pain or medical concern.</div></div>
+    <button class="btn mt10" data-action="go" data-to="pairing" ${S.ack?'':'disabled'}>Continue</button>
+    <div class="center mt10"><button class="link" data-action="find-clinician">Help me find a clinician</button></div>
+  </div>`;
+}
+function screenPairing(){
+  const inviteUrl=location.origin+location.pathname+"?pair="+S.code;
+  if(S.pairPhase==="choose"){
+    return `<div class="pad">
+      <div class="eyebrow">Set up</div>
+      <h2 class="display" style="font-size:25px;margin-top:8px">How are you trying it?</h2>
+      <p class="lead mt6" style="font-size:13.5px">Slow Burn is built for two phones. Pick how you and your partner want to demo.</p>
+      <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
+        <div class="opt" data-action="pair-create"><div class="oic">${I.phone}</div>
+          <div><div class="ttl">Pair two phones</div><div class="dsc">You’re here; invite your partner’s phone with a code or QR. The consent gate unlocks live across both.</div></div></div>
+        <div class="opt" data-action="pair-join"><div class="oic">${I.link}</div>
+          <div><div class="ttl">Join with a code</div><div class="dsc">Your partner already started — enter the pair code they share.</div></div></div>
+        <div class="opt" data-action="pair-solo"><div class="oic">${I.solo}</div>
+          <div><div class="ttl">Explore solo on one phone</div><div class="dsc">Tap through both sides yourself with a you/partner toggle. No second device needed.</div></div></div>
+      </div>
+      <div class="foot-legal">Live pairing keeps each person’s private notes on their own phone — only what you both choose is ever shared.</div>
+    </div>`;
+  }
+  if(S.pairPhase==="create"){
+    const online=S.partnerOnline;
+    return `<div class="pad">
+      <button class="back" data-action="pair-back">‹ Back</button>
+      <div class="eyebrow mt10">Invite your partner</div>
+      <h2 class="display" style="font-size:24px;margin-top:8px">Scan to join</h2>
+      <p class="lead mt6" style="font-size:13.5px">On your partner’s phone, scan this or open the link and enter the code.</p>
+      <div class="qrbox mt14" id="qrbox"></div>
+      <div class="codepill mt14">${S.code}</div>
+      <p class="tiny center mt6">${esc(inviteUrl)}</p>
+      <div class="livebar ${online?'':'off'} mt14">${online?'● Partner connected — you’re linked':'○ Waiting for your partner to join…'}</div>
+      <div class="card-soft mt14">
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
+        <input class="field" id="myname" placeholder="e.g. Sam" value="${esc(S.names[S.myRole]==='Sam'?'':S.names[S.myRole])}" />
+      </div>
+      <button class="btn mt14" data-action="enter-app-host">Continue ${online?'':'— your partner can join anytime'}</button>
+    </div>`;
+  }
+  // join
+  const pre=S.pending||"";
+  return `<div class="pad">
+    <button class="back" data-action="pair-back">‹ Back</button>
+    <div class="eyebrow mt10">Join your partner</div>
+    <h2 class="display" style="font-size:24px;margin-top:8px">Enter the pair code</h2>
+    <p class="lead mt6" style="font-size:13.5px">Type the code from your partner’s phone.</p>
+    <input class="field code mt18" id="joincode" maxlength="8" placeholder="SB····" value="${esc(pre)}" />
+    <div class="card-soft mt14">
+      <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
+      <input class="field" id="joinname" placeholder="e.g. Alex" />
+    </div>
+    <button class="btn mt14" data-action="do-join">Link our phones</button>
+    <div class="foot-legal">Both phones need to be online. Nothing you write privately leaves your device.</div>
+  </div>`;
+}
+
+/* ---------------- APP ---------------- */
+function appChrome(inner){
+  const p=activeRole();
+  const onlineDot = S.mode==="live" ? `<span class="g ${S.partnerOnline?'':'off'}"></span>` : `<span class="g"></span>`;
+  const pairedTxt = S.mode==="live"
+    ? `${S.partnerOnline?'Linked with':'Waiting for'} ${firstName(otherName())}`
+    : `Paired with ${firstName(otherName())}`;
+  return `
+  <div class="apphead">
+    <div><div class="greet">Welcome back</div><div class="who">${firstName(meName())}</div></div>
+    <div class="pill">${onlineDot}${pairedTxt}</div>
+  </div>
+  ${inner}
+  <div class="tabs">
+    ${tabBtn("today","Today",I.today)}
+    ${tabBtn("program","Program",I.program)}
+    ${tabBtn("checkins","Check-ins",I.chat)}
+    ${tabBtn("partner","Us",I.heart)}
+  </div>`;
+}
+function tabBtn(id,label,icon){
+  const on=S.tab===id;
+  const notif=(id==="checkins"&&hasNewMatch())?'<span class="notif"></span>':"";
+  return `<button class="tab ${on?'on':''}" data-action="tab" data-tab="${id}">${notif}${icon}<span>${label}</span></button>`;
+}
+function tabToday(){
+  const cur=maxUnlocked(),st=STAGES[cur-1],mySess=me().sessions[cur]||0;
+  return `<div class="view"><div class="pad-tab">
+    <div class="eyebrow">Your current stage</div>
+    <div class="card card-tap mt10" data-action="open-stage" data-id="${cur}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div class="tiny" style="color:var(--primary);font-weight:700">${st.weeks} · Stage ${cur}</div>
+          <h3 style="font-size:21px;margin-top:5px">${st.title}</h3><p class="tiny" style="margin-top:3px">${st.sub}</p></div>
+        <div class="st-num cur" style="width:44px;height:44px;border-radius:13px">${cur}</div></div>
+      <p class="lead" style="font-size:13.5px;margin-top:12px;color:var(--ink)">${st.intent}</p>
+      <div class="row mt14"><button class="btn" data-action="open-stage" data-id="${cur}">Open this stage →</button></div>
+    </div>
+    <div class="card-soft mt14" style="display:flex;gap:13px;align-items:flex-start">
+      <div style="flex:none;margin-top:1px">${I.spark}</div>
+      <div><div style="font-weight:700;font-size:13.5px">A gentle nudge</div>
+        <p class="tiny" style="margin-top:4px;line-height:1.55">${nudgeText(cur)}</p></div></div>
+    <div class="card mt14">
+      <div class="kv"><span class="k">Sessions you’ve logged here</span><span class="v">${mySess}</span></div>
+      <div class="kv"><span class="k">Next session</span><span class="v">${S.nextSession==="not-set"?'<button class="link" data-action="schedule" style="padding:0">Schedule →</button>':esc(S.nextSession)}</span></div>
+      <div class="kv"><span class="k">Stage focus</span><span class="v" style="color:var(--plum)">“${st.focus}”</span></div></div>
+    <div class="foot-legal">Slow Burn is a wellness program, not medical advice. · <button class="link" data-action="find-clinician" style="font-size:10.5px;padding:0">Find a clinician</button></div>
+  </div></div>`;
+}
+function tabProgram(){
+  const cur=maxUnlocked();
+  const rail=STAGES.map(s=>`<div class="seg-b ${s.id<cur?'done':(s.id===cur?'cur':'')}"></div>`).join("");
+  const items=STAGES.map(s=>{
+    const locked=s.id>cur,done=s.id<cur;
+    const cls=locked?"locked":(done?"done":(s.id===cur?"cur":""));
+    const tag=locked?`<div class="st-tag">${I.lock}</div>`:done?`<span class="badge done">Explored</span>`:s.id===cur?`<span class="badge cur">Current</span>`:"";
+    return `<div class="stage-item ${cls}" ${locked?'':`data-action="open-stage" data-id="${s.id}"`}>
+      <div class="st-num">${done?I.check:s.id}</div>
+      <div class="st-body"><div class="st-title">${s.title}</div><div class="st-sub">${s.weeks} · ${s.sub}</div></div>${tag}</div>`;
+  }).join("");
+  return `<div class="view"><div class="pad-tab">
+    <div class="eyebrow">The program</div><h2 class="display" style="font-size:25px;margin-top:8px">Six stages, together</h2>
+    <p class="lead mt6" style="font-size:13.5px">You unlock each stage only when you’ve both privately confirmed you’re ready. No negotiating, no pressure.</p>
+    <div class="rail mt18">${rail}</div><div class="tiny" style="margin-top:4px">${cur-1} of 6 stages explored</div>
+    <div class="mt18">${items}</div></div></div>`;
+}
+function tabCheckins(){
+  let blocks="";
+  for(let s=6;s>=1;s--){
+    const a=S.data.A.debrief[s],b=S.data.B.debrief[s];
+    if(a&&b){
+      const gm=a.good.filter(x=>b.good.includes(x)),mm=a.more.filter(x=>b.more.includes(x));
+      blocks+=`<div class="card mt14">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="st-title" style="font-size:15px">Stage ${s} · ${STAGES[s-1].title}</div><span class="badge done">Matched</span></div>
+        <div class="divider" style="margin:14px 0"></div>
+        <div class="tiny" style="font-weight:700;color:var(--sage);letter-spacing:.04em;text-transform:uppercase">You both appreciated</div>
+        ${gm.length?`<div class="chips mt10">${gm.map(x=>`<span class="chip match readonly">${esc(x)}</span>`).join("")}</div>`:`<p class="tiny mt10">No exact overlaps here — and that’s completely normal. Your private notes stayed private.</p>`}
+        ${mm.length?`<div class="tiny mt18" style="font-weight:700;color:var(--plum);letter-spacing:.04em;text-transform:uppercase">You’re both open to</div><div class="chips mt10">${mm.map(x=>`<span class="chip readonly" style="border-color:#F1C9E0;background:#FFF0F7;color:var(--plum-d)">${esc(x)}</span>`).join("")}</div>`:""}
+      </div>`;
+    }
+  }
+  let pending="";
+  for(let s=6;s>=1;s--){
+    const mine=me().debrief[s],theirs=other().debrief[s];
+    if(mine&&!theirs){
+      pending+=`<div class="card-soft mt14" style="display:flex;gap:12px;align-items:flex-start"><div style="flex:none">${I.chat.replace(/currentColor/g,'#8B7B76')}</div>
+        <div><div style="font-weight:700;font-size:13.5px">Waiting on ${firstName(otherName())}</div>
+        <p class="tiny" style="margin-top:3px;line-height:1.5">Your Stage ${s} reflection is saved. We’ll surface what you both felt good about once ${firstName(otherName())} reflects too — and your private note never is.</p></div></div>`;
+    }
+  }
+  const empty=(!blocks&&!pending);
+  return `<div class="view"><div class="pad-tab">
+    <div class="eyebrow">Shared reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you both felt</h2>
+    <p class="lead mt6" style="font-size:13.5px">After each session you each reflect privately. Slow Burn only surfaces what <b>both</b> of you named — never the rest.</p>
+    ${empty?`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
+      <p class="lead" style="font-size:14px">No shared reflections yet.</p>
+      <p class="tiny mt6">Run a session and reflect. ${S.mode==="live"?`When ${firstName(otherName())} reflects too, your overlap appears here.`:`Then switch to ${firstName(otherName())} and reflect — the overlap appears here.`}</p></div>`:(blocks+pending)}
+  </div></div>`;
+}
+function tabPartner(){
+  const cur=maxUnlocked();
+  const liveRow = S.mode==="live"
+    ? `<div class="livebar ${S.partnerOnline?'':'off'} mt4" style="margin-bottom:6px">${S.partnerOnline?'● Live — both phones connected':'○ Partner offline right now'}</div>`
+    : `<div class="tiny mt4" style="margin-bottom:6px">Solo preview — use the Sam / Alex switch up top to see both sides.</div>`;
+  return `<div class="view"><div class="pad-tab">
+    <div class="eyebrow">Your pairing</div><h2 class="display" style="font-size:25px;margin-top:8px">You & ${firstName(otherName())}</h2>
+    ${liveRow}
+    <div class="card mt14">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="avatar A">${(S.names.A||'S')[0].toUpperCase()}</div>
+        <div class="avatar B" style="margin-left:-14px">${(S.names.B||'A')[0].toUpperCase()}</div>
+        <div style="margin-left:6px"><div style="font-weight:700">${firstName(S.names.A)} & ${firstName(S.names.B)}</div>
+          <div class="tiny">Linked · code ${S.code||'—'}</div></div></div>
+      <div class="divider"></div>
+      <div class="kv"><span class="k">Current stage</span><span class="v">Stage ${cur} — ${STAGES[cur-1].title}</span></div>
+      <div class="kv"><span class="k">${firstName(S.names.A)} · sessions</span><span class="v">${totalSessions('A')}</span></div>
+      <div class="kv"><span class="k">${firstName(S.names.B)} · sessions</span><span class="v">${totalSessions('B')}</span></div></div>
+    <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Privacy, by design</div>
+      <p class="tiny" style="line-height:1.6">Your readiness answers and private notes stay on your own phone. Slow Burn only ever shows the reflections you <b>both</b> named positively. Nothing else crosses between you.</p></div>
+    <div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:8px">For clinicians</div>
+      <p class="tiny" style="line-height:1.6">A sex therapist or pelvic-floor PT can prescribe Slow Burn between sessions and follow your pace.</p>
+      <button class="btn btn-soft mt10" data-action="find-clinician" style="font-size:14px">Share with my clinician</button></div>
+    <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jessica Leigh Biles</div>
+      <p class="tiny" style="line-height:1.6">Slow Burn is created with Jessica Leigh Biles — SAR-certified sex coach and host of the Freedom Between the Sheets podcast.</p>
+      <a class="btn mt10" href="https://www.jessicaleighbiles.com" target="_blank" rel="noopener noreferrer" style="font-size:14px;text-decoration:none">Visit jessicaleighbiles.com &#8599;</a></div>
+    <div class="foot-legal">Wellness &amp; education only · not medical advice · consult a licensed clinician for pain or medical concerns.</div>
+  </div></div>`;
+}
+
+function screenStage(id){
+  const st=STAGES[id-1],cur=maxUnlocked(),isCurrent=id===cur;
+  const mySess=me().sessions[id]||0,iReady=!!me().ready[id],theyReady=!!other().ready[id],unlockedNext=iReady&&theyReady;
+  let gate="";
+  if(id<6){
+    if(unlockedNext){
+      gate=`<div class="gate mt18" style="background:linear-gradient(160deg,#EEF3EA,#E4EEDF);border-color:#CFE0C9">
+        <div class="g-icon">${I.check.replace(/#fff/g,'#6E8B6E')}</div>
+        <div style="font-weight:700;font-size:15px;font-family:var(--serif)">You both confirmed. Stage ${id+1} is open.</div>
+        <p class="tiny mt6" style="line-height:1.6">You each privately said you’re ready — no negotiation needed. That’s the whole idea.</p>
+        <button class="btn mt14" data-action="open-stage" data-id="${id+1}">Go to Stage ${id+1} →</button></div>`;
+    } else if(isCurrent&&!mySess){
+      gate=`<div class="gate mt18"><div class="g-icon">${I.lock}</div>
+        <div style="font-weight:700;font-size:15px;font-family:var(--serif)">The next stage is gated — together</div>
+        <p class="tiny mt6" style="line-height:1.6">Run at least one session here first. When you’re ready, you’ll privately confirm — and Stage ${id+1} unlocks only once ${firstName(otherName())} does too.</p></div>`;
+    } else if(isCurrent&&iReady&&!theyReady){
+      gate=`<div class="gate mt18"><div class="g-icon">${I.shield}</div>
+        <div style="font-weight:700;font-size:15px;font-family:var(--serif)">You’re ready.</div>
+        <p class="tiny mt6" style="line-height:1.6">Stage ${id+1} will unlock the moment ${firstName(otherName())} is ready too. No rush — you’ll both simply arrive there.</p>
+        <div class="status-line"><span class="s-dot on"></span>${firstName(meName())} · ready</div>
+        <div class="status-line"><span class="s-dot off"></span>${firstName(otherName())} · hasn’t confirmed yet</div>
+        <button class="btn btn-soft mt10" data-action="unready" data-id="${id}" style="font-size:13.5px">Actually, I’d like more time here</button></div>`;
+    } else if(isCurrent){
+      gate=`<div class="gate mt18"><div class="g-icon">${I.spark}</div>
+        <div style="font-weight:700;font-size:15px;font-family:var(--serif)">Ready to progress?</div>
+        <p class="tiny mt6" style="line-height:1.6">Only move on when this stage feels easy and unhurried. When you privately confirm, Stage ${id+1} unlocks as soon as ${firstName(otherName())} confirms too.</p>
+        <button class="btn mt14" data-action="ready" data-id="${id}">I feel ready for Stage ${id+1}</button>
+        <p class="lock-note">${I.lock} ${firstName(otherName())}’s answer stays private until you’ve both confirmed.</p></div>`;
+    }
+  }
+  return `<div class="view"><div class="pad">
+    <button class="back" data-action="tab" data-tab="program">‹ Program</button>
+    <div class="eyebrow mt10">${st.weeks} · Stage ${id} of 6</div>
+    <h2 class="display" style="font-size:27px;margin-top:8px">${st.title}</h2>
+    <p class="lead mt6">${st.sub}</p>
+    <div class="card-soft mt18"><p style="font-size:14px;line-height:1.6;color:var(--ink)">${st.intent}</p></div>
+    <div class="card mt14"><div class="tiny" style="font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">How this session goes · ${st.mins}</div>
+      <div class="mt10">${st.steps.map((x,i)=>`<div class="step"><div class="dot">${i+1}</div><div class="stx">${x}</div></div>`).join("")}</div>
+      <div class="callout mt14" style="background:#FFF0F7;border-color:#F3D2E6;color:var(--plum-d)"><b>Boundary for this stage.</b> ${st.bounds}</div>
+      <div class="mt14" style="display:flex;align-items:center;gap:9px;justify-content:center;color:var(--plum);font-family:var(--serif);font-size:15px">“${st.focus}”</div></div>
+    ${id<=cur?`<button class="btn mt18" data-action="start-session" data-id="${id}">Start a guided session</button>`:""}
+    ${gate}
+    <div class="foot-legal">Move at the slower partner’s pace. Returning to an earlier stage is always okay.</div>
+  </div></div>`;
+}
+function screenSession(){
+  const st=STAGES[S.session.stageId-1];
+  if(S.session.phase==="guide"){
+    return `<div class="view"><div class="pad">
+      <button class="back" data-action="open-stage" data-id="${S.session.stageId}">‹ Leave session</button>
+      <div class="center mt18"><div class="eyebrow">Stage ${st.id} · in session</div>
+        <div class="timer mt10" id="timer">00:00</div><p class="tiny">Take all the time you want. There’s no target.</p></div>
+      <div class="card mt18"><div style="font-family:var(--serif);font-size:16px;text-align:center;color:var(--plum)">“${st.focus}”</div>
+        <div class="divider"></div>${st.steps.map((x,i)=>`<div class="step"><div class="dot">${i+1}</div><div class="stx">${x}</div></div>`).join("")}</div>
+      <button class="btn btn-plum mt18" data-action="to-reflect">I’ve finished — reflect privately</button>
+      <div class="foot-legal">Either partner can pause or stop at any point, no explanation needed.</div></div></div>`;
+  }
+  const g=S.form.good,m=S.form.more;
+  return `<div class="view"><div class="pad">
+    <div class="eyebrow">Private reflection · Stage ${st.id}</div>
+    <h2 class="display" style="font-size:24px;margin-top:8px">Just for you, ${firstName(meName())}</h2>
+    <p class="lead mt6" style="font-size:13.5px">Answer honestly. Only the things you and ${firstName(otherName())} <b>both</b> choose will ever be shown to either of you.</p>
+    <div class="card mt18"><div style="font-weight:700;font-size:14.5px">1 · What felt good this time?</div><div class="tiny mt6">Choose any that fit.</div>
+      <div class="chips mt10">${GOOD.map(x=>`<span class="chip ${g.has(x)?'sel':''}" data-action="chip" data-grp="good" data-val="${esc(x)}">${x}</span>`).join("")}</div></div>
+    <div class="card mt14"><div style="font-weight:700;font-size:14.5px">2 · Anything you’d welcome more of?</div><div class="tiny mt6">Gentle wishes, not complaints.</div>
+      <div class="chips mt10">${MORE.map(x=>`<span class="chip ${m.has(x)?'sel':''}" data-action="chip" data-grp="more" data-val="${esc(x)}">${x}</span>`).join("")}</div></div>
+    <div class="card mt14"><div style="font-weight:700;font-size:14.5px">3 · A private note to yourself</div><div class="tiny mt6">Never shared with ${firstName(otherName())} — this is only ever yours.</div>
+      <textarea class="note mt10" id="privnote" placeholder="Anything you noticed, felt, or want to remember…">${esc(S.form.note)}</textarea>
+      <div class="lock-note">${I.lock} Stays on your phone, always.</div></div>
+    <button class="btn mt18" data-action="submit-debrief" data-id="${st.id}">Save my reflection</button>
+    <div class="foot-legal">You can update your reflection any time before your next session.</div></div></div>`;
+}
+
+function nudgeText(cur){
+  const st=STAGES[cur-1],mine=me().sessions[cur]||0;
+  if(mine===0) return `You’re on <b>${st.title}</b>. When you both have a quiet evening, open the stage and try a first session — there’s nothing to get right.`;
+  if(me().ready[cur]&&!other().ready[cur]) return `You’ve confirmed you’re ready for the next stage. ${firstName(otherName())} will get there in their own time — you’ll unlock it together.`;
+  return `Nicely done staying with <b>${st.title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session to see what you share.`;
+}
+
+/* ---------------- FIND A CLINICIAN ---------------- */
+function clinCard(name,tag,desc,url){
+  return `<a class="opt" href="${url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
+    <div class="oic">${I.shield}</div>
+    <div style="flex:1;min-width:0"><div class="ttl">${name}</div>
+      <div class="tiny" style="color:var(--primary);font-weight:700;margin:2px 0">${tag}</div>
+      <div class="dsc">${desc}</div></div>
+    <div style="flex:none;color:var(--muted-2);font-size:18px">↗</div></a>`;
+}
+function screenClinicians(){
+  return `<div class="view"><div class="pad">
+    <button class="back" data-action="clin-back">‹ Back</button>
+    <div class="eyebrow mt10">Professional support</div>
+    <h2 class="display" style="font-size:25px;margin-top:8px">Find a clinician</h2>
+    <p class="lead mt6" style="font-size:13.5px">Slow Burn works best alongside professional care — especially if there’s pain, a medical condition, recovery, or a trauma history. These are independent directories; we’re not affiliated with them.</p>
+    <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
+      ${clinCard("AASECT","Certified sex therapists","Search AASECT-certified sex therapists &amp; counselors by location.","https://www.aasect.org/referral-directory")}
+      ${clinCard("APTA Pelvic Health","Pelvic-floor physical therapists","Find a licensed pelvic-floor PT — pain, postpartum, post-surgery, menopause.","https://www.aptapelvichealth.org/ptlocator")}
+      ${clinCard("Psychology Today","Sex therapy directory","Browse therapists who list sex therapy, filter by insurance &amp; area.","https://www.psychologytoday.com/us/therapists/sex-therapy")}
+    </div>
+    <div class="callout mt18" style="background:#FFF0F7;border-color:#F3D2E6;color:var(--plum-d)">If you’re in crisis or in severe pain, contact a licensed medical professional or your local emergency number directly.</div>
+    <div class="foot-legal">Links open in your browser. Slow Burn is a wellness &amp; education program and does not provide medical care.</div>
+  </div></div>`;
+}
+
+/* ============================================================ RENDER ============================================================ */
+function renderBar(){
+  const bar=document.getElementById("protobar");
+  const pre=(S.screen==="welcome"||S.screen==="disclaimer"||S.screen==="pairing"||S.screen==="clinicians");
+  if(pre){bar.style.display="none";return;}
+  bar.style.display="";
+  if(S.mode==="live"){
+    bar.innerHTML=`<div class="pb-title"><span class="pb-dot ${S.partnerOnline?'live':'off'}"></span>
+      LIVE · you’re ${esc(firstName(meName()))}
+      <span class="pb-sub">· ${S.partnerOnline?firstName(otherName())+' connected':'waiting for partner'} · code ${esc(S.code)}</span></div>
+      <div class="pb-controls"><button class="btn-ghost-lite" data-action="leave">Leave</button></div>`;
+  } else if(S.mode==="solo"){
+    bar.innerHTML=`<div class="pb-title"><span class="pb-dot"></span>Slow Burn — solo preview<span class="pb-sub">· switch sides to feel the pairing</span></div>
+      <div class="pb-controls"><span class="view-label">Seeing as</span>
+        <div class="seg"><button data-action="set-view" data-view="A" class="${S.view==='A'?'on':''}"><span class="who-dot"></span>${esc(firstName(S.names.A))}</button>
+        <button data-action="set-view" data-view="B" class="${S.view==='B'?'on':''}"><span class="who-dot"></span>${esc(firstName(S.names.B))}</button></div>
+        <button class="btn-ghost-lite" data-action="reset">Reset</button></div>`;
+  } else {
+    bar.innerHTML=`<div class="pb-title"><span class="pb-dot"></span>Slow Burn<span class="pb-sub">· guided intimacy program</span></div>`;
+  }
+}
+function render(){
+  renderBar();
+  const root=document.getElementById("root");
+  let html="";
+  if(S.screen==="welcome")html=screenWelcome();
+  else if(S.screen==="disclaimer")html=screenDisclaimer();
+  else if(S.screen==="pairing")html=screenPairing();
+  else if(S.screen==="stage")html=appChrome(screenStage(S.stageOpen));
+  else if(S.screen==="session")html=screenSession();
+  else if(S.screen==="clinicians")html=screenClinicians();
+  else if(S.screen==="app"){
+    let inner=S.tab==="today"?tabToday():S.tab==="program"?tabProgram():S.tab==="checkins"?tabCheckins():tabPartner();
+    html=appChrome(inner);
+  }
+  root.innerHTML=html;root.scrollTop=0;
+  if(S.screen==="pairing"&&S.pairPhase==="create")drawQR();
+}
+function drawQR(){
+  const box=document.getElementById("qrbox");if(!box)return;
+  const url=location.origin+location.pathname+"?pair="+S.code;
+  box.innerHTML="";
+  try{
+    if(window.QRCode){new QRCode(box,{text:url,width:172,height:172,colorDark:"#2B2126",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});return;}
+  }catch(e){}
+  box.innerHTML=`<div class="tiny center">Open this link on the other phone:<br/><b>${esc(url)}</b></div>`;
+}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2800);}
+
+setInterval(()=>{
+  if(S.screen==="session"&&S.session&&S.session.phase==="guide"){
+    const el=document.getElementById("timer");
+    if(el){const s=Math.floor((Date.now()-S.session.startedAt)/1000);
+      el.textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+  }
+},1000);
+
+/* ============================================================ EVENTS ============================================================ */
+document.addEventListener("click",(e)=>{
+  const el=e.target.closest("[data-action]");if(!el)return;
+  const a=el.dataset.action;
+
+  if(a==="go"){ if(el.dataset.to==="pairing"&&S.pending){S.pairPhase="join";} S.screen=el.dataset.to; render(); return; }
+  if(a==="toggle-ack"){S.ack=!S.ack;render();return;}
+  if(a==="find-clinician"){S.clinReturn={screen:S.screen,tab:S.tab,stageOpen:S.stageOpen};S.screen="clinicians";render();return;}
+  if(a==="clin-back"){const r=S.clinReturn||{screen:"app",tab:"today"};S.screen=r.screen||"app";if(r.tab)S.tab=r.tab;if(r.stageOpen)S.stageOpen=r.stageOpen;render();return;}
+
+  // pairing
+  if(a==="pair-create"){S.pairPhase="create";S.code=genCode();connectLive("A","",S.code);render();return;}
+  if(a==="pair-join"){S.pairPhase="join";render();return;}
+  if(a==="pair-solo"){S.mode="solo";S.screen="app";S.tab="today";render();return;}
+  if(a==="pair-back"){leaveLive();S.mode=null;S.pairPhase="choose";render();return;}
+  if(a==="enter-app-host"){
+    const nm=(document.getElementById("myname")||{}).value||"";
+    if(nm.trim())S.names[S.myRole]=nm.trim();
+    publishState();S.screen="app";S.tab="today";render();return;
+  }
+  if(a==="do-join"){
+    const code=((document.getElementById("joincode")||{}).value||"").trim().toUpperCase();
+    const nm=((document.getElementById("joinname")||{}).value||"").trim();
+    if(code.length<4){toast("Enter the code from the other phone");return;}
+    connectLive("B",nm,code);toast("Linking…");return;
+  }
+  if(a==="leave"||a==="reset"){leaveLive();S=freshState();render();return;}
+  if(a==="set-view"){S.view=el.dataset.view;render();return;}
+
+  // app
+  if(a==="tab"){S.tab=el.dataset.tab;S.screen="app";render();return;}
+  if(a==="open-stage"){S.stageOpen=+el.dataset.id;S.screen="stage";render();return;}
+  if(a==="schedule"){S.nextSession="This weekend";render();toast("We’ll send a gentle reminder — never a demand.");return;}
+  if(a==="start-session"){S.session={stageId:+el.dataset.id,startedAt:Date.now(),phase:"guide"};S.screen="session";render();return;}
+  if(a==="to-reflect"){S.form={good:new Set(),more:new Set(),note:""};S.session.phase="reflect";render();return;}
+  if(a==="chip"){const set=S.form[el.dataset.grp];const v=el.dataset.val;if(set.has(v))set.delete(v);else set.add(v);el.classList.toggle("sel");return;}
+  if(a==="submit-debrief"){
+    const id=+el.dataset.id;const note=(document.getElementById("privnote")||{}).value||"";
+    me().debrief[id]={good:[...S.form.good],more:[...S.form.more],note};
+    me().sessions[id]=(me().sessions[id]||0)+1;
+    publishState();
+    S.session=null;S.screen="app";S.stageOpen=id;
+    const bothIn=S.data.A.debrief[id]&&S.data.B.debrief[id];
+    S.tab=bothIn?"checkins":"today";render();
+    toast(bothIn?"Reflection saved — see what you both shared":"Saved privately. "+firstName(otherName())+(S.mode==="live"?" hasn’t reflected yet.":" hasn’t reflected yet."));
+    return;
+  }
+  if(a==="ready"){const id=+el.dataset.id;me().ready[id]=true;publishState();render();
+    const both=S.data.A.ready[id]&&S.data.B.ready[id];
+    toast(both?"You both confirmed — Stage "+(id+1)+" unlocked":"Confirmed privately. Waiting for "+firstName(otherName())+".");return;}
+  if(a==="unready"){const id=+el.dataset.id;me().ready[id]=false;publishState();render();toast("No problem — staying here.");return;}
+});
+
+/* init: honor ?pair=CODE deep link for the joining partner */
+(function init(){
+  try{const p=new URL(location.href).searchParams.get("pair");if(p)S.pending=p.toUpperCase().slice(0,8);}catch(e){}
+  render();
+})();
+</script>
+</body>
+</html>

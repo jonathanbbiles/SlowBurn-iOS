@@ -1,0 +1,77 @@
+# Slow Burn — Codemagic cloud build → TestFlight (Capacitor iOS)
+# Mirrors the ChordLoop pipeline. Automatic code signing: the App Store Connect
+# API key (integration "ChordLoopAPIKey") CREATES the distribution certificate +
+# provisioning profile on first run. Same Apple team, so the same key works here.
+workflows:
+  ios-testflight:
+    name: Slow Burn iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: ChordLoopAPIKey   # existing API key in your Codemagic team
+    environment:
+      vars:
+        BUNDLE_ID: "com.jonathanbiles.slowburn"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+      node: 22
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install npm dependencies
+        script: npm install
+      - name: Add + sync iOS platform (Capacitor)
+        script: |
+          [ -d ios ] || npx cap add ios
+          npx cap sync ios
+      - name: Embed the Slow Burn app icon (replace Capacitor default)
+        script: |
+          ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
+          if [ -f appicon-1024.png ]; then
+            rm -rf "$ICONSET"; mkdir -p "$ICONSET"
+            cp appicon-1024.png "$ICONSET/AppIcon-1024.png"
+            cat > "$ICONSET/Contents.json" <<'JSON'
+          { "images": [ { "filename": "AppIcon-1024.png", "idiom": "universal", "platform": "ios", "size": "1024x1024" } ], "info": { "author": "xcode", "version": 1 } }
+          JSON
+            echo "Embedded Slow Burn app icon:"; ls -la "$ICONSET"
+          else
+            echo "No appicon-1024.png found — using Capacitor default icon."
+          fi
+      - name: Set build number + export-compliance flag
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "6787719986" 2>/dev/null || echo 0)
+          NEXT=$(( LATEST + 1 ))
+          PLIST=ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT" "$PLIST"
+          # No non-exempt encryption -> skip the per-build export-compliance prompt.
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
+            || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          echo "CFBundleVersion set to $NEXT (previous TestFlight latest: $LATEST); ITSAppUsesNonExemptEncryption=false"
+      - name: Set up code signing (create cert + profile if missing)
+        script: |
+          keychain initialize
+          # The CLI needs a private key to build a certificate request — generate one.
+          openssl genrsa -out /tmp/dist_key.pem 2048
+          # Create an iOS Distribution certificate using that key (saves cert + key .p12).
+          app-store-connect certificates create \
+            --type IOS_DISTRIBUTION \
+            --certificate-key=@file:/tmp/dist_key.pem \
+            --save
+          # Create/download the App Store provisioning profile, paired with that cert.
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/dist_key.pem \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Build signed IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

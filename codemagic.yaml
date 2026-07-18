@@ -10,6 +10,11 @@ workflows:
     integrations:
       app_store_connect: ChordLoopAPIKey   # existing API key in your Codemagic team
     environment:
+      ios_signing:
+        provisioning_profiles:
+          - SlowBurn_AppStore_SharedDist
+        certificates:
+          - JB_Shared_Distribution
       vars:
         BUNDLE_ID: "com.jonathanbiles.slowburn"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
@@ -47,22 +52,10 @@ workflows:
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
           echo "CFBundleVersion set to $NEXT (previous TestFlight latest: $LATEST); ITSAppUsesNonExemptEncryption=false"
-      - name: Set up code signing (create cert + profile if missing)
+      - name: Set up code signing — apply the stored profile + the ONE shared cert (no mint, no revoke)
         script: |
-          keychain initialize
-          # The CLI needs a private key to build a certificate request — generate one.
-          openssl genrsa -out /tmp/dist_key.pem 2048
-          # Create an iOS Distribution certificate using that key (saves cert + key .p12).
-          app-store-connect certificates create \
-            --type IOS_DISTRIBUTION \
-            --certificate-key=@file:/tmp/dist_key.pem \
-            --save
-          # Create/download the App Store provisioning profile, paired with that cert.
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --certificate-key=@file:/tmp/dist_key.pem \
-            --create
-          keychain add-certificates
+          security find-identity -v -p codesigning || true
+          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/" || true
           xcode-project use-profiles
       - name: Build signed IPA
         script: |

@@ -6,7 +6,8 @@
   "dependencies": {
     "@capacitor/browser": "^8.0.0",
     "@capacitor/core": "latest",
-    "@capacitor/ios": "latest"
+    "@capacitor/ios": "latest",
+    "cordova-plugin-purchase": "^13.18.0"
   },
   "devDependencies": {
     "@capacitor/cli": "latest"

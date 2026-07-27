@@ -372,28 +372,32 @@ function openSite(url){
    cordova-plugin-purchase (CdvPurchase v13), ported from the
    ScootSteps / ChordLoop IAP_PATTERN.
 
-   MONETIZATION_ENABLED = false for this submission: the tip
-   buttons stay hidden and the Support card shows an honest
-   "share it / visit our sites" note instead. There is no dead buy
-   button, because a buy button pointing at an IAP product that
-   isn't live in App Store Connect is a Guideline 2.1(b) rejection
-   (that caught ChordLoop).
+   MONETIZATION_ENABLED = true: the tip jar is LIVE. The three
+   CONSUMABLE products below must exist in App Store Connect with
+   EXACTLY these ids ($1.99 / $4.99 / $9.99), and the Paid Apps
+   Agreement must show "Active" (ASC → Business).
 
-   TO TURN TIPS ON — this is the ONLY code change needed:
-     1. App Store Connect → Slow Burn → In-App Purchases → create
-        the three CONSUMABLE products with the exact ids below.
-     2. Paid Apps Agreement must show "Active" (ASC → Business).
-     3. npm i cordova-plugin-purchase && npx cap sync ios
-     4. Flip MONETIZATION_ENABLED to true.
+   This is still not a dead-button risk (the Guideline 2.1(b)
+   rejection that caught ChordLoop): the buttons render ONLY when
+   Apple has actually returned purchasable products, so before the
+   products go live the Support card falls back to the honest
+   "share it / visit our sites" note instead of a buy button that
+   would do nothing.
 
    NO MOCKS: a tip is recorded ONLY inside store.when().verified().
    tip() never grants anything — it only asks Apple, and it no-ops
    unless the native bridge is present AND Apple returned the
    product. So the buttons can never appear without a real,
    purchasable product behind them.
+
+   Plugin arrival (IAP_PATTERN rule 3): CdvPurchase lands
+   asynchronously, so we never gate setup on it at parse time —
+   already-present OR deviceready OR a short poll, whichever wins,
+   and wireStore() is idempotent so a double-arrival can't
+   double-register or double-initialize the store.
    ============================================================ */
 const Monetize=(function(){
-  const MONETIZATION_ENABLED=false;          // <<< flip to true once the ASC products exist
+  const MONETIZATION_ENABLED=true;           // tips ON — the three ASC products below must be live
   const TIPPED_KEY="sb_supported";
   const PRODUCTS={
     small: "com.jonathanbiles.slowburn.tip.small",
@@ -401,7 +405,7 @@ const Monetize=(function(){
     large: "com.jonathanbiles.slowburn.tip.large"
   };
   const LABEL={small:"Small",medium:"Medium",large:"Generous"};
-  const st={ready:false,prices:{}};
+  const st={ready:false,prices:{},wired:false};
 
   function enabled(){ return MONETIZATION_ENABLED; }
   // ready() is true only when Apple actually returned purchasable products.
@@ -419,7 +423,9 @@ const Monetize=(function(){
   }
 
   function wireStore(){
+    if(st.wired) return;                            // idempotent — deviceready + poll can both fire
     const P=window.CdvPurchase; if(!P) return;      // no bridge → tip() stays a no-op
+    st.wired=true;
     const store=P.store;
     store.register(Object.keys(PRODUCTS).map(k=>(
       {id:PRODUCTS[k],type:P.ProductType.CONSUMABLE,platform:P.Platform.APPLE_APPSTORE}
@@ -441,7 +447,14 @@ const Monetize=(function(){
   function init(){
     if(!enabled()) return;                          // free build: nothing to wire
     document.addEventListener("deviceready",wireStore,false);
-    if(window.CdvPurchase) wireStore();
+    wireStore();                                    // already here? wire now.
+    // The bridge can also land after deviceready on a cold launch, so poll
+    // briefly (~10s) rather than trusting any single arrival mechanism.
+    let tries=0;
+    const t=setInterval(function(){
+      if(st.wired||++tries>50){ clearInterval(t); return; }
+      wireStore();
+    },200);
   }
 
   // Asks Apple. Never grants. No-ops without the bridge AND a loaded product.

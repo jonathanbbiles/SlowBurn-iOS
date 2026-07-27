@@ -346,6 +346,117 @@ function liveFail(){
 }
 function leaveLive(){try{if(S.mq){S.mq.publish("slowburn/"+S.code+"/p/"+S.myRole,"0",{retain:true});S.mq.end(true);}}catch(e){}S.mq=null;}
 
+/* ============================================================
+   EXTERNAL LINKS — Capacitor Browser.open with window.open
+   fallback, so links really open in the system browser instead of
+   dead-navigating inside the native WKWebView. (Same openSite()
+   pattern used in Permission / the App Builder Template.)
+   Slow Burn is co-created, so BOTH creators' sites live here.
+   ============================================================ */
+const LINK_JESSICA="https://www.jessicaleighbiles.com";
+const LINK_JONATHAN="https://jonathanscribbles.com";
+function capNative(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
+function capPlugin(name){ try{ return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[name])||null; }catch(e){ return null; } }
+function openSite(url){
+  if(!url) return;
+  const B=capPlugin("Browser");
+  if(capNative()&&B){
+    try{ Promise.resolve(B.open({url:url})).catch(function(){ window.open(url,"_system"); }); return; }catch(e){}
+  }
+  try{ window.open(url,"_system"); }
+  catch(e){ try{ window.open(url,"_blank","noopener"); }catch(e2){ location.href=url; } }
+}
+
+/* ============================================================
+   SUPPORT / TIP JAR — real StoreKit consumables via
+   cordova-plugin-purchase (CdvPurchase v13), ported from the
+   ScootSteps / ChordLoop IAP_PATTERN.
+
+   MONETIZATION_ENABLED = false for this submission: the tip
+   buttons stay hidden and the Support card shows an honest
+   "share it / visit our sites" note instead. There is no dead buy
+   button, because a buy button pointing at an IAP product that
+   isn't live in App Store Connect is a Guideline 2.1(b) rejection
+   (that caught ChordLoop).
+
+   TO TURN TIPS ON — this is the ONLY code change needed:
+     1. App Store Connect → Slow Burn → In-App Purchases → create
+        the three CONSUMABLE products with the exact ids below.
+     2. Paid Apps Agreement must show "Active" (ASC → Business).
+     3. npm i cordova-plugin-purchase && npx cap sync ios
+     4. Flip MONETIZATION_ENABLED to true.
+
+   NO MOCKS: a tip is recorded ONLY inside store.when().verified().
+   tip() never grants anything — it only asks Apple, and it no-ops
+   unless the native bridge is present AND Apple returned the
+   product. So the buttons can never appear without a real,
+   purchasable product behind them.
+   ============================================================ */
+const Monetize=(function(){
+  const MONETIZATION_ENABLED=false;          // <<< flip to true once the ASC products exist
+  const TIPPED_KEY="sb_supported";
+  const PRODUCTS={
+    small: "com.jonathanbiles.slowburn.tip.small",
+    medium:"com.jonathanbiles.slowburn.tip.medium",
+    large: "com.jonathanbiles.slowburn.tip.large"
+  };
+  const LABEL={small:"Small",medium:"Medium",large:"Generous"};
+  const st={ready:false,prices:{}};
+
+  function enabled(){ return MONETIZATION_ENABLED; }
+  // ready() is true only when Apple actually returned purchasable products.
+  function ready(){ return !!(enabled()&&st.ready&&Object.keys(st.prices).length); }
+  function hasSupported(){ try{ return localStorage.getItem(TIPPED_KEY)==="1"; }catch(e){ return false; } }
+  function priceOf(k){ return st.prices[k]||""; }
+  function keys(){ return ["small","medium","large"].filter(k=>st.prices[k]); }
+  function labelOf(k){ return LABEL[k]||k; }
+
+  // The ONLY place a tip is ever recorded — reached from .verified() alone.
+  function recordTip(){
+    try{ localStorage.setItem(TIPPED_KEY,"1"); }catch(e){}
+    if(typeof render==="function") render();
+    if(typeof toast==="function") toast("Thank you — that genuinely helps.");
+  }
+
+  function wireStore(){
+    const P=window.CdvPurchase; if(!P) return;      // no bridge → tip() stays a no-op
+    const store=P.store;
+    store.register(Object.keys(PRODUCTS).map(k=>(
+      {id:PRODUCTS[k],type:P.ProductType.CONSUMABLE,platform:P.Platform.APPLE_APPSTORE}
+    )));
+    store.when()
+      .approved(t=>t.verify())
+      .verified(r=>{ r.finish(); recordTip(); })    // <-- only grant point
+      .productUpdated(()=>{
+        Object.keys(PRODUCTS).forEach(k=>{
+          const p=store.get(PRODUCTS[k],P.Platform.APPLE_APPSTORE);
+          if(p&&p.pricing&&p.pricing.price) st.prices[k]=p.pricing.price;
+        });
+        st.ready=true; if(typeof render==="function") render();
+      });
+    store.error(e=>console.warn("[tip] store error",e&&e.code,e&&e.message));
+    store.initialize([P.Platform.APPLE_APPSTORE]);
+  }
+
+  function init(){
+    if(!enabled()) return;                          // free build: nothing to wire
+    document.addEventListener("deviceready",wireStore,false);
+    if(window.CdvPurchase) wireStore();
+  }
+
+  // Asks Apple. Never grants. No-ops without the bridge AND a loaded product.
+  function tip(k){
+    if(!ready()) return false;
+    const P=window.CdvPurchase; if(!P) return false;
+    const p=P.store.get(PRODUCTS[k],P.Platform.APPLE_APPSTORE);
+    const offer=p&&p.getOffer&&p.getOffer();
+    if(offer){ offer.order(); return true; }
+    return false;
+  }
+
+  return {enabled,ready,hasSupported,priceOf,keys,labelOf,tip,init,PRODUCTS};
+})();
+
 /* ---- icons ---- */
 const I={
  flame:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-1.5.6-2.8 1.3-3.7C8.9 10 9 11 10 11.5 9.2 9 12 6.5 12 3Z" fill="#fff"/></svg>',
@@ -376,7 +487,12 @@ function screenWelcome(){
     <div class="pad" style="padding-top:0">
       <button class="btn" data-action="go" data-to="disclaimer">Begin</button>
       <div class="center mt14"><span class="tiny">Built on Sensate Focus · used by sex therapists since 1970</span></div>
-      <div class="center mt6"><a class="link" href="https://www.jessicaleighbiles.com" target="_blank" rel="noopener noreferrer" style="font-size:12px">Created with Jessica Leigh Biles &#8599;</a></div>
+      <div class="center mt6" style="display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap">
+        <a class="link" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:12px">Jessica Leigh Biles &#8599;</a>
+        <span class="tiny" style="font-size:12px">&middot;</span>
+        <a class="link" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:12px">Jonathan Biles &#8599;</a>
+      </div>
+      <div class="center" style="margin-top:2px"><span class="tiny" style="font-size:11px">Created together</span></div>
     </div></div>`;
 }
 function screenDisclaimer(){
@@ -568,9 +684,38 @@ function tabPartner(){
       <button class="btn btn-soft mt10" data-action="find-clinician" style="font-size:14px">Share with my clinician</button></div>
     <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jessica Leigh Biles</div>
       <p class="tiny" style="line-height:1.6">Slow Burn is created with Jessica Leigh Biles — SAR-certified sex coach and host of the Freedom Between the Sheets podcast.</p>
-      <a class="btn mt10" href="https://www.jessicaleighbiles.com" target="_blank" rel="noopener noreferrer" style="font-size:14px;text-decoration:none">Visit jessicaleighbiles.com &#8599;</a></div>
+      <a class="btn mt10" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:14px;text-decoration:none">Visit jessicaleighbiles.com &#8599;</a></div>
+    <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jonathan Biles</div>
+      <p class="tiny" style="line-height:1.6">The other half of Slow Burn — Jonathan writes and builds the apps behind the program. More of his work, and the best way to reach us, lives at jonathanscribbles.com.</p>
+      <a class="btn btn-plum mt10" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:14px;text-decoration:none">Visit jonathanscribbles.com &#8599;</a></div>
+    ${supportCard()}
     <div class="foot-legal">Wellness &amp; education only · not medical advice · consult a licensed clinician for pain or medical concerns.</div>
   </div></div>`;
+}
+
+/* Support card — tasteful, never a paywall. Nothing in Slow Burn is ever
+   locked behind it. Real tip buttons render ONLY when Apple has returned
+   purchasable products (Monetize.ready()); otherwise the card is an honest
+   "share it / say hello" note, so there is never a dead buy button. */
+function supportCard(){
+  const thanks=Monetize.hasSupported()
+    ? `<div class="tiny mt10" style="color:var(--sage);font-weight:700">&#9829; Thank you — you've supported Slow Burn.</div>` : "";
+  if(Monetize.ready()){
+    const btns=Monetize.keys().map(k=>
+      `<button class="chip" data-action="tip" data-tier="${k}">${Monetize.labelOf(k)} &middot; ${esc(Monetize.priceOf(k))}</button>`
+    ).join("");
+    return `<div class="card mt14" style="border-color:var(--line-2)">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Support Slow Burn</div>
+      <p class="tiny" style="line-height:1.6">No ads, no subscription, nothing locked — the whole program is yours either way. If it's helped the two of you, you're welcome to leave a tip toward keeping it going.</p>
+      <div class="chips mt10">${btns}</div>${thanks}</div>`;
+  }
+  return `<div class="card mt14" style="border-color:var(--line-2)">
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px">Support Slow Burn</div>
+    <p class="tiny" style="line-height:1.6">No ads, no subscription, no upsells — the whole program is yours. If it's helped the two of you, the kindest support is telling another couple about it, or saying hello from either of our sites.</p>
+    <div class="row mt10" style="gap:8px">
+      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:13px">Jessica's site</button>
+      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:13px">Jonathan's site</button>
+    </div>${thanks}</div>`;
 }
 
 function screenStage(id){
@@ -655,7 +800,7 @@ function nudgeText(cur){
 
 /* ---------------- FIND A CLINICIAN ---------------- */
 function clinCard(name,tag,desc,url){
-  return `<a class="opt" href="${url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">
+  return `<a class="opt" href="${url}" data-action="open-url" data-url="${url}" style="text-decoration:none;color:inherit">
     <div class="oic">${I.shield}</div>
     <div style="flex:1;min-width:0"><div class="ttl">${name}</div>
       <div class="tiny" style="color:var(--primary);font-weight:700;margin:2px 0">${tag}</div>
@@ -740,6 +885,11 @@ document.addEventListener("click",(e)=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=el.dataset.action;
 
+  // external links — always through the system browser, never in-webview
+  if(a==="open-url"){ e.preventDefault(); openSite(el.dataset.url); return; }
+  // tip: asks Apple only. Never grants — that happens in Monetize's verified().
+  if(a==="tip"){ e.preventDefault(); if(!Monetize.tip(el.dataset.tier)) toast("Tipping isn't available right now."); return; }
+
   if(a==="go"){ if(el.dataset.to==="pairing"&&S.pending){S.pairPhase="join";} S.screen=el.dataset.to; render(); return; }
   if(a==="toggle-ack"){S.ack=!S.ack;render();return;}
   if(a==="find-clinician"){S.clinReturn={screen:S.screen,tab:S.tab,stageOpen:S.stageOpen};S.screen="clinicians";render();return;}
@@ -791,6 +941,7 @@ document.addEventListener("click",(e)=>{
 /* init: honor ?pair=CODE deep link for the joining partner */
 (function init(){
   try{const p=new URL(location.href).searchParams.get("pair");if(p)S.pending=p.toUpperCase().slice(0,8);}catch(e){}
+  Monetize.init();
   render();
 })();
 </script>

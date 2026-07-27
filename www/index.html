@@ -209,59 +209,208 @@
 /* ============================================================
    Slow Burn — phone client (solo mode + live two-device pairing)
    ============================================================ */
+/* ============================================================
+   IDENTITY MODEL
+   ------------------------------------------------------------
+   Slow Burn adapts to whoever is actually using it. Nothing in
+   the program assumes a gender, an orientation, a body, or a
+   monogamous couple. Everything below feeds ONE templating
+   layer (see T() further down) that every user-facing string in
+   the app passes through, so there is exactly one place where
+   person-specific language is decided.
+
+   Defaults are deliberately inclusive, not "male + female":
+   unset pronouns resolve to they/them, unset partner term
+   resolves to "partner", and an unset structure is treated as
+   unspecified rather than monogamous.
+   ============================================================ */
+const GENDERS=[
+  {id:"woman",     label:"Woman"},
+  {id:"man",       label:"Man"},
+  {id:"nonbinary", label:"Non-binary"},
+  {id:"genderfluid",label:"Genderfluid"},
+  {id:"agender",   label:"Agender"},
+  {id:"custom",    label:"Self-describe"},
+  {id:"na",        label:"Prefer not to say"}
+];
+const PSET_SHE ={they:"she", them:"her", their:"her", theirs:"hers", themself:"herself",   theyre:"she’s",  theyve:"she’s"};
+const PSET_HE  ={they:"he",  them:"him", their:"his", theirs:"his",  themself:"himself",   theyre:"he’s",   theyve:"he’s"};
+const PSET_THEY={they:"they",them:"them",their:"their",theirs:"theirs",themself:"themselves",theyre:"they’re",theyve:"they’ve"};
+const PRONOUNS=[
+  {id:"she",   label:"she/her",  set:PSET_SHE},
+  {id:"he",    label:"he/him",   set:PSET_HE},
+  {id:"they",  label:"they/them",set:PSET_THEY},
+  {id:"shethey",label:"she/they",set:PSET_SHE},
+  {id:"hethey",label:"he/they",  set:PSET_HE},
+  {id:"custom",label:"Self-describe",set:null},
+  {id:"na",    label:"Prefer not to say",set:PSET_THEY}
+];
+const ORIENTATIONS=[
+  {id:"straight", label:"Straight"},
+  {id:"gay",      label:"Gay"},
+  {id:"lesbian",  label:"Lesbian"},
+  {id:"bi",       label:"Bisexual"},
+  {id:"pan",      label:"Pansexual"},
+  {id:"queer",    label:"Queer"},
+  {id:"ace",      label:"Asexual / ace-spectrum"},
+  {id:"demi",     label:"Demisexual"},
+  {id:"questioning",label:"Questioning"},
+  {id:"custom",   label:"Self-describe"},
+  {id:"na",       label:"Prefer not to say"}
+];
+const STRUCTURES=[
+  {id:"solo",  label:"Solo — just me",        dsc:"A practice of your own. Every stage has a solo form."},
+  {id:"mono",  label:"Monogamous",            dsc:"One partnership, closed."},
+  {id:"open",  label:"Open relationship",     dsc:"A core partnership with agreed openness."},
+  {id:"enm",   label:"Ethically non-monogamous",dsc:"More than one connection, openly and by agreement."},
+  {id:"poly",  label:"Polyamorous",           dsc:"Multiple partners. Run Slow Burn once per partnership."},
+  {id:"ra",    label:"Relationship anarchy",  dsc:"Your own agreements, without a default hierarchy."},
+  {id:"custom",label:"Self-describe",         dsc:"Name it in your own words."},
+  {id:"na",    label:"Prefer not to say",     dsc:"We’ll keep the language neutral."}
+];
+/* What you call the person you're practising with. Purely a label —
+   it never implies a gender for them, and they set their own. */
+const PARTNER_TERMS=["partner","spouse","wife","husband","girlfriend","boyfriend","enbyfriend","datemate","sweetheart","lover","companion","self-describe"];
+/* How the program should name intimate areas. Sensate Focus needs to be
+   explicit about what is and isn't in scope per stage, but the wording
+   shouldn't assume anyone's anatomy. */
+const AREA_STYLES=[
+  {id:"inclusive",label:"Chest and genitals",       dsc:"Anatomy-neutral. The default."},
+  {id:"clinical", label:"Breasts, chest and genitals",dsc:"More explicitly clinical."},
+  {id:"own",      label:"“The areas we named”",     dsc:"You decide together, off-app, what’s in scope."}
+];
+
+/* Sample profile used ONLY by the clearly-labelled walkthrough (App Review
+   / “show me how it works”). Two people, both they/them — a neutral example,
+   not a default couple. Nothing here is ever a user's starting state. */
+const SAMPLE={A:{name:"Rowan",gender:"nonbinary",pronouns:"they",orientation:"queer"},
+              B:{name:"Ari",  gender:"nonbinary",pronouns:"they",orientation:"queer"},
+              structure:"mono",partnerTerm:"partner",areas:"inclusive"};
+
+/* ------------------------------------------------------------
+   THE PROGRAM — six stages of Sensate Focus.
+   Every stage carries BOTH a partnered form and a solo form, so
+   a solo user gets a real practice, not a locked-out couple app.
+   Copy is written with {tokens} and resolved through T().
+   ------------------------------------------------------------ */
 const STAGES=[
  {id:1,title:"Foundations",sub:"Non-genital touch",weeks:"Week 1",mins:"20–30 min",
   intent:"Rebuild ease with touch — no pressure, no performance, no destination.",
-  steps:["Choose an unhurried, private time. Phones away. One partner receives, the other gives.",
+  soloIntent:"Rebuild ease with your own touch — no pressure, no performance, no destination.",
+  steps:["Choose an unhurried, private time. Phones away. One of you receives, the other gives — decide however you like.",
     "The giver touches the receiver’s hands, arms, back, shoulders, legs and face — exploring texture, temperature and pressure out of their own curiosity.",
-    "Breasts and genitals are off-limits at this stage. There is no goal of arousal.",
-    "The receiver simply notices sensation, and only speaks up if something feels uncomfortable.",
+    "{Areas} are off-limits at this stage. There is no goal of arousal.",
+    "The receiver simply notices sensation, and speaks up only if something feels uncomfortable.",
     "After 10–15 minutes, switch roles."],
-  focus:"Notice, don’t perform.",bounds:"Off-limits this stage: breasts, genitals, intercourse."},
+  soloSteps:["Choose an unhurried, private time. Phones away, door closed.",
+    "Move your own hands slowly over your hands, arms, shoulders, legs and face — exploring texture, temperature and pressure out of curiosity.",
+    "{Areas} are off-limits at this stage. There is no goal of arousal.",
+    "Notice sensation as it is. If something feels uncomfortable, ease off and change what you’re doing.",
+    "Give it 10–15 minutes, then rest quietly for a moment before you finish."],
+  focus:"Notice, don’t perform.",
+  bounds:"Off-limits this stage: {areas}, and any penetrative sex.",
+  soloBounds:"Off-limits this stage: {areas}. This is about touch, not arousal."},
+
  {id:2,title:"Trading Touch",sub:"Guided turns",weeks:"Week 2",mins:"25–35 min",
+  soloTitle:"Following Sensation",soloSub:"Learning your own preferences",
   intent:"Learn each other’s preferences through clear turns and gentle hand-guidance.",
+  soloIntent:"Learn your own preferences — what your body actually likes, today.",
   steps:["Continue non-genital touch, taking clear turns as giver and receiver.",
     "The receiver may place a hand over the giver’s to show ‘slower’, ‘softer’, ‘here’ — without words if you prefer.",
-    "Stay with sensation rather than trying to create a reaction.","Swap roles at the halfway point."],
-  focus:"Show, don’t direct.",bounds:"Still non-genital. No expectation of arousal."},
+    "Stay with sensation rather than trying to create a reaction.",
+    "Swap roles at the halfway point."],
+  soloSteps:["Continue non-genital touch, staying with your own hands.",
+    "Experiment deliberately: slower, softer, firmer, lighter. Notice which your body prefers today.",
+    "Stay with sensation rather than trying to create a reaction.",
+    "Note anything you’d want a partner to know — now, or someday."],
+  focus:"Show, don’t direct.",
+  bounds:"Still non-genital. No expectation of arousal.",
+  soloBounds:"Still non-genital. No expectation of arousal."},
+
  {id:3,title:"Whole-Body Mapping",sub:"Including — without demand",weeks:"Weeks 3–4",mins:"30–40 min",
   intent:"Touch may now include the whole body, kept exploratory rather than goal-oriented.",
-  steps:["Touch can now include breasts and genitals as part of full-body exploration.",
+  soloIntent:"Touch may now include your whole body, kept exploratory rather than goal-oriented.",
+  steps:["Touch can now include {areas} as part of full-body exploration.",
     "This is still non-demand: the aim is sensation and curiosity, not arousal or orgasm.",
-    "If either partner becomes goal-focused or anxious, gently return to neutral areas, then resume.",
+    "If either of you becomes goal-focused or anxious, gently return to neutral areas, then resume.",
     "Keep taking turns; keep the pace slow."],
-  focus:"Curiosity over outcome.",bounds:"Arousal is welcome if it arises, but it is never the goal. No intercourse."},
+  soloSteps:["Touch can now include {areas} as part of full-body exploration.",
+    "This is still non-demand: the aim is sensation and curiosity, not arousal or orgasm.",
+    "If you notice yourself chasing an outcome, return to neutral areas, then resume.",
+    "Keep the pace slow. There is nowhere to arrive."],
+  focus:"Curiosity over outcome.",
+  bounds:"Arousal is welcome if it arises, but it is never the goal. No penetrative sex this stage.",
+  soloBounds:"Arousal is welcome if it arises, but it is never the goal."},
+
  {id:4,title:"Mutual Touch",sub:"Giving and receiving together",weeks:"Week 5",mins:"30–40 min",
-  intent:"Both partners give and receive at the same time, staying with sensation.",
-  steps:["Move to touching each other simultaneously.",
-    "Notice how it feels to attend to your own sensations and your partner’s at once.",
+  soloTitle:"Staying With It",soloSub:"Longer, unhurried attention",
+  intent:"Both of you give and receive at the same time, staying with sensation.",
+  soloIntent:"Hold unhurried attention for longer than feels necessary, and notice what happens.",
+  steps:["Move to touching each other at the same time.",
+    "Notice how it feels to attend to your own sensations and {partner}’s at once.",
     "If it becomes performance-focused, pause and return to taking turns.",
     "Close with a few quiet minutes simply resting in contact."],
-  focus:"Shared, unhurried attention.",bounds:"Continue without expectation of intercourse or climax."},
+  soloSteps:["Extend the session — stay with full-body touch longer than you think you need to.",
+    "Notice how attention drifts toward an outcome, and gently bring it back to sensation.",
+    "If it becomes goal-focused, return to neutral areas, then resume.",
+    "Close with a few quiet minutes simply resting."],
+  focus:"Shared, unhurried attention.",
+  bounds:"Continue without any expectation of penetrative sex or climax.",
+  soloBounds:"Continue without any expectation of climax."},
+
  {id:5,title:"Sensual Integration",sub:"Movement & closeness",weeks:"Weeks 6–7",mins:"35–45 min",
+  soloTitle:"Movement & Breath",soloSub:"Bringing the whole body in",
   intent:"Introduce gentle movement and bodies coming together, still without demand.",
-  steps:["Add gentle movement and, if both welcome it, positions that bring your bodies close.",
-    "There is no expectation of penetration or climax — these may or may not happen.",
-    "At any point either partner may return to earlier, simpler touch. That is success, not a setback.",
+  soloIntent:"Introduce gentle movement and breath, still without demand.",
+  steps:["Add gentle movement and, if you both welcome it, positions that bring your bodies close.",
+    "There is no expectation of sex or climax — these may or may not happen.",
+    "At any point either of you may return to earlier, simpler touch. That is success, not a setback.",
     "If a pain condition or medical concern is present, follow your clinician’s guidance for this stage."],
-  focus:"Together, without a finish line.",bounds:"Clinician-guided if pain, recovery, or a medical condition is involved."},
+  soloSteps:["Add gentle movement and breath — let your whole body be involved, not only your hands.",
+    "There is no expectation of arousal or climax — these may or may not happen.",
+    "At any point you may return to earlier, simpler touch. That is success, not a setback.",
+    "If a pain condition or medical concern is present, follow your clinician’s guidance for this stage."],
+  focus:"Together, without a finish line.",
+  bounds:"Clinician-guided if pain, recovery, or a medical condition is involved.",
+  soloBounds:"Clinician-guided if pain, recovery, or a medical condition is involved."},
+
  {id:6,title:"Integration & Maintenance",sub:"Keeping it alive",weeks:"Ongoing",mins:"Flexible",
-  intent:"Fold non-demand touch into a sustainable rhythm you both look forward to.",
+  intent:"Fold non-demand touch into a sustainable rhythm you look forward to.",
+  soloIntent:"Fold non-demand touch into a sustainable rhythm you look forward to.",
   steps:["Choose a realistic cadence — a weekly ritual, or whatever fits your life.",
     "Keep the principles: unhurried, non-demand, sensation over outcome.",
     "Return to any earlier stage whenever you want a reset.",
     "Revisit the check-ins now and then to notice what’s changed."],
-  focus:"A practice, not a project.",bounds:"Revisit earlier stages freely — progress isn’t a straight line."}
+  soloSteps:["Choose a realistic cadence — a weekly ritual, or whatever fits your life.",
+    "Keep the principles: unhurried, non-demand, sensation over outcome.",
+    "Return to any earlier stage whenever you want a reset.",
+    "Revisit your check-ins now and then to notice what’s changed."],
+  focus:"A practice, not a project.",
+  bounds:"Revisit earlier stages freely — progress isn’t a straight line.",
+  soloBounds:"Revisit earlier stages freely — progress isn’t a straight line."}
 ];
-const GOOD=["Feeling unhurried","Being touched slowly","Eye contact","Full attention","Warmth & closeness","Laughing together","Feeling safe","The pace we set"];
+const GOOD=["Feeling unhurried","Being touched slowly","Eye contact","Full attention","Warmth & closeness","Laughing","Feeling safe","The pace we set"];
+const GOOD_SOLO=["Feeling unhurried","Slow touch","Full attention","Warmth","Feeling safe","Being present","Curiosity","The pace I set"];
 const MORE=["More time","A slower pace","More talking","Less talking","Softer touch","Firmer touch","A calmer setting","Starting earlier"];
+const MORE_SOLO=["More time","A slower pace","Softer touch","Firmer touch","A calmer setting","Starting earlier","Fewer distractions","Less self-judgement"];
 
+function blankPerson(){
+  return {name:"",gender:"",genderCustom:"",pronouns:"",pronounsCustom:"",orientation:"",orientationCustom:""};
+}
 function freshState(){
   return {screen:"welcome",tab:"today",ack:false,
-    mode:null,           // null | 'solo' | 'live'
-    view:"A",            // solo toggle
+    mode:null,           // null | 'solo' | 'shared' | 'live'
+    view:"A",            // shared-device / sample toggle
     myRole:"A",          // live
-    names:{A:"Sam",B:"Alex"},
+    setupStep:"who",
+    isSample:false,
+    profile:{
+      done:false,
+      people:{A:blankPerson(),B:blankPerson()},
+      structure:"", structureCustom:"",
+      partnerTerm:"partner", partnerTermCustom:"",
+      areas:"inclusive"
+    },
     code:"",pairPhase:"choose",pending:null,
     mq:null,connected:false,partnerOnline:false,
     stageOpen:null,session:null,form:{good:new Set(),more:new Set(),note:""},
@@ -271,21 +420,157 @@ function freshState(){
 }
 let S=freshState();
 
-/* ---- roles / names ---- */
+/* ---- roles / people ---- */
+function isSolo(){ return S.mode==="solo"; }
 function activeRole(){ return S.mode==="live"?S.myRole:S.view; }
 function partnerRole(){ return activeRole()==="A"?"B":"A"; }
 function me(){ return S.data[activeRole()]; }
 function other(){ return S.data[partnerRole()]; }
-function meName(){ return S.names[activeRole()]||"You"; }
-function otherName(){ return S.names[partnerRole()]||"your partner"; }
+function person(role){ return S.profile.people[role]||blankPerson(); }
 function firstName(n){ return (n||"").split(" ")[0]; }
-
-/* ---- derived ---- */
-function maxUnlocked(){let n=1;for(let s=1;s<=6;s++){if(S.data.A.ready[s]&&S.data.B.ready[s])n=Math.max(n,s+1);}return Math.min(n,6);}
-function totalSessions(w){let n=0;for(let s=1;s<=6;s++)n+=(S.data[w].sessions[s]||0);return n;}
-function hasNewMatch(){for(let s=1;s<=6;s++){if(S.data.A.debrief[s]&&S.data.B.debrief[s])return true;}return false;}
 function esc(t){return (t||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function genCode(){const a="ACDEFHJKLMNPRTUWXY34679";let c="SB";for(let i=0;i<4;i++)c+=a[Math.floor(Math.random()*a.length)];return c;}
+
+function meName(){ return firstName(person(activeRole()).name)||"you"; }
+/* The partner's label. A name if we have one; otherwise the term THEY chose
+   ("your partner", "your datemate"…). Never a gendered guess. */
+function partnerTerm(){
+  const p=S.profile;
+  const t=(p.partnerTerm==="self-describe"?(p.partnerTermCustom||"partner"):(p.partnerTerm||"partner"));
+  return t.trim()||"partner";
+}
+function otherName(){ return firstName(person(partnerRole()).name)||("your "+partnerTerm()); }
+
+/* Pronoun set for a role — falls back to they/them whenever unset. */
+function pronounSet(role){
+  const p=person(role);
+  if(p.pronouns==="custom"){
+    const parts=(p.pronounsCustom||"").split("/").map(x=>x.trim()).filter(Boolean);
+    if(parts.length>=2){
+      const [they,them]=parts;
+      const their=parts[2]||them, theirs=parts[3]||their, themself=parts[4]||(them+"self");
+      return {they,them,their,theirs,themself,theyre:they+"’s",theyve:they+"’s"};
+    }
+    return PSET_THEY;
+  }
+  const found=PRONOUNS.find(x=>x.id===p.pronouns);
+  return (found&&found.set)||PSET_THEY;
+}
+function pronounLabel(role){
+  const p=person(role);
+  if(p.pronouns==="custom") return p.pronounsCustom||"they/them";
+  const f=PRONOUNS.find(x=>x.id===p.pronouns);
+  return f?(f.id==="na"?"they/them":f.label):"they/them";
+}
+function structureLabel(){
+  const p=S.profile;
+  if(p.structure==="custom") return p.structureCustom||"Self-described";
+  const f=STRUCTURES.find(x=>x.id===p.structure);
+  return f?f.label:"Not specified";
+}
+function genderLabel(role){
+  const p=person(role);
+  if(p.gender==="custom") return p.genderCustom||"Self-described";
+  const f=GENDERS.find(x=>x.id===p.gender);
+  return f?f.label:"Not specified";
+}
+function orientationLabel(role){
+  const p=person(role);
+  if(p.orientation==="custom") return p.orientationCustom||"Self-described";
+  const f=ORIENTATIONS.find(x=>x.id===p.orientation);
+  return f?f.label:"Not specified";
+}
+/* Multiple partners? Then the program is run once per partnership, and copy
+   should say so rather than implying this is your only connection. */
+function isMultiPartner(){ return ["enm","poly","ra","open"].indexOf(S.profile.structure)>=0; }
+function areaPhrase(){
+  const st=S.profile.areas||"inclusive";
+  if(st==="clinical") return "breasts, chest and genitals";
+  if(st==="own") return isSolo()?"the areas you’ve named for yourself":"the areas you’ve named between you";
+  return "chest and genitals";
+}
+
+/* ============================================================
+   T() — THE TEMPLATING LAYER
+   ------------------------------------------------------------
+   Every person-dependent string in Slow Burn goes through here.
+   If a profile field is unset, the token resolves to inclusive,
+   gender-neutral language rather than to a default gender.
+   ============================================================ */
+function T(str){
+  if(!str) return "";
+  const ps=pronounSet(partnerRole());
+  const solo=isSolo();
+  const pname=otherName();
+  const term=partnerTerm();
+  const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
+  const us = solo ? "you"
+           : (isMultiPartner() ? "you and "+pname : "the two of you");
+  const map={
+    me:meName(),                 Me:cap(meName()),
+    partner:pname,               Partner:cap(pname),
+    pterm:term,                  Pterm:cap(term),
+    pterms:term+"s",             Pterms:cap(term)+"s",
+    they:ps.they,                They:cap(ps.they),
+    them:ps.them,                Them:cap(ps.them),
+    their:ps.their,              Their:cap(ps.their),
+    theirs:ps.theirs,            Theirs:cap(ps.theirs),
+    themself:ps.themself,
+    theyre:ps.theyre,            Theyre:cap(ps.theyre),
+    theyve:ps.theyve,            Theyve:cap(ps.theyve),
+    us:us,                       Us:cap(us),
+    areas:areaPhrase(),          Areas:cap(areaPhrase()),
+    together: solo?"on your own":"together",
+    Together: solo?"On your own":"Together"
+  };
+  return String(str).replace(/\{(\w+)\}/g,(m,k)=>(k in map)?map[k]:m);
+}
+/* Escape-then-template, for anything that lands in innerHTML. */
+function TE(str){ return T(esc(str)); }
+
+/* Stage accessors that respect solo vs partnered. */
+function stTitle(st){ return (isSolo()&&st.soloTitle)||st.title; }
+function stSub(st){ return (isSolo()&&st.soloSub)||st.sub; }
+function stIntent(st){ return T((isSolo()&&st.soloIntent)||st.intent); }
+function stSteps(st){ return ((isSolo()&&st.soloSteps)||st.steps).map(T); }
+function stBounds(st){ return T((isSolo()&&st.soloBounds)||st.bounds); }
+function goodChips(){ return isSolo()?GOOD_SOLO:GOOD; }
+function moreChips(){ return isSolo()?MORE_SOLO:MORE; }
+
+/* ---- derived ---- */
+/* Solo unlocks on your own readiness; partnered still requires BOTH — the
+   consent gate is the point of the app and it is unchanged. */
+function maxUnlocked(){
+  let n=1;
+  for(let s=1;s<=6;s++){
+    const ok=isSolo()?!!S.data[activeRole()].ready[s]:(S.data.A.ready[s]&&S.data.B.ready[s]);
+    if(ok)n=Math.max(n,s+1);
+  }
+  return Math.min(n,6);
+}
+function totalSessions(w){let n=0;for(let s=1;s<=6;s++)n+=(S.data[w].sessions[s]||0);return n;}
+function hasNewMatch(){
+  if(isSolo())return false;
+  for(let s=1;s<=6;s++){if(S.data.A.debrief[s]&&S.data.B.debrief[s])return true;}
+  return false;
+}
+
+/* ---- profile persistence (local only — never transmitted) ---- */
+const PROFILE_KEY="sb_profile_v2";
+function saveProfile(){
+  try{ localStorage.setItem(PROFILE_KEY,JSON.stringify({profile:S.profile,mode:S.mode})); }catch(e){}
+}
+function loadProfile(){
+  try{
+    const raw=localStorage.getItem(PROFILE_KEY); if(!raw) return false;
+    const o=JSON.parse(raw); if(!o||!o.profile||!o.profile.done) return false;
+    S.profile=Object.assign(freshState().profile,o.profile);
+    S.profile.people=Object.assign({A:blankPerson(),B:blankPerson()},o.profile.people||{});
+    if(o.mode) S.mode=o.mode;
+    return true;
+  }catch(e){ return false; }
+}
+function clearProfile(){ try{ localStorage.removeItem(PROFILE_KEY); }catch(e){} }
 
 /* ============================================================
    LIVE PAIRING — public MQTT relay over WSS (no account, works
@@ -297,15 +582,21 @@ function genCode(){const a="ACDEFHJKLMNPRTUWXY34679";let c="SB";for(let i=0;i<4;
    ============================================================ */
 const RELAY="wss://broker.emqx.io:8084/mqtt";
 function extractChips(deb){const o={};for(let s=1;s<=6;s++){if(deb[s])o[s]={good:deb[s].good||[],more:deb[s].more||[]};}return o;}
+/* What crosses between the two devices, and nothing else:
+   readiness, session counts, chip selections, and how you want to be
+   ADDRESSED (name + pronouns) so the other device can word its prompts
+   for you correctly. Gender, orientation, relationship structure and
+   every free-text note stay local — they are never in this payload. */
 function publishState(){
   if(S.mode!=="live"||!S.mq||!S.connected) return;
-  const mine=me();
+  const mine=me(),who=person(S.myRole);
   S.mq.publish("slowburn/"+S.code+"/s/"+S.myRole,
-    JSON.stringify({role:S.myRole,name:S.names[S.myRole],ready:mine.ready,sessions:mine.sessions,chips:extractChips(mine.debrief)}),
+    JSON.stringify({role:S.myRole,name:who.name,pronouns:who.pronouns,pronounsCustom:who.pronounsCustom,
+      ready:mine.ready,sessions:mine.sessions,chips:extractChips(mine.debrief)}),
     {retain:true,qos:0});
 }
 function connectLive(role,name,code){
-  S.mode="live";S.myRole=role;S.code=code;if(name)S.names[role]=name;
+  S.mode="live";S.myRole=role;S.code=code;if(name)S.profile.people[role].name=name;
   if(!window.mqtt){liveFail();return;}
   const base="slowburn/"+code;
   let opened=false,client;
@@ -336,7 +627,11 @@ function applyPartner(m){
   const pr=partnerRole();
   S.data[pr].ready=m.ready||{};S.data[pr].sessions=m.sessions||{};
   const deb={},ch=m.chips||{};for(const k in ch)deb[k]={good:ch[k].good||[],more:ch[k].more||[]};
-  S.data[pr].debrief=deb;if(m.name)S.names[pr]=m.name;
+  S.data[pr].debrief=deb;
+  /* Let the other person's OWN pronouns win over anything we guessed for them. */
+  if(m.name)S.profile.people[pr].name=m.name;
+  if(m.pronouns){S.profile.people[pr].pronouns=m.pronouns;S.profile.people[pr].pronounsCustom=m.pronounsCustom||"";}
+  saveProfile();
   S.partnerOnline=true;render();
 }
 function liveFail(){
@@ -494,8 +789,9 @@ function screenWelcome(){
         <div class="mark">${I.flame}</div>
         <div><div class="eyebrow">A guided intimacy program</div>
         <h1 class="display" style="margin-top:10px;font-size:54px">Slow Burn</h1>
-        <div class="script" style="font-size:28px;color:var(--plum);margin-top:0;transform:rotate(-3deg)">for the two of you &#9829;</div>
-        <p class="lead" style="margin-top:14px;max-width:280px">A structured, clinician-informed program you move through together — one unhurried step at a time.</p></div>
+        <div class="script" style="font-size:28px;color:var(--plum);margin-top:0;transform:rotate(-3deg)">at your pace &#9829;</div>
+        <p class="lead" style="margin-top:14px;max-width:290px">A structured, clinician-informed program you move through one unhurried step at a time — on your own, or with a partner.</p>
+        <p class="tiny" style="margin-top:9px;max-width:290px">Every gender, every orientation, every kind of relationship.</p></div>
       </div></div>
     <div class="pad" style="padding-top:0">
       <button class="btn" data-action="go" data-to="disclaimer">Begin</button>
@@ -517,81 +813,280 @@ function screenDisclaimer(){
     <div class="card-soft mt14"><p style="font-size:13.5px;line-height:1.6;color:var(--ink)">If either partner is managing pain during intimacy, a medical condition, a recent surgery or recovery, or a history of trauma, please work with a licensed clinician — a sex therapist or pelvic-floor physical therapist — before or alongside this program.</p></div>
     <div class="check-row" data-action="toggle-ack"><div class="cbox ${S.ack?'on':''}">${I.check}</div>
       <div class="ctext">I understand Slow Burn is an educational wellness tool, not medical advice, and I’ll consult a clinician for any pain or medical concern.</div></div>
-    <button class="btn mt10" data-action="go" data-to="pairing" ${S.ack?'':'disabled'}>Continue</button>
+    <button class="btn mt10" data-action="go" data-to="setup" ${S.ack?'':'disabled'}>Continue</button>
     <div class="center mt10"><button class="link" data-action="find-clinician">Help me find a clinician</button></div>
   </div>`;
 }
+/* ============================================================
+   SETUP — who is actually using this app.
+   ------------------------------------------------------------
+   Runs once on first launch and is fully editable afterwards
+   from the last tab. Everything captured here is stored on the
+   device only and is NEVER published over the pairing relay.
+   Every field is skippable; skipping resolves to inclusive,
+   gender-neutral language rather than to any default identity.
+   ============================================================ */
+function optionGrid(group,opts,cur,role){
+  return `<div class="chips mt10">${opts.map(o=>
+    `<span class="chip ${cur===o.id?'sel':''}" data-action="pick" data-grp="${group}" data-val="${o.id}"${role?` data-role="${role}"`:""}>${esc(o.label)}</span>`
+  ).join("")}</div>`;
+}
+function setupProgress(n){
+  const total=4;
+  return `<div class="rail" style="margin:0 0 16px">${[1,2,3,4].map(i=>
+    `<div class="seg-b ${i<n?'done':(i===n?'cur':'')}"></div>`).join("")}</div>
+    <div class="tiny" style="margin:-12px 0 14px">Step ${n} of ${total}</div>`;
+}
+function personForm(role,heading,blurb){
+  const p=person(role);
+  return `
+    <div class="card mt14">
+      <div style="font-weight:700;font-size:14.5px">${heading}</div>
+      ${blurb?`<div class="tiny mt6" style="line-height:1.5">${blurb}</div>`:""}
+      <input class="field mt10" id="nm_${role}" placeholder="Name or nickname (optional)" value="${esc(p.name)}" data-action="noop" />
+    </div>
+    <div class="card mt14">
+      <div style="font-weight:700;font-size:14.5px">Gender identity</div>
+      <div class="tiny mt6">Optional. Nothing in the program changes based on this except the words it uses.</div>
+      ${optionGrid("gender",GENDERS,p.gender,role)}
+      ${p.gender==="custom"?`<input class="field mt10" id="gc_${role}" placeholder="In your own words" value="${esc(p.genderCustom)}" />`:""}
+    </div>
+    <div class="card mt14">
+      <div style="font-weight:700;font-size:14.5px">Pronouns</div>
+      <div class="tiny mt6">This is what actually rewrites the app’s language. Left blank, Slow Burn uses they/them.</div>
+      ${optionGrid("pronouns",PRONOUNS,p.pronouns,role)}
+      ${p.pronouns==="custom"?`<input class="field mt10" id="pc_${role}" placeholder="e.g. ze/hir/hir" value="${esc(p.pronounsCustom)}" />`:""}
+    </div>
+    <div class="card mt14">
+      <div style="font-weight:700;font-size:14.5px">Sexual orientation</div>
+      <div class="tiny mt6">Optional, and never used to gate or change any stage.</div>
+      ${optionGrid("orientation",ORIENTATIONS,p.orientation,role)}
+      ${p.orientation==="custom"?`<input class="field mt10" id="oc_${role}" placeholder="In your own words" value="${esc(p.orientationCustom)}" />`:""}
+    </div>`;
+}
+function screenSetup(){
+  const st=S.setupStep;
+
+  if(st==="who"){
+    return `<div class="pad">
+      <div class="eyebrow">Setting up</div>
+      <h2 class="display" style="font-size:25px;margin-top:8px">Who’s practising?</h2>
+      <p class="lead mt6" style="font-size:13.5px">Slow Burn works on your own or with a partner. Pick what fits — you can change it later.</p>
+      <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
+        <div class="opt" data-action="who-solo"><div class="oic">${I.solo}</div>
+          <div><div class="ttl">Just me</div><div class="dsc">A full solo practice — every stage has a solo form. Nothing is locked off.</div></div></div>
+        <div class="opt" data-action="who-two"><div class="oic">${I.phone}</div>
+          <div><div class="ttl">Me and a partner</div><div class="dsc">You’ll each set your own identity, and can use one device or two.</div></div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="opt" data-action="who-sample"><div class="oic">${I.spark}</div>
+        <div><div class="ttl">See a sample walkthrough</div><div class="dsc">A clearly-labelled example (Rowan &amp; Ari, both they/them) to look around without entering anything about yourself.</div></div></div>
+      <div class="foot-legal">Everything you enter about yourself stays on this device. It is never sent to us, and never sent over the pairing link.</div>
+    </div>`;
+  }
+
+  if(st==="you"){
+    return `<div class="pad">
+      <button class="back" data-action="setup-back">‹ Back</button>
+      <div class="mt10">${setupProgress(2)}</div>
+      <div class="eyebrow">About you</div>
+      <h2 class="display" style="font-size:25px;margin-top:8px">How should we speak to you?</h2>
+      <p class="lead mt6" style="font-size:13.5px">All of this is optional. Anything you leave blank simply stays neutral.</p>
+      ${personForm("A","Your name","Used only to greet you inside the app.")}
+      ${S.editReturn
+        ?`<button class="btn mt18" data-action="setup-save">Save</button>`
+        :`<button class="btn mt18" data-action="setup-next">Continue</button>
+          <div class="center mt6"><button class="link" data-action="setup-next">Skip for now</button></div>`}
+    </div>`;
+  }
+
+  if(st==="partner"){
+    const p=S.profile;
+    const termCur=p.partnerTerm||"partner";
+    return `<div class="pad">
+      <button class="back" data-action="setup-back">‹ Back</button>
+      <div class="mt10">${setupProgress(3)}</div>
+      <div class="eyebrow">About your partner</div>
+      <h2 class="display" style="font-size:25px;margin-top:8px">And them?</h2>
+      <p class="lead mt6" style="font-size:13.5px">Fill this in together if you like — or leave it blank and let them set their own on their device when you pair.</p>
+      <div class="card mt14">
+        <div style="font-weight:700;font-size:14.5px">What do you call them?</div>
+        <div class="tiny mt6">A label of your choosing. It never implies a gender.</div>
+        <div class="chips mt10">${PARTNER_TERMS.map(t=>
+          `<span class="chip ${termCur===t?'sel':''}" data-action="pick" data-grp="pterm" data-val="${esc(t)}">${esc(t)}</span>`).join("")}</div>
+        ${termCur==="self-describe"?`<input class="field mt10" id="ptc" placeholder="In your own words" value="${esc(p.partnerTermCustom)}" />`:""}
+      </div>
+      ${personForm("B","Their name","So the app can speak about them by name.")}
+      ${S.editReturn
+        ?`<button class="btn mt18" data-action="setup-save">Save</button>`
+        :`<button class="btn mt18" data-action="setup-next">Continue</button>
+          <div class="center mt6"><button class="link" data-action="setup-next">Skip — they’ll set their own</button></div>`}
+    </div>`;
+  }
+
+  // structure
+  const p=S.profile;
+  return `<div class="pad">
+    <button class="back" data-action="setup-back">‹ Back</button>
+    <div class="mt10">${setupProgress(4)}</div>
+    <div class="eyebrow">Your relationship</div>
+    <h2 class="display" style="font-size:25px;margin-top:8px">How do you do relationships?</h2>
+    <p class="lead mt6" style="font-size:13.5px">Slow Burn doesn’t assume. This only changes how the app talks about your connections.</p>
+    <div class="card mt14">
+      <div style="font-weight:700;font-size:14.5px">Relationship structure</div>
+      <div class="mt10" style="display:flex;flex-direction:column;gap:10px">
+        ${STRUCTURES.map(o=>`<div class="opt" data-action="pick" data-grp="structure" data-val="${o.id}"
+          style="${p.structure===o.id?'border-color:var(--primary);background:var(--surface-2)':''}">
+          <div class="oic" style="${p.structure===o.id?'background:var(--primary);border-color:var(--primary)':''}">
+            ${p.structure===o.id?I.check:'<span style="color:var(--muted-2);font-size:18px">·</span>'}</div>
+          <div><div class="ttl">${o.label}</div><div class="dsc">${o.dsc}</div></div></div>`).join("")}
+      </div>
+      ${p.structure==="custom"?`<input class="field mt10" id="sc" placeholder="In your own words" value="${esc(p.structureCustom)}" />`:""}
+      ${isMultiPartner()?`<div class="callout mt14">Slow Burn is run once per partnership. You can reset and start a separate run with another partner at any time — nothing is shared between them.</div>`:""}
+    </div>
+    <div class="card mt14">
+      <div style="font-weight:700;font-size:14.5px">Naming body areas</div>
+      <div class="tiny mt6">Sensate Focus has to be clear about what’s in scope at each stage. Choose the wording that fits your bodies.</div>
+      <div class="mt10" style="display:flex;flex-direction:column;gap:10px">
+        ${AREA_STYLES.map(o=>`<div class="opt" data-action="pick" data-grp="areas" data-val="${o.id}"
+          style="${p.areas===o.id?'border-color:var(--primary);background:var(--surface-2)':''}">
+          <div class="oic" style="${p.areas===o.id?'background:var(--primary);border-color:var(--primary)':''}">
+            ${p.areas===o.id?I.check:'<span style="color:var(--muted-2);font-size:18px">·</span>'}</div>
+          <div><div class="ttl" style="font-size:15px">${o.label}</div><div class="dsc">${o.dsc}</div></div></div>`).join("")}
+      </div>
+    </div>
+    ${S.editReturn
+      ?`<button class="btn mt18" data-action="setup-save">Save</button>`
+      :`<button class="btn mt18" data-action="setup-done">${isSoloIntent()?"Start my practice":"Continue to pairing"}</button>`}
+    <div class="foot-legal">You can change any of this later from the last tab.</div>
+  </div>`;
+}
+/* During setup S.mode isn't committed yet — this is the pending choice. */
+function isSoloIntent(){ return S.setupIntent==="solo"; }
+
+/* ---- editable profile, reachable from the last tab ---- */
+function screenProfile(){
+  const p=S.profile, solo=isSolo();
+  const row=(k,v)=>`<div class="kv"><span class="k">${k}</span><span class="v">${esc(v)}</span></div>`;
+  return `<div class="view"><div class="pad">
+    <button class="back" data-action="profile-back">‹ Back</button>
+    <div class="eyebrow mt10">Your setup</div>
+    <h2 class="display" style="font-size:25px;margin-top:8px">Identity &amp; language</h2>
+    <p class="lead mt6" style="font-size:13.5px">This is what Slow Burn uses to shape its wording. It lives on this device and nowhere else.</p>
+
+    <div class="card mt18">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">You</div>
+      ${row("Name",firstName(person("A").name)||"Not set")}
+      ${row("Gender",genderLabel("A"))}
+      ${row("Pronouns",pronounLabel("A"))}
+      ${row("Orientation",orientationLabel("A"))}
+      <button class="btn btn-soft mt14" data-action="edit-person" data-role="A" style="font-size:13.5px">Edit</button>
+    </div>
+
+    ${solo?"":`<div class="card mt14">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">${esc(cap1(partnerTerm()))}</div>
+      ${row("Name",firstName(person("B").name)||"Not set")}
+      ${row("You call them",partnerTerm())}
+      ${row("Gender",genderLabel("B"))}
+      ${row("Pronouns",pronounLabel("B"))}
+      ${row("Orientation",orientationLabel("B"))}
+      <button class="btn btn-soft mt14" data-action="edit-person" data-role="B" style="font-size:13.5px">Edit</button>
+    </div>`}
+
+    <div class="card mt14">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Relationship &amp; wording</div>
+      ${row("Structure",structureLabel())}
+      ${row("Body areas",areaPhrase())}
+      ${row("Practising",solo?"On my own":"With a partner")}
+      <button class="btn btn-soft mt14" data-action="edit-structure" style="font-size:13.5px">Edit</button>
+    </div>
+
+    <div class="card-soft mt14">
+      <div style="font-weight:700;font-size:13.5px;margin-bottom:6px">How your answers are used</div>
+      <p class="tiny" style="line-height:1.6">Pronouns and the name you chose rewrite the app’s wording. Gender and orientation are recorded for you alone — no stage, prompt, or boundary is gated on them, and no combination is treated as the norm. Anything left blank stays neutral.</p>
+    </div>
+
+    <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Start over</div>
+      <p class="tiny" style="line-height:1.6">Clears this setup and your progress on this device — useful if you want to begin a separate run${isMultiPartner()?" with another partner":""}.</p>
+      <button class="btn btn-soft mt10" data-action="reset-all" style="font-size:13.5px">Reset Slow Burn</button></div>
+    <div class="foot-legal">Wellness &amp; education only · not medical advice.</div>
+  </div></div>`;
+}
+function cap1(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
+
 function screenPairing(){
   const inviteUrl=location.origin+location.pathname+"?pair="+S.code;
   if(S.pairPhase==="choose"){
     return `<div class="pad">
-      <div class="eyebrow">Set up</div>
-      <h2 class="display" style="font-size:25px;margin-top:8px">How are you trying it?</h2>
-      <p class="lead mt6" style="font-size:13.5px">Slow Burn is built for two phones. Pick how you and your partner want to demo.</p>
+      <button class="back" data-action="pair-to-setup">‹ Back</button>
+      <div class="eyebrow mt10">Set up</div>
+      <h2 class="display" style="font-size:25px;margin-top:8px">One device or two?</h2>
+      <p class="lead mt6" style="font-size:13.5px">Two devices keeps each person’s answers genuinely private. One device works too.</p>
       <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
         <div class="opt" data-action="pair-create"><div class="oic">${I.phone}</div>
-          <div><div class="ttl">Pair two phones</div><div class="dsc">You’re here; invite your partner’s phone with a code or QR. The consent gate unlocks live across both.</div></div></div>
+          <div><div class="ttl">Pair two devices</div><div class="dsc">Invite ${esc(otherName())} with a code or QR. The consent gate unlocks live across both.</div></div></div>
         <div class="opt" data-action="pair-join"><div class="oic">${I.link}</div>
-          <div><div class="ttl">Join with a code</div><div class="dsc">Your partner already started — enter the pair code they share.</div></div></div>
-        <div class="opt" data-action="pair-solo"><div class="oic">${I.solo}</div>
-          <div><div class="ttl">Explore solo on one phone</div><div class="dsc">Tap through both sides yourself with a you/partner toggle. No second device needed.</div></div></div>
+          <div><div class="ttl">Join with a code</div><div class="dsc">They already started — enter the pair code they share.</div></div></div>
+        <div class="opt" data-action="pair-shared"><div class="oic">${I.solo}</div>
+          <div><div class="ttl">Share this one device</div><div class="dsc">Hand the phone back and forth, switching sides with a toggle at the top.</div></div></div>
       </div>
-      <div class="foot-legal">Live pairing keeps each person’s private notes on their own phone — only what you both choose is ever shared.</div>
+      <div class="foot-legal">Live pairing keeps each person’s private notes on their own device — only what you both choose is ever shared. Your name and pronouns sync so each device words things correctly; your gender, orientation and structure never leave this phone.</div>
     </div>`;
   }
   if(S.pairPhase==="create"){
     const online=S.partnerOnline;
     return `<div class="pad">
       <button class="back" data-action="pair-back">‹ Back</button>
-      <div class="eyebrow mt10">Invite your partner</div>
+      <div class="eyebrow mt10">Invite ${TE("{partner}")}</div>
       <h2 class="display" style="font-size:24px;margin-top:8px">Scan to join</h2>
-      <p class="lead mt6" style="font-size:13.5px">On your partner’s phone, scan this or open the link and enter the code.</p>
+      <p class="lead mt6" style="font-size:13.5px">${TE("On {their} device, scan this or open the link and enter the code.")}</p>
       <div class="qrbox mt14" id="qrbox"></div>
       <div class="codepill mt14">${S.code}</div>
       <p class="tiny center mt6">${esc(inviteUrl)}</p>
-      <div class="livebar ${online?'':'off'} mt14">${online?'● Partner connected — you’re linked':'○ Waiting for your partner to join…'}</div>
+      <div class="livebar ${online?'':'off'} mt14">${online?TE("● {Partner} connected — you’re linked"):TE("○ Waiting for {partner} to join…")}</div>
       <div class="card-soft mt14">
         <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
-        <input class="field" id="myname" placeholder="e.g. Sam" value="${esc(S.names[S.myRole]==='Sam'?'':S.names[S.myRole])}" />
+        <input class="field" id="myname" placeholder="Name or nickname" value="${esc(person(S.myRole).name)}" />
       </div>
-      <button class="btn mt14" data-action="enter-app-host">Continue ${online?'':'— your partner can join anytime'}</button>
+      <button class="btn mt14" data-action="enter-app-host">Continue ${online?'':TE("— {they} can join anytime")}</button>
     </div>`;
   }
   // join
   const pre=S.pending||"";
   return `<div class="pad">
     <button class="back" data-action="pair-back">‹ Back</button>
-    <div class="eyebrow mt10">Join your partner</div>
+    <div class="eyebrow mt10">Join ${TE("{partner}")}</div>
     <h2 class="display" style="font-size:24px;margin-top:8px">Enter the pair code</h2>
-    <p class="lead mt6" style="font-size:13.5px">Type the code from your partner’s phone.</p>
+    <p class="lead mt6" style="font-size:13.5px">${TE("Type the code from {their} device.")}</p>
     <input class="field code mt18" id="joincode" maxlength="8" placeholder="SB····" value="${esc(pre)}" />
     <div class="card-soft mt14">
       <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
-      <input class="field" id="joinname" placeholder="e.g. Alex" />
+      <input class="field" id="joinname" placeholder="Name or nickname" value="${esc(person("B").name)}" />
     </div>
-    <button class="btn mt14" data-action="do-join">Link our phones</button>
-    <div class="foot-legal">Both phones need to be online. Nothing you write privately leaves your device.</div>
+    <button class="btn mt14" data-action="do-join">Link our devices</button>
+    <div class="foot-legal">Both devices need to be online. Nothing you write privately leaves your device; only your name and pronouns are shared, so each side words things correctly.</div>
   </div>`;
 }
 
 /* ---------------- APP ---------------- */
 function appChrome(inner){
-  const p=activeRole();
   const onlineDot = S.mode==="live" ? `<span class="g ${S.partnerOnline?'':'off'}"></span>` : `<span class="g"></span>`;
-  const pairedTxt = S.mode==="live"
-    ? `${S.partnerOnline?'Linked with':'Waiting for'} ${firstName(otherName())}`
-    : `Paired with ${firstName(otherName())}`;
+  const pill = isSolo()
+    ? `<div class="pill">${onlineDot}Solo practice</div>`
+    : `<div class="pill">${onlineDot}${esc(S.mode==="live"
+        ? (S.partnerOnline?T("Linked with {partner}"):T("Waiting for {partner}"))
+        : T("With {partner}"))}</div>`;
   return `
   <div class="apphead">
-    <div><div class="greet">Welcome back</div><div class="who">${firstName(meName())}</div></div>
-    <div class="pill">${onlineDot}${pairedTxt}</div>
+    <div><div class="greet">Welcome back</div><div class="who">${esc(cap1(meName()))}</div></div>
+    ${pill}
   </div>
   ${inner}
   <div class="tabs">
     ${tabBtn("today","Today",I.today)}
     ${tabBtn("program","Program",I.program)}
     ${tabBtn("checkins","Check-ins",I.chat)}
-    ${tabBtn("partner","Us",I.heart)}
+    ${tabBtn("partner",isSolo()?"You":"Us",I.heart)}
   </div>`;
 }
 function tabBtn(id,label,icon){
@@ -606,9 +1101,9 @@ function tabToday(){
     <div class="card card-tap mt10" data-action="open-stage" data-id="${cur}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div><div class="tiny" style="color:var(--primary);font-weight:700">${st.weeks} · Stage ${cur}</div>
-          <h3 style="font-size:21px;margin-top:5px">${st.title}</h3><p class="tiny" style="margin-top:3px">${st.sub}</p></div>
+          <h3 style="font-size:21px;margin-top:5px">${esc(stTitle(st))}</h3><p class="tiny" style="margin-top:3px">${esc(stSub(st))}</p></div>
         <div class="st-num cur" style="width:44px;height:44px;border-radius:13px">${cur}</div></div>
-      <p class="lead" style="font-size:13.5px;margin-top:12px;color:var(--ink)">${st.intent}</p>
+      <p class="lead" style="font-size:13.5px;margin-top:12px;color:var(--ink)">${esc(stIntent(st))}</p>
       <div class="row mt14"><button class="btn" data-action="open-stage" data-id="${cur}">Open this stage →</button></div>
     </div>
     <div class="card-soft mt14" style="display:flex;gap:13px;align-items:flex-start">
@@ -623,7 +1118,7 @@ function tabToday(){
   </div></div>`;
 }
 function tabProgram(){
-  const cur=maxUnlocked();
+  const cur=maxUnlocked(),solo=isSolo();
   const rail=STAGES.map(s=>`<div class="seg-b ${s.id<cur?'done':(s.id===cur?'cur':'')}"></div>`).join("");
   const items=STAGES.map(s=>{
     const locked=s.id>cur,done=s.id<cur;
@@ -631,22 +1126,46 @@ function tabProgram(){
     const tag=locked?`<div class="st-tag">${I.lock}</div>`:done?`<span class="badge done">Explored</span>`:s.id===cur?`<span class="badge cur">Current</span>`:"";
     return `<div class="stage-item ${cls}" ${locked?'':`data-action="open-stage" data-id="${s.id}"`}>
       <div class="st-num">${done?I.check:s.id}</div>
-      <div class="st-body"><div class="st-title">${s.title}</div><div class="st-sub">${s.weeks} · ${s.sub}</div></div>${tag}</div>`;
+      <div class="st-body"><div class="st-title">${esc(stTitle(s))}</div><div class="st-sub">${s.weeks} · ${esc(stSub(s))}</div></div>${tag}</div>`;
   }).join("");
   return `<div class="view"><div class="pad-tab">
-    <div class="eyebrow">The program</div><h2 class="display" style="font-size:25px;margin-top:8px">Six stages, together</h2>
-    <p class="lead mt6" style="font-size:13.5px">You unlock each stage only when you’ve both privately confirmed you’re ready. No negotiating, no pressure.</p>
+    <div class="eyebrow">The program</div><h2 class="display" style="font-size:25px;margin-top:8px">${solo?"Six stages, your pace":"Six stages, together"}</h2>
+    <p class="lead mt6" style="font-size:13.5px">${solo
+      ?"You unlock each stage when you privately confirm you’re ready. No schedule, no pressure."
+      :"You unlock each stage only when you’ve both privately confirmed you’re ready. No negotiating, no pressure."}</p>
     <div class="rail mt18">${rail}</div><div class="tiny" style="margin-top:4px">${cur-1} of 6 stages explored</div>
     <div class="mt18">${items}</div></div></div>`;
 }
 function tabCheckins(){
+  /* Solo: your own reflections over time — the same private-first idea,
+     without inventing a partner to match against. */
+  if(isSolo()){
+    let own="";
+    for(let s=6;s>=1;s--){
+      const d=me().debrief[s]; if(!d) continue;
+      own+=`<div class="card mt14">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="st-title" style="font-size:15px">Stage ${s} · ${esc(stTitle(STAGES[s-1]))}</div><span class="badge done">Logged</span></div>
+        <div class="divider" style="margin:14px 0"></div>
+        <div class="tiny" style="font-weight:700;color:var(--sage);letter-spacing:.04em;text-transform:uppercase">What felt good</div>
+        ${d.good.length?`<div class="chips mt10">${d.good.map(x=>`<span class="chip match readonly">${esc(x)}</span>`).join("")}</div>`:`<p class="tiny mt10">Nothing selected for this one.</p>`}
+        ${d.more.length?`<div class="tiny mt18" style="font-weight:700;color:var(--plum);letter-spacing:.04em;text-transform:uppercase">You’d welcome more of</div><div class="chips mt10">${d.more.map(x=>`<span class="chip readonly" style="border-color:#F1C9E0;background:#FFF0F7;color:var(--plum-d)">${esc(x)}</span>`).join("")}</div>`:""}
+      </div>`;
+    }
+    return `<div class="view"><div class="pad-tab">
+      <div class="eyebrow">Your reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you noticed</h2>
+      <p class="lead mt6" style="font-size:13.5px">After each session you reflect privately. Everything here — including your written notes — stays on this device.</p>
+      ${own||`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
+        <p class="lead" style="font-size:14px">No reflections yet.</p>
+        <p class="tiny mt6">Run a session and reflect — your pattern over time shows up here.</p></div>`}
+    </div></div>`;
+  }
   let blocks="";
   for(let s=6;s>=1;s--){
     const a=S.data.A.debrief[s],b=S.data.B.debrief[s];
     if(a&&b){
       const gm=a.good.filter(x=>b.good.includes(x)),mm=a.more.filter(x=>b.more.includes(x));
       blocks+=`<div class="card mt14">
-        <div style="display:flex;justify-content:space-between;align-items:center"><div class="st-title" style="font-size:15px">Stage ${s} · ${STAGES[s-1].title}</div><span class="badge done">Matched</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="st-title" style="font-size:15px">Stage ${s} · ${esc(stTitle(STAGES[s-1]))}</div><span class="badge done">Matched</span></div>
         <div class="divider" style="margin:14px 0"></div>
         <div class="tiny" style="font-weight:700;color:var(--sage);letter-spacing:.04em;text-transform:uppercase">You both appreciated</div>
         ${gm.length?`<div class="chips mt10">${gm.map(x=>`<span class="chip match readonly">${esc(x)}</span>`).join("")}</div>`:`<p class="tiny mt10">No exact overlaps here — and that’s completely normal. Your private notes stayed private.</p>`}
@@ -659,8 +1178,8 @@ function tabCheckins(){
     const mine=me().debrief[s],theirs=other().debrief[s];
     if(mine&&!theirs){
       pending+=`<div class="card-soft mt14" style="display:flex;gap:12px;align-items:flex-start"><div style="flex:none">${I.chat.replace(/currentColor/g,'#8B7B76')}</div>
-        <div><div style="font-weight:700;font-size:13.5px">Waiting on ${firstName(otherName())}</div>
-        <p class="tiny" style="margin-top:3px;line-height:1.5">Your Stage ${s} reflection is saved. We’ll surface what you both felt good about once ${firstName(otherName())} reflects too — and your private note never is.</p></div></div>`;
+        <div><div style="font-weight:700;font-size:13.5px">${TE("Waiting on {partner}")}</div>
+        <p class="tiny" style="margin-top:3px;line-height:1.5">${TE("Your Stage "+s+" reflection is saved. We’ll surface what you both felt good about once {partner} reflects too — and your private note never is.")}</p></div></div>`;
     }
   }
   const empty=(!blocks&&!pending);
@@ -669,29 +1188,58 @@ function tabCheckins(){
     <p class="lead mt6" style="font-size:13.5px">After each session you each reflect privately. Slow Burn only surfaces what <b>both</b> of you named — never the rest.</p>
     ${empty?`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
       <p class="lead" style="font-size:14px">No shared reflections yet.</p>
-      <p class="tiny mt6">Run a session and reflect. ${S.mode==="live"?`When ${firstName(otherName())} reflects too, your overlap appears here.`:`Then switch to ${firstName(otherName())} and reflect — the overlap appears here.`}</p></div>`:(blocks+pending)}
+      <p class="tiny mt6">Run a session and reflect. ${S.mode==="live"?TE("When {partner} reflects too, your overlap appears here."):TE("Then switch to {partner} and reflect — the overlap appears here.")}</p></div>`:(blocks+pending)}
   </div></div>`;
 }
 function tabPartner(){
-  const cur=maxUnlocked();
-  const liveRow = S.mode==="live"
-    ? `<div class="livebar ${S.partnerOnline?'':'off'} mt4" style="margin-bottom:6px">${S.partnerOnline?'● Live — both phones connected':'○ Partner offline right now'}</div>`
-    : `<div class="tiny mt4" style="margin-bottom:6px">Solo preview — use the Sam / Alex switch up top to see both sides.</div>`;
+  const cur=maxUnlocked(),solo=isSolo();
+  const initial=r=>{const n=firstName(person(r).name);return (n?n[0]:(r==="A"?"Y":"P")).toUpperCase();};
+
+  const header = solo
+    ? `<div class="eyebrow">Your practice</div><h2 class="display" style="font-size:25px;margin-top:8px">Just you</h2>
+       <div class="tiny mt4" style="margin-bottom:6px">Everything here stays on this device.</div>`
+    : `<div class="eyebrow">Your pairing</div><h2 class="display" style="font-size:25px;margin-top:8px">${esc(T("You & {partner}"))}</h2>
+       ${S.mode==="live"
+         ? `<div class="livebar ${S.partnerOnline?'':'off'} mt4" style="margin-bottom:6px">${S.partnerOnline?'● Live — both devices connected':TE("○ {Partner} is offline right now")}</div>`
+         : `<div class="tiny mt4" style="margin-bottom:6px">Sharing one device — use the switch up top to change sides.</div>`}`;
+
+  const summary = solo
+    ? `<div class="card mt14">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="avatar A">${initial("A")}</div>
+          <div style="margin-left:6px"><div style="font-weight:700">${esc(cap1(meName()))}</div>
+            <div class="tiny">${esc(pronounLabel("A"))} · solo practice</div></div></div>
+        <div class="divider"></div>
+        <div class="kv"><span class="k">Current stage</span><span class="v">Stage ${cur} — ${esc(stTitle(STAGES[cur-1]))}</span></div>
+        <div class="kv"><span class="k">Sessions logged</span><span class="v">${totalSessions(activeRole())}</span></div>
+        <div class="kv"><span class="k">Structure</span><span class="v">${esc(structureLabel())}</span></div></div>`
+    : `<div class="card mt14">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="avatar A">${initial("A")}</div>
+          <div class="avatar B" style="margin-left:-14px">${initial("B")}</div>
+          <div style="margin-left:6px"><div style="font-weight:700">${esc(cap1(firstName(person("A").name)||"You"))} &amp; ${esc(cap1(otherName()))}</div>
+            <div class="tiny">${esc(structureLabel())}${S.code?" · code "+esc(S.code):""}</div></div></div>
+        <div class="divider"></div>
+        <div class="kv"><span class="k">Current stage</span><span class="v">Stage ${cur} — ${esc(stTitle(STAGES[cur-1]))}</span></div>
+        <div class="kv"><span class="k">${esc(cap1(firstName(person("A").name)||"You"))} · sessions</span><span class="v">${totalSessions('A')}</span></div>
+        <div class="kv"><span class="k">${esc(cap1(otherName()))} · sessions</span><span class="v">${totalSessions('B')}</span></div></div>`;
+
   return `<div class="view"><div class="pad-tab">
-    <div class="eyebrow">Your pairing</div><h2 class="display" style="font-size:25px;margin-top:8px">You & ${firstName(otherName())}</h2>
-    ${liveRow}
-    <div class="card mt14">
-      <div style="display:flex;align-items:center;gap:14px">
-        <div class="avatar A">${(S.names.A||'S')[0].toUpperCase()}</div>
-        <div class="avatar B" style="margin-left:-14px">${(S.names.B||'A')[0].toUpperCase()}</div>
-        <div style="margin-left:6px"><div style="font-weight:700">${firstName(S.names.A)} & ${firstName(S.names.B)}</div>
-          <div class="tiny">Linked · code ${S.code||'—'}</div></div></div>
-      <div class="divider"></div>
-      <div class="kv"><span class="k">Current stage</span><span class="v">Stage ${cur} — ${STAGES[cur-1].title}</span></div>
-      <div class="kv"><span class="k">${firstName(S.names.A)} · sessions</span><span class="v">${totalSessions('A')}</span></div>
-      <div class="kv"><span class="k">${firstName(S.names.B)} · sessions</span><span class="v">${totalSessions('B')}</span></div></div>
+    ${header}
+    ${summary}
+    <div class="card card-tap mt14" data-action="open-profile">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div><div style="font-weight:700;font-size:14px">Identity &amp; language</div>
+          <p class="tiny" style="margin-top:4px;line-height:1.6">${solo
+            ?esc(T("Pronouns: {they}/{them}. Slow Burn words everything around how you describe yourself."))
+            :esc(T("You use "+pronounLabel("A")+"; {partner} uses "+pronounLabel("B")+". Every prompt in the app is worded from this."))}</p></div>
+        <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div></div>
     <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Privacy, by design</div>
-      <p class="tiny" style="line-height:1.6">Your readiness answers and private notes stay on your own phone. Slow Burn only ever shows the reflections you <b>both</b> named positively. Nothing else crosses between you.</p></div>
+      <p class="tiny" style="line-height:1.6">${solo
+        ?"Your readiness answers, reflections, private notes and identity settings never leave this device. Slow Burn has no account and no server."
+        :"Your readiness answers and private notes stay on your own device. Slow Burn only ever shows the reflections you <b>both</b> named positively. The only identity detail that crosses between your devices is how you want to be addressed — your name and pronouns. Your gender, orientation and relationship structure never leave your own phone."}</p></div>
+    ${isMultiPartner()?`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">More than one partner?</div>
+      <p class="tiny" style="line-height:1.6">Slow Burn runs once per partnership, at that partnership’s own pace. To begin a separate run, reset from Identity &amp; language — nothing carries over between them.</p></div>`:""}
     <div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:8px">For clinicians</div>
       <p class="tiny" style="line-height:1.6">A sex therapist or pelvic-floor PT can prescribe Slow Burn between sessions and follow your pace.</p>
       <button class="btn btn-soft mt10" data-action="find-clinician" style="font-size:14px">Share with my clinician</button></div>
@@ -719,12 +1267,12 @@ function supportCard(){
     ).join("");
     return `<div class="card mt14" style="border-color:var(--line-2)">
       <div style="font-weight:700;font-size:14px;margin-bottom:6px">Support Slow Burn</div>
-      <p class="tiny" style="line-height:1.6">No ads, no subscription, nothing locked — the whole program is yours either way. If it's helped the two of you, you're welcome to leave a tip toward keeping it going.</p>
+      <p class="tiny" style="line-height:1.6">No ads, no subscription, nothing locked — the whole program is yours either way. If it's helped ${esc(T("{us}"))},you're welcome to leave a tip toward keeping it going.</p>
       <div class="chips mt10">${btns}</div>${thanks}</div>`;
   }
   return `<div class="card mt14" style="border-color:var(--line-2)">
     <div style="font-weight:700;font-size:14px;margin-bottom:6px">Support Slow Burn</div>
-    <p class="tiny" style="line-height:1.6">No ads, no subscription, no upsells — the whole program is yours. If it's helped the two of you, the kindest support is telling another couple about it, or saying hello from either of our sites.</p>
+    <p class="tiny" style="line-height:1.6">No ads, no subscription, no upsells — the whole program is yours. If it's helped ${esc(T("{us}"))},the kindest support is telling someone else about it, or saying hello from either of our sites.</p>
     <div class="row mt10" style="gap:8px">
       <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:13px">Jessica's site</button>
       <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:13px">Jonathan's site</button>
@@ -732,10 +1280,31 @@ function supportCard(){
 }
 
 function screenStage(id){
-  const st=STAGES[id-1],cur=maxUnlocked(),isCurrent=id===cur;
-  const mySess=me().sessions[id]||0,iReady=!!me().ready[id],theyReady=!!other().ready[id],unlockedNext=iReady&&theyReady;
+  const st=STAGES[id-1],cur=maxUnlocked(),isCurrent=id===cur,solo=isSolo();
+  const mySess=me().sessions[id]||0,iReady=!!me().ready[id],theyReady=!!other().ready[id];
+  const unlockedNext=solo?iReady:(iReady&&theyReady);
   let gate="";
-  if(id<6){
+  if(id<6&&solo){
+    /* Solo: the gate is still a gate — but it's a gate with yourself, not
+       a lock waiting on a partner who doesn't exist. */
+    if(iReady){
+      gate=`<div class="gate mt18" style="background:linear-gradient(160deg,#EEF3EA,#E4EEDF);border-color:#CFE0C9">
+        <div class="g-icon">${I.check.replace(/#fff/g,'#6E8B6E')}</div>
+        <div style="font-weight:700;font-size:15px;font-family:var(--serif)">You confirmed. Stage ${id+1} is open.</div>
+        <p class="tiny mt6" style="line-height:1.6">Move on when you want to — and come back here whenever you’d rather.</p>
+        <button class="btn mt14" data-action="open-stage" data-id="${id+1}">Go to Stage ${id+1} →</button>
+        <button class="btn btn-soft mt10" data-action="unready" data-id="${id}" style="font-size:13.5px">Actually, I’d like more time here</button></div>`;
+    } else if(isCurrent&&!mySess){
+      gate=`<div class="gate mt18"><div class="g-icon">${I.lock}</div>
+        <div style="font-weight:700;font-size:15px;font-family:var(--serif)">Stage ${id+1} opens after a session</div>
+        <p class="tiny mt6" style="line-height:1.6">Run at least one session here first. There’s no minimum beyond that — you decide when you’re ready.</p></div>`;
+    } else if(isCurrent){
+      gate=`<div class="gate mt18"><div class="g-icon">${I.spark}</div>
+        <div style="font-weight:700;font-size:15px;font-family:var(--serif)">Ready to progress?</div>
+        <p class="tiny mt6" style="line-height:1.6">Only move on when this stage feels easy and unhurried. Staying here longer is not falling behind.</p>
+        <button class="btn mt14" data-action="ready" data-id="${id}">I feel ready for Stage ${id+1}</button></div>`;
+    }
+  } else if(id<6){
     if(unlockedNext){
       gate=`<div class="gate mt18" style="background:linear-gradient(160deg,#EEF3EA,#E4EEDF);border-color:#CFE0C9">
         <div class="g-icon">${I.check.replace(/#fff/g,'#6E8B6E')}</div>
@@ -745,35 +1314,35 @@ function screenStage(id){
     } else if(isCurrent&&!mySess){
       gate=`<div class="gate mt18"><div class="g-icon">${I.lock}</div>
         <div style="font-weight:700;font-size:15px;font-family:var(--serif)">The next stage is gated — together</div>
-        <p class="tiny mt6" style="line-height:1.6">Run at least one session here first. When you’re ready, you’ll privately confirm — and Stage ${id+1} unlocks only once ${firstName(otherName())} does too.</p></div>`;
+        <p class="tiny mt6" style="line-height:1.6">${TE("Run at least one session here first. When you’re ready, you’ll privately confirm — and Stage "+(id+1)+" unlocks only once {partner} does too.")}</p></div>`;
     } else if(isCurrent&&iReady&&!theyReady){
       gate=`<div class="gate mt18"><div class="g-icon">${I.shield}</div>
         <div style="font-weight:700;font-size:15px;font-family:var(--serif)">You’re ready.</div>
-        <p class="tiny mt6" style="line-height:1.6">Stage ${id+1} will unlock the moment ${firstName(otherName())} is ready too. No rush — you’ll both simply arrive there.</p>
-        <div class="status-line"><span class="s-dot on"></span>${firstName(meName())} · ready</div>
-        <div class="status-line"><span class="s-dot off"></span>${firstName(otherName())} · hasn’t confirmed yet</div>
+        <p class="tiny mt6" style="line-height:1.6">${TE("Stage "+(id+1)+" will unlock the moment {partner} is ready too. No rush — you’ll both simply arrive there.")}</p>
+        <div class="status-line"><span class="s-dot on"></span>${esc(cap1(meName()))} · ready</div>
+        <div class="status-line"><span class="s-dot off"></span>${esc(cap1(otherName()))} · hasn’t confirmed yet</div>
         <button class="btn btn-soft mt10" data-action="unready" data-id="${id}" style="font-size:13.5px">Actually, I’d like more time here</button></div>`;
     } else if(isCurrent){
       gate=`<div class="gate mt18"><div class="g-icon">${I.spark}</div>
         <div style="font-weight:700;font-size:15px;font-family:var(--serif)">Ready to progress?</div>
-        <p class="tiny mt6" style="line-height:1.6">Only move on when this stage feels easy and unhurried. When you privately confirm, Stage ${id+1} unlocks as soon as ${firstName(otherName())} confirms too.</p>
+        <p class="tiny mt6" style="line-height:1.6">${TE("Only move on when this stage feels easy and unhurried. When you privately confirm, Stage "+(id+1)+" unlocks as soon as {partner} confirms too.")}</p>
         <button class="btn mt14" data-action="ready" data-id="${id}">I feel ready for Stage ${id+1}</button>
-        <p class="lock-note">${I.lock} ${firstName(otherName())}’s answer stays private until you’ve both confirmed.</p></div>`;
+        <p class="lock-note">${I.lock} ${TE("{Partner}’s answer stays private until you’ve both confirmed.")}</p></div>`;
     }
   }
   return `<div class="view"><div class="pad">
     <button class="back" data-action="tab" data-tab="program">‹ Program</button>
     <div class="eyebrow mt10">${st.weeks} · Stage ${id} of 6</div>
-    <h2 class="display" style="font-size:27px;margin-top:8px">${st.title}</h2>
-    <p class="lead mt6">${st.sub}</p>
-    <div class="card-soft mt18"><p style="font-size:14px;line-height:1.6;color:var(--ink)">${st.intent}</p></div>
+    <h2 class="display" style="font-size:27px;margin-top:8px">${esc(stTitle(st))}</h2>
+    <p class="lead mt6">${esc(stSub(st))}</p>
+    <div class="card-soft mt18"><p style="font-size:14px;line-height:1.6;color:var(--ink)">${esc(stIntent(st))}</p></div>
     <div class="card mt14"><div class="tiny" style="font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">How this session goes · ${st.mins}</div>
-      <div class="mt10">${st.steps.map((x,i)=>`<div class="step"><div class="dot">${i+1}</div><div class="stx">${x}</div></div>`).join("")}</div>
-      <div class="callout mt14" style="background:#FFF0F7;border-color:#F3D2E6;color:var(--plum-d)"><b>Boundary for this stage.</b> ${st.bounds}</div>
-      <div class="mt14" style="display:flex;align-items:center;gap:9px;justify-content:center;color:var(--plum);font-family:var(--serif);font-size:15px">“${st.focus}”</div></div>
+      <div class="mt10">${stSteps(st).map((x,i)=>`<div class="step"><div class="dot">${i+1}</div><div class="stx">${esc(x)}</div></div>`).join("")}</div>
+      <div class="callout mt14" style="background:#FFF0F7;border-color:#F3D2E6;color:var(--plum-d)"><b>Boundary for this stage.</b> ${esc(stBounds(st))}</div>
+      <div class="mt14" style="display:flex;align-items:center;gap:9px;justify-content:center;color:var(--plum);font-family:var(--serif);font-size:15px">“${esc(st.focus)}”</div></div>
     ${id<=cur?`<button class="btn mt18" data-action="start-session" data-id="${id}">Start a guided session</button>`:""}
     ${gate}
-    <div class="foot-legal">Move at the slower partner’s pace. Returning to an earlier stage is always okay.</div>
+    <div class="foot-legal">${solo?"Go at your own pace. Returning to an earlier stage is always okay.":"Move at the slower person’s pace. Returning to an earlier stage is always okay."}</div>
   </div></div>`;
 }
 function screenSession(){
@@ -783,21 +1352,23 @@ function screenSession(){
       <button class="back" data-action="open-stage" data-id="${S.session.stageId}">‹ Leave session</button>
       <div class="center mt18"><div class="eyebrow">Stage ${st.id} · in session</div>
         <div class="timer mt10" id="timer">00:00</div><p class="tiny">Take all the time you want. There’s no target.</p></div>
-      <div class="card mt18"><div style="font-family:var(--serif);font-size:16px;text-align:center;color:var(--plum)">“${st.focus}”</div>
-        <div class="divider"></div>${st.steps.map((x,i)=>`<div class="step"><div class="dot">${i+1}</div><div class="stx">${x}</div></div>`).join("")}</div>
+      <div class="card mt18"><div style="font-family:var(--serif);font-size:16px;text-align:center;color:var(--plum)">“${esc(st.focus)}”</div>
+        <div class="divider"></div>${stSteps(st).map((x,i)=>`<div class="step"><div class="dot">${i+1}</div><div class="stx">${esc(x)}</div></div>`).join("")}</div>
       <button class="btn btn-plum mt18" data-action="to-reflect">I’ve finished — reflect privately</button>
-      <div class="foot-legal">Either partner can pause or stop at any point, no explanation needed.</div></div></div>`;
+      <div class="foot-legal">${isSolo()?"You can pause or stop at any point, no reason needed.":"Either of you can pause or stop at any point, no explanation needed."}</div></div></div>`;
   }
-  const g=S.form.good,m=S.form.more;
+  const g=S.form.good,m=S.form.more,solo=isSolo();
   return `<div class="view"><div class="pad">
     <div class="eyebrow">Private reflection · Stage ${st.id}</div>
-    <h2 class="display" style="font-size:24px;margin-top:8px">Just for you, ${firstName(meName())}</h2>
-    <p class="lead mt6" style="font-size:13.5px">Answer honestly. Only the things you and ${firstName(otherName())} <b>both</b> choose will ever be shown to either of you.</p>
+    <h2 class="display" style="font-size:24px;margin-top:8px">Just for you${meName()==="you"?"":", "+esc(cap1(meName()))}</h2>
+    <p class="lead mt6" style="font-size:13.5px">${solo
+      ?"Answer honestly. Nothing here leaves this device."
+      :TE("Answer honestly. Only the things you and {partner} <b>both</b> choose will ever be shown to either of you.")}</p>
     <div class="card mt18"><div style="font-weight:700;font-size:14.5px">1 · What felt good this time?</div><div class="tiny mt6">Choose any that fit.</div>
-      <div class="chips mt10">${GOOD.map(x=>`<span class="chip ${g.has(x)?'sel':''}" data-action="chip" data-grp="good" data-val="${esc(x)}">${x}</span>`).join("")}</div></div>
+      <div class="chips mt10">${goodChips().map(x=>`<span class="chip ${g.has(x)?'sel':''}" data-action="chip" data-grp="good" data-val="${esc(x)}">${esc(x)}</span>`).join("")}</div></div>
     <div class="card mt14"><div style="font-weight:700;font-size:14.5px">2 · Anything you’d welcome more of?</div><div class="tiny mt6">Gentle wishes, not complaints.</div>
-      <div class="chips mt10">${MORE.map(x=>`<span class="chip ${m.has(x)?'sel':''}" data-action="chip" data-grp="more" data-val="${esc(x)}">${x}</span>`).join("")}</div></div>
-    <div class="card mt14"><div style="font-weight:700;font-size:14.5px">3 · A private note to yourself</div><div class="tiny mt6">Never shared with ${firstName(otherName())} — this is only ever yours.</div>
+      <div class="chips mt10">${moreChips().map(x=>`<span class="chip ${m.has(x)?'sel':''}" data-action="chip" data-grp="more" data-val="${esc(x)}">${esc(x)}</span>`).join("")}</div></div>
+    <div class="card mt14"><div style="font-weight:700;font-size:14.5px">3 · A private note to yourself</div><div class="tiny mt6">${solo?"Only ever yours.":TE("Never shared with {partner} — this is only ever yours.")}</div>
       <textarea class="note mt10" id="privnote" placeholder="Anything you noticed, felt, or want to remember…">${esc(S.form.note)}</textarea>
       <div class="lock-note">${I.lock} Stays on your phone, always.</div></div>
     <button class="btn mt18" data-action="submit-debrief" data-id="${st.id}">Save my reflection</button>
@@ -805,10 +1376,15 @@ function screenSession(){
 }
 
 function nudgeText(cur){
-  const st=STAGES[cur-1],mine=me().sessions[cur]||0;
-  if(mine===0) return `You’re on <b>${st.title}</b>. When you both have a quiet evening, open the stage and try a first session — there’s nothing to get right.`;
-  if(me().ready[cur]&&!other().ready[cur]) return `You’ve confirmed you’re ready for the next stage. ${firstName(otherName())} will get there in their own time — you’ll unlock it together.`;
-  return `Nicely done staying with <b>${st.title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session to see what you share.`;
+  const st=STAGES[cur-1],mine=me().sessions[cur]||0,title=esc(stTitle(st));
+  if(isSolo()){
+    if(mine===0) return `You’re on <b>${title}</b>. Next time you have a quiet hour, open the stage and try a first session — there’s nothing to get right.`;
+    if(me().ready[cur]) return `You’ve confirmed you’re ready for the next stage. Move on whenever you like — or stay here a while longer.`;
+    return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session to see your pattern.`;
+  }
+  if(mine===0) return T(`You’re on <b>${title}</b>. When {us} have a quiet evening, open the stage and try a first session — there’s nothing to get right.`);
+  if(me().ready[cur]&&!other().ready[cur]) return T(`You’ve confirmed you’re ready for the next stage. {Partner} will get there in {their} own time — you’ll unlock it together.`);
+  return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session to see what you share.`;
 }
 
 /* ---------------- FIND A CLINICIAN ---------------- */
@@ -839,20 +1415,24 @@ function screenClinicians(){
 /* ============================================================ RENDER ============================================================ */
 function renderBar(){
   const bar=document.getElementById("protobar");
-  const pre=(S.screen==="welcome"||S.screen==="disclaimer"||S.screen==="pairing"||S.screen==="clinicians");
+  const pre=(S.screen==="welcome"||S.screen==="disclaimer"||S.screen==="setup"||S.screen==="pairing"||S.screen==="clinicians");
   if(pre){bar.style.display="none";return;}
   bar.style.display="";
   if(S.mode==="live"){
     bar.innerHTML=`<div class="pb-title"><span class="pb-dot ${S.partnerOnline?'live':'off'}"></span>
-      LIVE · you’re ${esc(firstName(meName()))}
-      <span class="pb-sub">· ${S.partnerOnline?firstName(otherName())+' connected':'waiting for partner'} · code ${esc(S.code)}</span></div>
+      LIVE · you’re ${esc(cap1(meName()))}
+      <span class="pb-sub">· ${esc(S.partnerOnline?cap1(otherName())+' connected':T('waiting for {partner}'))} · code ${esc(S.code)}</span></div>
       <div class="pb-controls"><button class="btn-ghost-lite" data-action="leave">Leave</button></div>`;
-  } else if(S.mode==="solo"){
-    bar.innerHTML=`<div class="pb-title"><span class="pb-dot"></span>Slow Burn — solo preview<span class="pb-sub">· switch sides to feel the pairing</span></div>
+  } else if(S.mode==="shared"){
+    const nameA=cap1(firstName(person("A").name)||"You"), nameB=cap1(firstName(person("B").name)||cap1(partnerTerm()));
+    bar.innerHTML=`<div class="pb-title"><span class="pb-dot"></span>${S.isSample?"Sample walkthrough":"Sharing one device"}<span class="pb-sub">· hand it over to switch sides</span></div>
       <div class="pb-controls"><span class="view-label">Seeing as</span>
-        <div class="seg"><button data-action="set-view" data-view="A" class="${S.view==='A'?'on':''}"><span class="who-dot"></span>${esc(firstName(S.names.A))}</button>
-        <button data-action="set-view" data-view="B" class="${S.view==='B'?'on':''}"><span class="who-dot"></span>${esc(firstName(S.names.B))}</button></div>
+        <div class="seg"><button data-action="set-view" data-view="A" class="${S.view==='A'?'on':''}"><span class="who-dot"></span>${esc(nameA)}</button>
+        <button data-action="set-view" data-view="B" class="${S.view==='B'?'on':''}"><span class="who-dot"></span>${esc(nameB)}</button></div>
         <button class="btn-ghost-lite" data-action="reset">Reset</button></div>`;
+  } else if(S.mode==="solo"){
+    bar.innerHTML=`<div class="pb-title"><span class="pb-dot"></span>Slow Burn — solo practice<span class="pb-sub">· everything stays on this device</span></div>
+      <div class="pb-controls"><button class="btn-ghost-lite" data-action="reset">Reset</button></div>`;
   } else {
     bar.innerHTML=`<div class="pb-title"><span class="pb-dot"></span>Slow Burn<span class="pb-sub">· guided intimacy program</span></div>`;
   }
@@ -863,6 +1443,8 @@ function render(){
   let html="";
   if(S.screen==="welcome")html=screenWelcome();
   else if(S.screen==="disclaimer")html=screenDisclaimer();
+  else if(S.screen==="setup")html=screenSetup();
+  else if(S.screen==="profile")html=screenProfile();
   else if(S.screen==="pairing")html=screenPairing();
   else if(S.screen==="stage")html=appChrome(screenStage(S.stageOpen));
   else if(S.screen==="session")html=screenSession();
@@ -894,6 +1476,20 @@ setInterval(()=>{
 },1000);
 
 /* ============================================================ EVENTS ============================================================ */
+/* Setup re-renders on every pick, so pull any on-screen text fields into
+   state first — otherwise a half-typed name or self-description is lost. */
+function captureSetup(){
+  const val=id=>{const el=document.getElementById(id);return el?el.value:null;};
+  ["A","B"].forEach(r=>{
+    const p=S.profile.people[r]; if(!p) return;
+    const n=val("nm_"+r);  if(n!==null) p.name=n.trim();
+    const g=val("gc_"+r);  if(g!==null) p.genderCustom=g.trim();
+    const pc=val("pc_"+r); if(pc!==null) p.pronounsCustom=pc.trim();
+    const o=val("oc_"+r);  if(o!==null) p.orientationCustom=o.trim();
+  });
+  const sc=val("sc");   if(sc!==null) S.profile.structureCustom=sc.trim();
+  const pt=val("ptc");  if(pt!==null) S.profile.partnerTermCustom=pt.trim();
+}
 document.addEventListener("click",(e)=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=el.dataset.action;
@@ -903,20 +1499,89 @@ document.addEventListener("click",(e)=>{
   // tip: asks Apple only. Never grants — that happens in Monetize's verified().
   if(a==="tip"){ e.preventDefault(); if(!Monetize.tip(el.dataset.tier)) toast("Tipping isn't available right now."); return; }
 
-  if(a==="go"){ if(el.dataset.to==="pairing"&&S.pending){S.pairPhase="join";} S.screen=el.dataset.to; render(); return; }
+  if(a==="noop"){ return; }
+  if(a==="go"){
+    if(el.dataset.to==="setup"&&S.pending){ S.setupIntent="two"; S.setupStep="you"; }
+    S.screen=el.dataset.to; render(); return;
+  }
   if(a==="toggle-ack"){S.ack=!S.ack;render();return;}
+
+  /* ---------- setup ---------- */
+  if(a==="who-solo"){ S.setupIntent="solo"; S.setupStep="you"; render(); return; }
+  if(a==="who-two"){ S.setupIntent="two"; S.setupStep="you"; render(); return; }
+  if(a==="who-sample"){
+    // Clearly-labelled example so a reviewer (or a curious user) can look
+    // around without entering anything about themselves.
+    S.isSample=true; S.mode="shared"; S.view="A";
+    S.profile={done:true,
+      people:{A:Object.assign(blankPerson(),SAMPLE.A),B:Object.assign(blankPerson(),SAMPLE.B)},
+      structure:SAMPLE.structure,structureCustom:"",
+      partnerTerm:SAMPLE.partnerTerm,partnerTermCustom:"",areas:SAMPLE.areas};
+    S.screen="app"; S.tab="today"; render();
+    toast("Sample walkthrough — nothing here is yours.");
+    return;
+  }
+  if(a==="setup-save"){
+    captureSetup(); S.editReturn=false; saveProfile();
+    if(S.mode==="live") publishState();
+    S.screen="profile"; render(); toast("Saved."); return;
+  }
+  if(a==="setup-back"){
+    captureSetup();
+    if(S.editReturn){ S.editReturn=false; S.screen="profile"; render(); return; }
+    if(S.setupStep==="structure") S.setupStep=(S.setupIntent==="solo")?"you":"partner";
+    else if(S.setupStep==="partner") S.setupStep="you";
+    else if(S.setupStep==="you") S.setupStep="who";
+    else { S.screen="disclaimer"; }
+    render(); return;
+  }
+  if(a==="setup-next"){
+    captureSetup();
+    if(S.setupStep==="you") S.setupStep=(S.setupIntent==="solo")?"structure":"partner";
+    else if(S.setupStep==="partner") S.setupStep="structure";
+    render(); return;
+  }
+  if(a==="setup-done"){
+    captureSetup();
+    S.profile.done=true;
+    if(S.setupIntent==="solo"){
+      if(!S.profile.structure) S.profile.structure="solo";
+      S.mode="solo"; S.view="A"; S.screen="app"; S.tab="today";
+    } else {
+      S.screen="pairing"; S.pairPhase=S.pending?"join":"choose";
+    }
+    saveProfile(); render(); return;
+  }
+  if(a==="pick"){
+    captureSetup();
+    const grp=el.dataset.grp,val=el.dataset.val,role=el.dataset.role;
+    if(grp==="gender"||grp==="pronouns"||grp==="orientation"){
+      const p=S.profile.people[role]; if(p) p[grp]=(p[grp]===val?"":val);
+    } else if(grp==="pterm"){ S.profile.partnerTerm=val; }
+    else if(grp==="structure"){ S.profile.structure=val; }
+    else if(grp==="areas"){ S.profile.areas=val; }
+    saveProfile(); render(); return;
+  }
+
+  /* ---------- profile (editable, from the last tab) ---------- */
+  if(a==="open-profile"){ S.profileReturn={screen:S.screen,tab:S.tab}; S.screen="profile"; render(); return; }
+  if(a==="profile-back"){ const r=S.profileReturn||{screen:"app",tab:"partner"}; S.screen=r.screen||"app"; S.tab=r.tab||"partner"; render(); return; }
+  if(a==="edit-person"){ S.editReturn=true; S.setupIntent=isSolo()?"solo":"two"; S.setupStep=(el.dataset.role==="B")?"partner":"you"; S.screen="setup"; render(); return; }
+  if(a==="edit-structure"){ S.editReturn=true; S.setupIntent=isSolo()?"solo":"two"; S.setupStep="structure"; S.screen="setup"; render(); return; }
+  if(a==="reset-all"){ leaveLive(); clearProfile(); S=freshState(); render(); toast("Reset. Slow Burn starts fresh."); return; }
   if(a==="find-clinician"){S.clinReturn={screen:S.screen,tab:S.tab,stageOpen:S.stageOpen};S.screen="clinicians";render();return;}
   if(a==="clin-back"){const r=S.clinReturn||{screen:"app",tab:"today"};S.screen=r.screen||"app";if(r.tab)S.tab=r.tab;if(r.stageOpen)S.stageOpen=r.stageOpen;render();return;}
 
   // pairing
   if(a==="pair-create"){S.pairPhase="create";S.code=genCode();connectLive("A","",S.code);render();return;}
   if(a==="pair-join"){S.pairPhase="join";render();return;}
-  if(a==="pair-solo"){S.mode="solo";S.screen="app";S.tab="today";render();return;}
+  if(a==="pair-shared"){S.mode="shared";S.view="A";S.screen="app";S.tab="today";saveProfile();render();return;}
+  if(a==="pair-to-setup"){leaveLive();S.mode=null;S.screen="setup";S.setupStep="structure";render();return;}
   if(a==="pair-back"){leaveLive();S.mode=null;S.pairPhase="choose";render();return;}
   if(a==="enter-app-host"){
     const nm=(document.getElementById("myname")||{}).value||"";
-    if(nm.trim())S.names[S.myRole]=nm.trim();
-    publishState();S.screen="app";S.tab="today";render();return;
+    if(nm.trim())S.profile.people[S.myRole].name=nm.trim();
+    saveProfile();publishState();S.screen="app";S.tab="today";render();return;
   }
   if(a==="do-join"){
     const code=((document.getElementById("joincode")||{}).value||"").trim().toUpperCase();
@@ -924,7 +1589,14 @@ document.addEventListener("click",(e)=>{
     if(code.length<4){toast("Enter the code from the other phone");return;}
     connectLive("B",nm,code);toast("Linking…");return;
   }
-  if(a==="leave"||a==="reset"){leaveLive();S=freshState();render();return;}
+  if(a==="leave"||a==="reset"){
+    leaveLive();
+    const keep=(!S.isSample&&S.profile.done)?JSON.parse(JSON.stringify(S.profile)):null;
+    S=freshState();
+    if(keep){ S.profile=keep; S.screen="setup"; S.setupStep="who"; }   // keep who you are; re-choose how you're practising
+    else { clearProfile(); }
+    render(); return;
+  }
   if(a==="set-view"){S.view=el.dataset.view;render();return;}
 
   // app
@@ -941,19 +1613,27 @@ document.addEventListener("click",(e)=>{
     publishState();
     S.session=null;S.screen="app";S.stageOpen=id;
     const bothIn=S.data.A.debrief[id]&&S.data.B.debrief[id];
+    if(isSolo()){ S.tab="checkins"; render(); toast("Reflection saved — just for you."); return; }
     S.tab=bothIn?"checkins":"today";render();
-    toast(bothIn?"Reflection saved — see what you both shared":"Saved privately. "+firstName(otherName())+(S.mode==="live"?" hasn’t reflected yet.":" hasn’t reflected yet."));
+    toast(bothIn?"Reflection saved — see what you both shared":T("Saved privately. {Partner} hasn’t reflected yet."));
     return;
   }
   if(a==="ready"){const id=+el.dataset.id;me().ready[id]=true;publishState();render();
+    if(isSolo()){ toast("Confirmed — Stage "+(id+1)+" unlocked."); return; }
     const both=S.data.A.ready[id]&&S.data.B.ready[id];
-    toast(both?"You both confirmed — Stage "+(id+1)+" unlocked":"Confirmed privately. Waiting for "+firstName(otherName())+".");return;}
+    toast(both?"You both confirmed — Stage "+(id+1)+" unlocked":T("Confirmed privately. Waiting for {partner}."));return;}
   if(a==="unready"){const id=+el.dataset.id;me().ready[id]=false;publishState();render();toast("No problem — staying here.");return;}
 });
 
 /* init: honor ?pair=CODE deep link for the joining partner */
 (function init(){
   try{const p=new URL(location.href).searchParams.get("pair");if(p)S.pending=p.toUpperCase().slice(0,8);}catch(e){}
+  // A returning user shouldn't have to re-declare who they are.
+  if(loadProfile()&&!S.pending){
+    S.ack=true;
+    if(S.mode==="solo"||S.mode==="shared"){ S.screen="app"; S.tab="today"; }
+    else { S.mode=null; S.screen="pairing"; S.pairPhase="choose"; }
+  }
   Monetize.init();
   render();
 })();

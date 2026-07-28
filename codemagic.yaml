@@ -7,6 +7,23 @@ workflows:
     name: Slow Burn iOS → TestFlight
     instance_type: mac_mini_m2
     max_build_duration: 60
+    # --- Auto-build on push to main -----------------------------------------
+    # A push to main starts this workflow automatically: no browser, no "Start
+    # build" click. See PLAYBOOK.md "Shipping without the browser".
+    # ONE-TIME per app in the Codemagic UI: the repo needs a webhook registered
+    # (app -> Settings -> Webhooks -> "Add webhook"). Apps configured via
+    # codemagic.yaml, or connected over SSH/HTTPS rather than the GitHub App, do
+    # NOT get one automatically -- without it this block is inert and nothing
+    # breaks, builds just never self-start.
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+      # A newer push supersedes an in-flight build of the same branch.
+      cancel_previous_builds: true
     integrations:
       app_store_connect: ChordLoopAPIKey   # existing API key in your Codemagic team
     environment:
@@ -68,3 +85,18 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+
+        # --- REVIEW-SUBMIT TOGGLE — deliberately OFF ---------------------------
+        # As written, every green build goes to TestFlight and stops there.
+        # Uncommenting submit_to_app_store makes EVERY subsequent green build
+        # submit itself for App Store review, so flip it on with intent and flip
+        # it back off after the release.
+        # Prerequisites in App Store Connect, or the submit step fails the build:
+        #   - screenshots for every required device size
+        #   - description, keywords, promotional text, support + marketing URLs
+        #   - privacy policy URL and the App Privacy answers
+        #   - age rating, category, and export-compliance answers
+        #   - a "What's New" note for this version string
+        # See PLAYBOOK.md "Submitting for review without the browser".
+        # submit_to_app_store: true
+        # release_type: MANUAL      # MANUAL | AFTER_APPROVAL | SCHEDULED

@@ -14,6 +14,8 @@
     "jsdom": "^24.0.0"
   },
   "scripts": {
-    "audit:privacy": "node scripts/privacy-wire-audit.mjs"
+    "audit:privacy": "node scripts/privacy-wire-audit.mjs",
+    "test:crypto": "node scripts/e2e-crypto-test.mjs",
+    "test": "npm run audit:privacy && npm run test:crypto"
   }
 }

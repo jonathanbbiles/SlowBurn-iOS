@@ -6,67 +6,150 @@ disagree, the code and this file are right and the copy is a bug.
 ## Stored on the device, never transmitted
 
 All of it lives in `localStorage` under `sb_profile_v2` plus in-memory state.
-None of it is published, in any form, encrypted or otherwise.
 
 - Name and pronouns (yours and whatever you entered about your partner)
 - Gender, orientation, relationship structure, body-area preferences
-- Which stages you have confirmed you are ready for
 - Session counts per stage
-- Reflection chip selections ("what felt good", "what you'd welcome more of")
-- The free-text private note attached to each reflection
+- **The free-text private note attached to each reflection**
 
-## Transmitted between two paired phones
+None of it is published, in any form, encrypted or otherwise. Each phone words
+its own copy of the app from its own owner's setup, so none of it needs to
+cross. What is never sent cannot be broken.
 
-Live pairing is the only feature that uses the network at all. The complete
-protocol is two topics carrying one character each:
+## Transmitted between two paired phones — end-to-end encrypted
 
-| Topic | Payload | Meaning |
+Live pairing is the only feature that uses the network at all. There is no
+account, no server of ours, and no analytics. The relay is a public MQTT
+broker (`broker.emqx.io`) that carries ciphertext it cannot read.
+
+### The handshake
+
+Per pairing, fresh, nothing persisted:
+
+1. Each phone generates an **ephemeral ECDH P-256 key pair** and publishes
+   **only its public key**.
+2. Each derives the same shared secret on-device from its own private key and
+   the other's public key. **The shared secret is never transmitted**, in any
+   form, and never leaves the `E2E` module — it exists as one local variable
+   that is zeroed before the function returns.
+3. **HKDF-SHA-256** over that secret produces the working keys. The HKDF
+   **salt is `SHA-256("slowburn/pairing/v4|salt|" + pairCode)`** and the HKDF
+   **info binds the full transcript** — the session id plus both public keys
+   in a fixed host-then-guest order. Output, 104 bytes:
+
+   | bytes | use |
+   |---|---|
+   | 0–31 | AES-256-GCM message key |
+   | 32–63 | HMAC key for the host→guest confirmation tag |
+   | 64–95 | HMAC key for the guest→host confirmation tag |
+   | 96–103 | the 6-character safety word shown on both phones |
+
+4. Each side publishes an **HMAC confirmation tag**. Producing a valid tag
+   requires the pair code, because the code is the salt. **Nothing is
+   encrypted, sent, decrypted or displayed until both tags verify.**
+
+The pair code itself never goes on the wire. The topic is a *different*
+derivation of it (`SHA-256("slowburn/pairing/v4|topic|" + code)`, truncated to
+32 hex characters), so seeing the topic tells an observer nothing about the
+salt.
+
+### What is actually on the wire
+
+| Topic | Payload | Encrypted? |
 |---|---|---|
-| `sb3/<sessionId>/p/<side>` | `1` / `0` | this phone is currently connected |
-| `sb3/<sessionId>/u/<side>` | `0`–`6` | highest stage this phone's owner has confirmed they are ready for |
+| `sb4/<sid>/k/<side>` | 65-byte uncompressed P-256 **public** key, base64url | public by design |
+| `sb4/<sid>/c/<side>` | 16-byte HMAC confirmation tag, base64url | not secret; useless without the code |
+| `sb4/<sid>/m/<side>` | `iv(12) ‖ AES-256-GCM ciphertext ‖ tag(16)`, base64url | **yes** |
+| `sb4/<sid>/x/<side>` | **empty** — last will / goodbye | carries nothing to encrypt |
 
-- `<side>` is `h` (created the pairing) or `g` (joined it). It identifies
-  neither person.
-- `<sessionId>` is `SHA-256("slowburn/pairing/v3|" + pairCode)`, truncated to
-  32 hex characters. The pair code itself never goes on the wire, and the topic
-  cannot be derived without it.
-- `retain` is **false** on every publish including the last-will. Nothing is
-  left on the broker; a stranger subscribing after a session ends receives
-  nothing. Because there is no retained state to read on arrival, both phones
-  re-announce on a 12-second heartbeat instead.
-- Payloads are bare single characters, not JSON. There is no object for a field
-  to creep back into.
+`<side>` is `h` (created the pairing) or `g` (joined it). It identifies neither
+person.
 
-The stage number is what makes the consent gate work: stage N+1 opens only when
-both people have privately confirmed, which no phone can know unless the other
-tells it. One integer is the smallest signal that carries that.
+Everything that carries meaning is inside `/m/`. Field by field, the entire
+plaintext of the link — which only the two phones ever see:
 
-`scripts/privacy-wire-audit.mjs` (`npm run audit:privacy`) enforces all of the
-above against the real `www/index.html`. **Add a field to the protocol and that
-test fails.**
+| Field | Meaning | Encrypted |
+|---|---|---|
+| `v` | protocol version (`4`) | yes |
+| `n` | strictly increasing counter, for replay rejection | yes |
+| `u` | `0`–`6`: highest stage this phone's owner has confirmed they are ready for | yes |
+| `cf` | 8-hex fingerprint of the chip lists, so two app versions can't mismap chips | yes |
+| `r` | per stage, the **indexes** (never the text) of the reflection chips chosen: `{g:[…], m:[…]}` | yes |
 
-## Honest limitations
+There is no name, no pronoun, no gender, no orientation, no structure, no
+session count and **no note field** in that object — `stateEnvelope()` does not
+read `debrief[s].note`, so the written note cannot be sent even by accident.
 
-1. **The relay is a public broker** (`broker.emqx.io`), unauthenticated, and
-   anyone may subscribe to `sb3/#`. What they would collect is anonymous stage
-   integers and connect/disconnect blips, unlinkable to any person, device or
-   other session. That is an acceptable exposure for this payload — it would
-   *not* have been for the old one. Hashing the topic means an observer also
-   cannot enumerate or target a particular couple without their pair code.
-2. **It is still behavioural metadata.** A dedicated observer of the whole
-   namespace could count concurrent sessions and see anonymous pacing patterns.
-   Nothing ties those to a person, but it is not zero.
-3. **The correct long-term answer is a private authenticated backend** — an
-   account-less pairing service with per-session credentials and TLS to a host
-   under our control, so the coordination signal is not on infrastructure we
-   neither own nor audit. That is a real piece of work (hosting, uptime, a
-   privacy policy that covers a server we operate) and is not a prerequisite
-   for the current build being truthful. It is the next step, not a pending
-   defect.
+AES-GCM additional authenticated data is `slowburn/e2e/v4|<sid>|<sender side>`,
+so a message cannot be replayed onto the other side's topic. `n` must strictly
+increase, so a stale message cannot roll a partner's view of consent backwards.
+
+`retain` is **false** on every publish including the last will. Nothing is left
+on the broker; a stranger subscribing after a session ends receives nothing.
+Both phones re-announce on a 12-second heartbeat instead.
+
+If `crypto.subtle` is unavailable, **live pairing refuses to run**. There is no
+plaintext fallback path in the app.
+
+## Threat model
+
+**What this defends against.**
+
+- *A passive observer of the relay, including its operator.* Sees ciphertext,
+  two ephemeral public keys and two short tags. Cannot read the stage pointer
+  or the reflection selections. Keys are ephemeral per pairing, so a secret
+  recovered later cannot decrypt an earlier session.
+- *An active attacker who owns the relay but does not know the pair code.*
+  Can inject its own public key, but cannot produce a confirmation tag without
+  the code, so the handshake never completes and the victim's phone publishes
+  no ciphertext to it at all. (`npm run test:crypto`, case 2.)
+- *Replay, reflection and tampering.* Rejected by the counter, the AAD and the
+  GCM tag respectively. (Cases 4, 5, 6.)
+
+**What it does not defend against — honestly.**
+
+1. **The relay still learns metadata.** It sees that two anonymous parties are
+   exchanging encrypted messages on one hashed topic: when they connect and
+   disconnect, the heartbeat rhythm, how many messages, and roughly how large.
+   Message size grows a little as reflections accumulate, so a determined
+   observer of one session could infer *that* a reflection was recorded —
+   never which one. None of it is tied to a person, a device or another
+   session. This is inherent to using a relay at all and encryption cannot
+   remove it.
+2. **An attacker who knows the pair code, and is in position at the moment of
+   pairing, can sit in the middle.** It would run two handshakes, one with
+   each phone. This is what the **safety word** is for: it is bound to the
+   transcript, so an attacker in the middle necessarily produces a *different*
+   word on each phone, and two people reading it aloud would see it
+   immediately. (`npm run test:crypto`, case 3, shows the words diverging.)
+   Comparing it is optional; a couple who never do are relying on the code
+   staying between them.
+3. **Pair-code entropy is ~45 bits** (10 characters of a 23-character
+   alphabet). That is the strength of the *anti-MITM binding*, not of the
+   encryption — confidentiality against a passive observer rests on P-256
+   ECDH and AES-256-GCM regardless. An offline search over the topic hash
+   could recover a code with serious hardware in hours, but a MITM has to be
+   in position *during* the few seconds of the handshake, and the code is
+   regenerated for every new pairing.
+4. **A paired phone does receive its partner's full chip selections**, and
+   chooses to display only the overlap — the same as shared-device mode has
+   always worked. Someone with the unlocked phone and a debugger could read
+   the non-overlapping ones. They cannot read the written note, which is never
+   sent. Genuinely hiding the non-overlap would need a private set
+   intersection, and with only eight chips per list the candidate space is too
+   small for one to mean anything.
+5. **The relay is still infrastructure we neither own nor audit.** It can drop
+   messages or refuse service. It cannot read them.
+
+`scripts/privacy-wire-audit.mjs` (`npm run audit:privacy`) enforces the wire
+format against the real `www/index.html`, and
+`scripts/e2e-crypto-test.mjs` (`npm run test:crypto`) enforces the threat model
+above. `npm test` runs both. **Add a field to the protocol and the audit
+fails.** That is the point — fix the protocol, not the test.
 
 ## Prior exposure — remediation
 
-Builds up to and including the TestFlight build that shipped the previous
+Builds up to and including the TestFlight build that shipped the pre-v3
 protocol published **name, pronouns, readiness, session counts and reflection
 chip selections** to `slowburn/<CODE>/s/<role>` with `retain:true`, under a
 6-character guessable code. Retained messages outlive the client, so that data
@@ -83,12 +166,13 @@ node scripts/purge-legacy-retained.mjs --verify   # expect "Nothing retained. Cl
 
 This clears what the broker still holds. It cannot un-read what a third party
 already copied, so treat the exposure window as real for anyone who paired on
-an affected build.
+an affected build. The v3 protocol (`sb3/…`) that followed it published only
+anonymous single digits and never retained anything, so it left nothing behind.
 
 ## App Store privacy posture
 
 "Data Not Collected" still holds. Nothing is collected by us or by a third
 party: there is no account, no analytics, no SDK that phones home, and the only
-network payload is an anonymous integer that is not an identifier, not linked to
-a user, and not retained anywhere. StoreKit tips are handled by Apple; we
-receive no customer data from them.
+network payload is ciphertext exchanged directly between two paired phones,
+which we cannot read, do not receive, and which is not retained anywhere.
+StoreKit tips are handled by Apple; we receive no customer data from them.

@@ -413,8 +413,15 @@ function freshState(){
     },
     code:"",pairPhase:"choose",pending:null,
     mq:null,connected:false,partnerOnline:false,
-    /* the only thing a paired phone ever learns about the other person */
-    partnerStage:0,partnerSeen:0,hb:null,
+    /* Live-pairing link state. pairSecure only turns true once the ECDH
+       handshake has been CONFIRMED with the pair code; nothing is sent or
+       decrypted before that. pairSafety is the 6-character word both
+       phones show so two people can check there is no one in the middle. */
+    pairSecure:false,pairSafety:"",partnerChipMismatch:false,
+    /* What a paired phone learns about the other person, and all it learns:
+       the stage they have confirmed, and which reflection chips they chose.
+       Both arrive end-to-end encrypted. Their written note never does. */
+    partnerStage:0,partnerSeen:0,partnerDebrief:{},hb:null,
     stageOpen:null,session:null,form:{good:new Set(),more:new Set(),note:""},
     nextSession:"not-set",
     data:{A:{ready:{},sessions:{},debrief:{}},B:{ready:{},sessions:{},debrief:{}}}
@@ -435,6 +442,8 @@ function isSolo(){ return S.mode==="solo"; }
 function activeRole(){ return S.mode==="shared"?S.view:"A"; }
 function partnerRole(){ return activeRole()==="A"?"B":"A"; }
 function me(){ return S.data[activeRole()]; }
+/* The partner's local slot. Only shared-device mode has one — in live pairing
+   what the partner sent lives in S.partnerDebrief instead (see theirDebrief). */
 function other(){ return S.data[partnerRole()]; }
 function person(role){ return S.profile.people[role]||blankPerson(); }
 function firstName(n){ return (n||"").split(" ")[0]; }
@@ -595,13 +604,32 @@ function maxUnlocked(){
   return Math.min(n,6);
 }
 function totalSessions(w){let n=0;for(let s=1;s<=6;s++)n+=(S.data[w].sessions[s]||0);return n;}
-/* Only meaningful when both reflections genuinely live on this phone, i.e.
-   shared-device mode. Paired phones never exchange reflections, so there is
-   nothing to match and nothing to badge. */
-function canMatchLocally(){ return S.mode==="shared"; }
+/* ---- reflection matching ----
+   Two ways the other person's chip selections can be present:
+     · shared-device — both reflections were typed on this phone
+     · live pairing  — they arrived over the end-to-end encrypted link
+   Either way the app only ever DISPLAYS the overlap. In live mode there is
+   nothing to match until the handshake is confirmed. */
+function canMatch(){
+  if(S.mode==="shared") return true;
+  return S.mode==="live"&&E2E.secure();
+}
+function myDebrief(s){ return me().debrief[s]||null; }
+function theirDebrief(s){
+  if(S.mode==="shared") return S.data[partnerRole()].debrief[s]||null;
+  if(S.mode==="live")   return (S.partnerDebrief||{})[s]||null;
+  return null;
+}
+/* Overlap only — never the chips only one of you named. */
+function matchFor(s){
+  const a=myDebrief(s), b=theirDebrief(s);
+  if(!a||!b) return null;
+  return {good:(a.good||[]).filter(x=>(b.good||[]).includes(x)),
+          more:(a.more||[]).filter(x=>(b.more||[]).includes(x))};
+}
 function hasNewMatch(){
-  if(!canMatchLocally())return false;
-  for(let s=1;s<=6;s++){if(S.data.A.debrief[s]&&S.data.B.debrief[s])return true;}
+  if(!canMatch())return false;
+  for(let s=1;s<=6;s++){ if(matchFor(s)) return true; }
   return false;
 }
 
@@ -623,42 +651,60 @@ function loadProfile(){
 function clearProfile(){ try{ localStorage.removeItem(PROFILE_KEY); }catch(e){} }
 
 /* ============================================================
-   LIVE PAIRING — minimal-disclosure protocol.
+   LIVE PAIRING — END-TO-END ENCRYPTED (protocol v4)
    ------------------------------------------------------------
-   WHAT CROSSES THE PAIRING LINK, IN FULL:
+   Two paired phones have to compare private answers — the shared
+   consent gate and the "what you both welcome more of" match are the
+   reason this app exists. They now do it without a server and without
+   showing the relay anything, by agreeing on a key the relay never sees.
 
-     topic  sb3/<sessionId>/p/<side>   payload "1" | "0"   (presence)
-     topic  sb3/<sessionId>/u/<side>   payload "0".."6"    (stage pointer)
+   HANDSHAKE (fresh per pairing, nothing persisted anywhere)
+     1. Each phone generates an ephemeral ECDH P-256 key pair and
+        publishes ONLY its PUBLIC key on sb4/<sid>/k/<side>.
+     2. Each derives the same shared secret on-device from its own
+        private key and the other's public key. The shared secret is
+        NEVER transmitted, in any form.
+     3. HKDF-SHA-256 over that secret — salted with a hash of the PAIR
+        CODE, and bound to the full transcript (both public keys in a
+        fixed order) — yields:
+          · a 256-bit AES-GCM message key
+          · two one-way confirmation keys, one per direction
+          · a 6-character safety word, shown on both phones
+     4. Each side publishes an HMAC confirmation tag on
+        sb4/<sid>/c/<side>. Producing a valid tag requires the pair code
+        (it is the HKDF salt), so a broker-side attacker who injects its
+        own public key cannot complete the handshake. Nothing is
+        encrypted, sent, decrypted or displayed until BOTH tags verify.
+        The safety word is the human-checkable backstop: if it matches
+        on both phones, there is no one in the middle.
 
-   That is the whole protocol. Two topics, one character each, no JSON,
-   no object with room for a field to creep back into. Nothing about a
-   person is in it: no name, no pronouns, no gender, no orientation, no
-   relationship structure, no session counts, no reflection chips and no
-   notes. Those never leave the phone they were typed on — not even
-   encrypted, because they are not sent at all.
+   ON THE WIRE, IN FULL
+     sb4/<sid>/k/<side>   ephemeral ECDH PUBLIC key   (public by design)
+     sb4/<sid>/c/<side>   key-confirmation tag        (useless without the code)
+     sb4/<sid>/m/<side>   AES-256-GCM ciphertext      (everything else)
+     sb4/<sid>/x/<side>   last will / goodbye         (EMPTY payload)
 
-   <side> is "h" (created the pairing) or "g" (joined it). It says nothing
-   about who either person is.
+   Every payload that carries meaning is inside /m/, i.e. ciphertext:
+   presence, the stage pointer, and the reflection chip selections that
+   make matching work. The relay sees random bytes.
 
-   The stage pointer is the consent gate itself and is the reason a link
-   exists: stage N+1 opens only when BOTH people have privately confirmed,
-   which is impossible unless each phone learns that the other has
-   confirmed. One integer is the smallest signal that carries that.
+   NEVER SENT — not even encrypted: names, pronouns, gender, orientation,
+   relationship structure, session counts, and the free-text private note.
+   Each phone words itself from its own owner's setup, so none of that
+   needs to cross, and what is never sent cannot be broken.
 
-   retain is FALSE on every publish, including the last-will. Nothing is
-   left on the broker once both phones disconnect; a stranger subscribing
-   afterwards receives nothing at all. Because there is no retained state
-   to read on arrival, both sides re-announce on a heartbeat instead.
+   retain is FALSE on every publish including the will, so nothing is left
+   behind for a stranger to read; both phones re-announce on a heartbeat.
 
-   The relay is still a public broker, and the topic is derived from the
-   pair code by SHA-256 so the code itself never appears on the wire and
-   the topic cannot be guessed from the app's name. That hardening is
-   worth having, but it is not what protects the user — minimisation is.
-   A private authenticated backend remains the correct long-term home for
-   this link; see PRIVACY.md.
+   THREAT MODEL and honest limits: see PRIVACY.md. Short version — the
+   broker still learns that two anonymous parties are exchanging encrypted
+   messages, and their timing and size. It cannot read them. If
+   crypto.subtle is unavailable, live pairing REFUSES to run rather than
+   silently falling back to plaintext.
    ============================================================ */
 const RELAY="wss://broker.emqx.io:8084/mqtt";
-const TOPIC_ROOT="sb3";
+const TOPIC_ROOT="sb4";
+const PROTO_V=4;
 
 /* Compact SHA-256 (public-domain construction). Used synchronously and
    without a network or crypto.subtle dependency, so topic derivation works
@@ -706,84 +752,352 @@ function sha256hex(str){
   }
   return H.map(x=>((x>>>0).toString(16).padStart(8,"0"))).join("");
 }
-/* The pair code never travels; only this derivation of it does. */
-function sessionId(code){ return sha256hex("slowburn/pairing/v3|"+normCode(code)).slice(0,32); }
-
+/* Two INDEPENDENT derivations of the pair code, with different domain
+   separators. The topic tells the broker where to route; the salt binds
+   the key exchange to the code. Seeing one on the wire (the topic) reveals
+   nothing about the other. The code itself never travels either way. */
+function sessionId(code){ return sha256hex("slowburn/pairing/v4|topic|"+normCode(code)).slice(0,32); }
+function pairSaltHex(code){ return sha256hex("slowburn/pairing/v4|salt|"+normCode(code)); }
 function pairBase(){ return TOPIC_ROOT+"/"+sessionId(S.code); }
-/* The single integer described above, and literally nothing else. */
-function publishProgress(){
-  if(S.mode!=="live"||!S.mq||!S.connected)return;
-  try{ S.mq.publish(pairBase()+"/u/"+S.pairSide,String(myStagePointer()),{retain:false,qos:0}); }catch(e){}
+
+/* ---- byte plumbing (WebCrypto talks in bytes; MQTT carries text) ----
+   UTF-8 is hand-rolled rather than taken from TextEncoder so the crypto path
+   has exactly one implementation everywhere it runs — WKWebView, a plain
+   browser, and the jsdom test harness alike. Payloads are a few dozen bytes,
+   so there is nothing to gain from the native one. */
+function utf8(s){
+  s=String(s); const out=[];
+  for(let i=0;i<s.length;i++){
+    let c=s.charCodeAt(i);
+    if(c<0x80)out.push(c);
+    else if(c<0x800)out.push(0xc0|(c>>6),0x80|(c&63));
+    else if(c<0xd800||c>=0xe000)out.push(0xe0|(c>>12),0x80|((c>>6)&63),0x80|(c&63));
+    else{ c=0x10000+(((c&0x3ff)<<10)|(s.charCodeAt(++i)&0x3ff));
+      out.push(0xf0|(c>>18),0x80|((c>>12)&63),0x80|((c>>6)&63),0x80|(c&63)); }
+  }
+  return new Uint8Array(out);
 }
-function publishPresence(v){
-  if(S.mode!=="live"||!S.mq||!S.connected)return;
-  try{ S.mq.publish(pairBase()+"/p/"+S.pairSide,v,{retain:false,qos:0}); }catch(e){}
+function unutf8(bytes){
+  const b=new Uint8Array(bytes); let s="";
+  for(let i=0;i<b.length;){
+    const c=b[i++];
+    if(c<0x80)s+=String.fromCharCode(c);
+    else if(c<0xe0)s+=String.fromCharCode(((c&31)<<6)|(b[i++]&63));
+    else if(c<0xf0)s+=String.fromCharCode(((c&15)<<12)|((b[i++]&63)<<6)|(b[i++]&63));
+    else{ const cp=(((c&7)<<18)|((b[i++]&63)<<12)|((b[i++]&63)<<6)|(b[i++]&63))-0x10000;
+      s+=String.fromCharCode(0xd800|(cp>>10),0xdc00|(cp&0x3ff)); }
+  }
+  return s;
 }
+function hexBytes(h){ const a=new Uint8Array(h.length>>1); for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16); return a; }
+function b64u(bytes){
+  const b=new Uint8Array(bytes); let s="";
+  for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);
+  return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function unb64u(str){
+  let s=String(str||"").replace(/-/g,"+").replace(/_/g,"/");
+  while(s.length%4)s+="=";
+  const bin=atob(s), a=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+  return a;
+}
+
+/* ============================================================
+   E2E — the whole cryptographic core, in one place.
+   Nothing outside this module ever touches key material, and the
+   module has no way to publish: it returns strings, the caller sends
+   them. If a future change tries to put a secret on the wire it has
+   to go through seal().
+   ============================================================ */
+const E2E=(function(){
+  function blank(){ return {sid:"",priv:null,pubB64:"",theirB64:"",key:null,
+    confMine:null,confTheirs:null,sas:"",derived:false,verified:false,
+    pendingTag:null,seq:0,lastSeen:-1}; }
+  let st=blank();
+  function sub(){ try{ return (window.crypto&&window.crypto.subtle)||null; }catch(e){ return null; } }
+  function supported(){ try{ return !!(sub()&&window.crypto.getRandomValues); }catch(e){ return false; } }
+  function reset(){ st=blank(); }
+  function derived(){ return !!st.derived; }
+  function verified(){ return !!st.verified; }
+  function secure(){ return !!(st.verified&&st.key); }
+  function safety(){ return st.sas; }
+  function myPub(){ return st.pubB64; }
+
+  /* Our ephemeral key pair. Idempotent — the heartbeat re-announces the
+     SAME public key rather than churning a new one every 12 seconds. */
+  async function begin(sid){
+    if(!supported()) throw new Error("no-subtle");
+    if(st.priv&&st.sid===sid) return st.pubB64;
+    st=blank(); st.sid=sid;
+    const kp=await sub().generateKey({name:"ECDH",namedCurve:"P-256"},false,["deriveBits"]);
+    st.priv=kp.privateKey;
+    st.pubB64=b64u(new Uint8Array(await sub().exportKey("raw",kp.publicKey)));
+    return st.pubB64;
+  }
+
+  async function hmacKey(raw){ return sub().importKey("raw",raw,{name:"HMAC",hash:"SHA-256"},false,["sign"]); }
+  /* A short human-comparable word. Only ever used for two people to read
+     the same thing aloud, so a slight modulo bias is irrelevant. */
+  function sasFrom(b){ let s=""; for(let i=0;i<6;i++)s+=CODE_ALPHA[b[i]%CODE_ALPHA.length]; return s.slice(0,3)+"-"+s.slice(3); }
+
+  /* ECDH → HKDF. The shared secret exists only as a local variable here
+     and is zeroed before this function returns. It is never stored, never
+     rendered, and there is no code path that can publish it. */
+  async function derive(theirB64,code,mySide){
+    if(!st.priv) throw new Error("no-keypair");
+    if(st.derived&&st.theirB64===theirB64) return false;      // already have this one
+    const theirRaw=unb64u(theirB64);
+    if(theirRaw.length!==65||theirRaw[0]!==4) throw new Error("bad-point");
+    const theirKey=await sub().importKey("raw",theirRaw,{name:"ECDH",namedCurve:"P-256"},false,[]);
+    const bits=new Uint8Array(await sub().deriveBits({name:"ECDH",public:theirKey},st.priv,256));
+    /* Transcript binding: both public keys, always in host-then-guest
+       order, so each phone hashes the identical string. Swapping or
+       replaying a key changes the derived key on both sides. */
+    const hostB64 =(mySide==="h")?st.pubB64:theirB64;
+    const guestB64=(mySide==="h")?theirB64:st.pubB64;
+    const info=utf8("slowburn/e2e/v4|"+st.sid+"|"+hostB64+"|"+guestB64);
+    const ikm=await sub().importKey("raw",bits,"HKDF",false,["deriveBits"]);
+    const okm=new Uint8Array(await sub().deriveBits(
+      {name:"HKDF",hash:"SHA-256",salt:hexBytes(pairSaltHex(code)),info:info},ikm,104*8));
+    st.key=await sub().importKey("raw",okm.slice(0,32),{name:"AES-GCM"},false,["encrypt","decrypt"]);
+    const kH=okm.slice(32,64), kG=okm.slice(64,96);
+    st.confMine  =await hmacKey(mySide==="h"?kH:kG);   // the tag I send
+    st.confTheirs=await hmacKey(mySide==="h"?kG:kH);   // the tag I expect
+    st.sas=sasFrom(okm.slice(96,104));
+    st.theirB64=theirB64; st.derived=true; st.verified=false;
+    st.seq=0; st.lastSeen=-1;                          // fresh key ⇒ fresh replay window
+    bits.fill(0); okm.fill(0);
+    return true;
+  }
+
+  function tagMsg(side){ return utf8("slowburn/e2e/v4|confirm|"+side+"|"+st.sid); }
+  async function myTag(mySide){
+    return b64u(new Uint8Array(await sub().sign("HMAC",st.confMine,tagMsg(mySide))).slice(0,16));
+  }
+  async function checkTag(theirSide,tagB64){
+    if(!st.confTheirs) return false;
+    const want=new Uint8Array(await sub().sign("HMAC",st.confTheirs,tagMsg(theirSide))).slice(0,16);
+    const got=unb64u(tagB64);
+    if(got.length!==16) return false;
+    let d=0; for(let i=0;i<16;i++)d|=want[i]^got[i];    // constant-time
+    return d===0;
+  }
+  /* Their tag can legitimately arrive before we've derived (their key and
+     their tag are two publishes). Hold it, check it the moment we can. */
+  function stashTag(side,tag){ st.pendingTag={side:side,tag:tag}; }
+  async function replayTag(){
+    if(!st.pendingTag||!st.derived) return false;
+    const t=st.pendingTag;
+    if(await checkTag(t.side,t.tag)){ st.verified=true; st.pendingTag=null; return true; }
+    return false;
+  }
+  function markVerified(){ st.verified=true; st.pendingTag=null; }
+
+  /* Bound to this session and this sender, so a message cannot be replayed
+     onto the other side's topic. */
+  function aad(side){ return utf8("slowburn/e2e/v4|"+st.sid+"|"+side); }
+  function nextSeq(){ return ++st.seq; }
+  async function seal(obj,mySide){
+    if(!st.key) throw new Error("not-secure");
+    const iv=window.crypto.getRandomValues(new Uint8Array(12));
+    const ct=new Uint8Array(await sub().encrypt(
+      {name:"AES-GCM",iv:iv,additionalData:aad(mySide),tagLength:128},st.key,utf8(JSON.stringify(obj))));
+    const out=new Uint8Array(12+ct.length); out.set(iv,0); out.set(ct,12);
+    return b64u(out);
+  }
+  async function open(b64,theirSide){
+    if(!st.key) throw new Error("not-secure");
+    const raw=unb64u(b64);
+    if(raw.length<29) throw new Error("short");
+    const pt=await sub().decrypt(
+      {name:"AES-GCM",iv:raw.slice(0,12),additionalData:aad(theirSide),tagLength:128},st.key,raw.slice(12));
+    const env=JSON.parse(unutf8(new Uint8Array(pt)));
+    const n=Number(env&&env.n);
+    if(!(n>st.lastSeen)) throw new Error("replay");     // strictly increasing
+    st.lastSeen=n;
+    return env;
+  }
+  return {supported,reset,begin,derive,derived,verified,secure,safety,myPub,
+          myTag,checkTag,stashTag,replayTag,markVerified,nextSeq,seal,open};
+})();
+
+/* The reflection chips are sent as INDEXES into these lists, never as text.
+   The fingerprint travels with them so two different app versions can never
+   silently mismap "Softer touch" onto something else. */
+const CHIPS_FP=sha256hex(GOOD.join("")+""+MORE.join("")).slice(0,8);
+
+/* The entire cleartext of the link, assembled here and nowhere else.
+   Everything in it is either an integer or an index into a fixed list. */
+function stateEnvelope(){
+  const r={};
+  for(let s=1;s<=6;s++){
+    const d=me().debrief[s]; if(!d) continue;
+    r[s]={g:(d.good||[]).map(x=>GOOD.indexOf(x)).filter(i=>i>=0),
+          m:(d.more||[]).map(x=>MORE.indexOf(x)).filter(i=>i>=0)};
+    /* d.note is deliberately absent. The private note is never sent. */
+  }
+  return {v:PROTO_V,n:E2E.nextSeq(),u:myStagePointer(),cf:CHIPS_FP,r:r};
+}
+/* The ONLY function that puts app state on the wire, and it cannot run
+   before the handshake is confirmed. */
+function publishState(){
+  if(S.mode!=="live"||!S.mq||!S.connected||!E2E.secure()) return Promise.resolve(false);
+  return E2E.seal(stateEnvelope(),S.pairSide).then(function(body){
+    try{ S.mq.publish(pairBase()+"/m/"+S.pairSide,body,{retain:false,qos:0}); }catch(e){}
+    return true;
+  }).catch(function(){ return false; });
+}
+/* Kept as the name the readiness handlers call — the stage pointer now
+   rides inside the same encrypted envelope as everything else. */
+function publishProgress(){ return publishState(); }
+
+function applyEnvelope(env){
+  if(!env||env.v!==PROTO_V) return;
+  S.partnerSeen=Date.now(); S.partnerOnline=true;
+  const n=parseInt(env.u,10);
+  if(n>=0&&n<=6) S.partnerStage=n;
+  S.partnerChipMismatch=(env.cf!==CHIPS_FP);
+  const out={};
+  if(!S.partnerChipMismatch&&env.r&&typeof env.r==="object"){
+    for(let s=1;s<=6;s++){
+      const d=env.r[s]||env.r[String(s)]; if(!d) continue;
+      out[s]={good:(Array.isArray(d.g)?d.g:[]).map(i=>GOOD[i]).filter(Boolean),
+              more:(Array.isArray(d.m)?d.m:[]).map(i=>MORE[i]).filter(Boolean)};
+    }
+  }
+  S.partnerDebrief=out;
+  /* Their first message under this key: they may well have missed ours while
+     they were still confirming, so answer with our own state once. */
+  if(Number(env.n)===1) publishState();
+  render();
+}
+
 /* Nothing is retained on the broker, so a phone that connects later cannot
    read the other's current state — both sides simply re-announce on a
    timer, and a partner falls back to "offline" if they go quiet. */
 const HEARTBEAT_MS=12000, PARTNER_STALE_MS=40000;
+function announceKey(){
+  if(S.mode!=="live"||!S.mq||!S.connected) return Promise.resolve("");
+  return E2E.begin(sessionId(S.code)).then(function(pub){
+    try{ S.mq.publish(pairBase()+"/k/"+S.pairSide,pub,{retain:false,qos:0}); }catch(e){}
+    return pub;
+  }).catch(function(){ return ""; });
+}
+function sendTag(){
+  if(S.mode!=="live"||!S.mq||!S.connected||!E2E.derived()) return Promise.resolve(false);
+  return E2E.myTag(S.pairSide).then(function(tag){
+    try{ S.mq.publish(pairBase()+"/c/"+S.pairSide,tag,{retain:false,qos:0}); }catch(e){}
+    return true;
+  }).catch(function(){ return false; });
+}
 function startHeartbeat(){
   stopHeartbeat();
   S.hb=setInterval(()=>{
-    publishPresence("1");publishProgress();
+    if(S.mode!=="live"||!S.connected) return;
+    announceKey();                    // same public key, re-announced for a late joiner
+    /* Re-send the confirmation tag too: nothing is retained and QoS 0 can
+       drop, and a lost tag would otherwise strand both sides half-confirmed. */
+    if(E2E.derived()) sendTag();
+    if(E2E.secure()) publishState();
     if(S.partnerOnline&&S.partnerSeen&&(Date.now()-S.partnerSeen)>PARTNER_STALE_MS){S.partnerOnline=false;render();}
   },HEARTBEAT_MS);
 }
 function stopHeartbeat(){ if(S.hb){clearInterval(S.hb);S.hb=null;} }
 
+/* Handshake progressed — reflect it in the UI and, once confirmed, send
+   this phone's state so the other side is immediately up to date. */
+function afterHandshake(){
+  const ok=E2E.secure();
+  S.pairSecure=ok; S.pairSafety=ok?E2E.safety():"";
+  if(ok) publishState();
+  render();
+}
+function onWire(topic,body){
+  const p=String(topic).split("/"), kind=p[2], sd=p[3];
+  if(sd===S.pairSide||(sd!=="h"&&sd!=="g")) return;
+  if(kind==="x"){ S.partnerOnline=false; render(); return; }
+  if(kind==="k"){
+    E2E.begin(sessionId(S.code))
+      .then(()=>E2E.derive(body,S.code,S.pairSide))
+      .then(function(fresh){
+        if(fresh===false) return null;                // same key we already have
+        S.pairSecure=false; S.pairSafety=""; S.partnerDebrief={};
+        /* They have only just arrived, and nothing is retained for them to
+           read — so re-announce our key immediately rather than making them
+           wait for the next heartbeat. Gated on the key being NEW, so the
+           two phones exchange keys once and stop. */
+        announceKey();
+        return sendTag().then(function(){ return E2E.replayTag(); });   // their tag may already be waiting
+      })
+      .then(()=>afterHandshake())
+      .catch(function(){});
+    return;
+  }
+  if(kind==="c"){
+    if(!E2E.derived()){ E2E.stashTag(sd,body); return; }
+    if(E2E.verified()) return;
+    E2E.checkTag(sd,body).then(function(ok){
+      if(!ok) return;                                  // wrong pair code, or someone in the middle
+      E2E.markVerified(); afterHandshake();
+    }).catch(function(){});
+    return;
+  }
+  if(kind==="m"){
+    if(!E2E.secure()) return;                          // never decrypt an unconfirmed key
+    E2E.open(body,sd).then(applyEnvelope).catch(function(){});
+  }
+}
+
 function connectLive(side,name,code){
+  /* No WebCrypto ⇒ no encrypted link ⇒ we do NOT pair. There is no
+     plaintext fallback path in this app. */
+  if(!E2E.supported()){ liveFail("This device can’t set up an encrypted link, so Slow Burn won’t pair over the network. Running solo instead."); return; }
   S.mode="live";S.pairSide=side;S.code=normCode(code);
   /* The name is this device owner's own, kept in their own slot, and used
      only to word this phone's copy. It is not published. */
   if(name)S.profile.people.A.name=name;
+  S.partnerDebrief={};S.partnerStage=0;S.partnerOnline=false;
+  S.pairSecure=false;S.pairSafety="";S.partnerChipMismatch=false;
+  E2E.reset();
   if(!window.mqtt){liveFail();return;}
   const base=pairBase();
   let opened=false,client;
   try{
     client=mqtt.connect(RELAY,{clientId:"sb_"+Math.random().toString(16).slice(2),clean:true,
       connectTimeout:6000,reconnectPeriod:4000,keepalive:30,
-      will:{topic:base+"/p/"+side,payload:"0",retain:false,qos:0}});
+      /* Empty payload: it says "this side dropped" and nothing else. The
+         broker already knows a client disconnected — that is not a leak we
+         can encrypt away, so we don't pretend otherwise. */
+      will:{topic:base+"/x/"+side,payload:"",retain:false,qos:0}});
   }catch(e){liveFail();return;}
   S.mq=client;
   const to=setTimeout(()=>{if(!opened){try{client.end(true);}catch(e){}liveFail();}},8000);
   client.on("connect",()=>{
     opened=true;clearTimeout(to);S.connected=true;
-    client.subscribe(base+"/u/+");client.subscribe(base+"/p/+");
-    publishPresence("1");publishProgress();
+    client.subscribe(base+"/k/+");client.subscribe(base+"/c/+");
+    client.subscribe(base+"/m/+");client.subscribe(base+"/x/+");
+    announceKey();
     startHeartbeat();
     if(S.pairPhase==="join"){S.screen="app";S.tab="today";}
     render();
   });
-  client.on("message",(t,payload)=>{
-    const p=t.split("/"),kind=p[2],sd=p[3];
-    if(sd===S.pairSide)return;
-    const v=payload.toString();
-    if(kind==="p"){
-      if(v==="0"){S.partnerOnline=false;render();return;}
-      S.partnerOnline=true;S.partnerSeen=Date.now();
-      /* They just arrived and nothing is retained for them to read, so
-         say where we are. */
-      publishProgress();render();return;
-    }
-    if(kind==="u"){
-      const n=parseInt(v,10);
-      if(!(n>=0&&n<=6))return;                 // anything else is not ours
-      S.partnerStage=n;S.partnerOnline=true;S.partnerSeen=Date.now();render();
-    }
-  });
+  client.on("message",(t,payload)=>{ onWire(t,payload.toString()); });
   client.on("error",()=>{});
 }
-function liveFail(){
+function liveFail(msg){
   // Relay unreachable (offline / blocked network) → graceful solo fallback.
-  stopHeartbeat();
+  stopHeartbeat(); E2E.reset();
   S.mode="solo";S.mq=null;S.connected=false;S.screen="app";S.tab="today";
-  toast("Couldn’t reach the live relay — running in solo mode.");render();
+  S.pairSecure=false;S.pairSafety="";
+  toast(msg||"Couldn’t reach the live relay — running in solo mode.");render();
 }
 function leaveLive(){
   stopHeartbeat();
-  try{if(S.mq){S.mq.publish(pairBase()+"/p/"+S.pairSide,"0",{retain:false,qos:0});S.mq.end(true);}}catch(e){}
+  try{if(S.mq){S.mq.publish(pairBase()+"/x/"+S.pairSide,"",{retain:false,qos:0});S.mq.end(true);}}catch(e){}
+  E2E.reset();
   S.mq=null;S.connected=false;S.partnerOnline=false;S.partnerStage=0;S.partnerSeen=0;
+  S.partnerDebrief={};S.pairSecure=false;S.pairSafety="";S.partnerChipMismatch=false;
 }
 
 /* ============================================================
@@ -1027,7 +1341,7 @@ function screenSetup(){
       <div class="divider"></div>
       <div class="opt" data-action="who-sample"><div class="oic">${I.spark}</div>
         <div><div class="ttl">See a sample walkthrough</div><div class="dsc">A clearly-labelled example (Rowan &amp; Ari, both they/them) to look around without entering anything about yourself.</div></div></div>
-      <div class="foot-legal">Everything you enter about yourself — your name, pronouns, identity, reflections and private notes — stays on this device. It is never sent to us. If you pair two phones, the only thing that crosses is an anonymous number: which stage you have said you are ready for. Nothing is stored anywhere afterwards.</div>
+      <div class="foot-legal">Everything you enter about yourself — your name, pronouns, identity and private notes — stays on this device. It is never sent to us; there is no account and no server. If you pair two phones, the only things that cross are which stage you have said you are ready for and which reflection chips you tapped, and they cross end-to-end encrypted: only your two phones can read them. Nothing is stored anywhere afterwards.</div>
     </div>`;
   }
 
@@ -1160,6 +1474,22 @@ function screenProfile(){
 }
 function cap1(s){ return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
 
+/* The human-checkable half of the handshake. Two phones that derived the
+   same key show the same word; anyone sitting in the middle would have to
+   produce two different keys, and the words would differ. Shown only once
+   the key is confirmed, so it can never suggest more safety than exists. */
+function safetyWordCard(){
+  if(S.mode!=="live") return "";
+  if(!S.pairSecure){
+    return `<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">Setting up encryption…</div>
+      <p class="tiny" style="line-height:1.6">${TE("Your phones are agreeing on a key only the two of them will hold. Nothing is sent until that’s done.")}</p></div>`;
+  }
+  return `<div class="card-soft mt14" style="background:var(--sage-bg);border-color:#D5E2D0">
+    <div style="display:flex;align-items:center;gap:9px"><div style="flex:none">${I.lock}</div>
+      <div style="font-weight:700;font-size:13.5px">Encrypted link · safety word</div></div>
+    <div class="codepill mt10" style="font-size:21px;color:#3f5c3a">${esc(S.pairSafety)}</div>
+    <p class="tiny mt6" style="line-height:1.6">${TE("If this reads the same on {partner}’s phone, no one is in the middle. You only need to check it once, and only if you want to.")}</p></div>`;
+}
 function screenPairing(){
   const inviteUrl=location.origin+location.pathname+"?pair="+S.code;
   if(S.pairPhase==="choose"){
@@ -1170,13 +1500,13 @@ function screenPairing(){
       <p class="lead mt6" style="font-size:13.5px">Two phones keeps each person’s answers on their own phone. One phone works too — you just hand it back and forth.</p>
       <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
         <div class="opt" data-action="pair-create"><div class="oic">${I.phone}</div>
-          <div><div class="ttl">Pair two devices</div><div class="dsc">Invite ${esc(otherName())} with a code or QR. The consent gate unlocks live across both.</div></div></div>
+          <div><div class="ttl">Pair two devices</div><div class="dsc">Invite ${esc(otherName())} with a code or QR. The consent gate and your reflection matches sync live across both, end-to-end encrypted.</div></div></div>
         <div class="opt" data-action="pair-join"><div class="oic">${I.link}</div>
           <div><div class="ttl">Join with a code</div><div class="dsc">They already started — enter the pair code they share.</div></div></div>
         <div class="opt" data-action="pair-shared"><div class="oic">${I.solo}</div>
           <div><div class="ttl">Share this one device</div><div class="dsc">Hand the phone back and forth, switching sides with a toggle at the top.</div></div></div>
       </div>
-      <div class="foot-legal">Pairing sends one thing between the two phones: an anonymous number saying which stage you have confirmed you are ready for. That is what makes the consent gate work. Your name, pronouns, gender, orientation, relationship structure, reflections and notes never leave the phone you typed them on.</div>
+      <div class="foot-legal">Your two phones agree on a key that only they hold, and everything they then send each other is encrypted with it — the relay in between carries scrambled bytes it cannot read, and keeps none of them. What crosses: which stage you have confirmed you are ready for, and which reflection chips you tapped, so the app can show what you both welcome. What never crosses, encrypted or otherwise: your name, pronouns, gender, orientation, relationship structure and every written note.</div>
     </div>`;
   }
   if(S.pairPhase==="create"){
@@ -1190,6 +1520,7 @@ function screenPairing(){
       <div class="codepill mt14">${prettyCode(S.code)}</div>
       <p class="tiny center mt6">${esc(inviteUrl)}</p>
       <div class="livebar ${online?'':'off'} mt14">${online?TE("● {Partner} connected — you’re linked"):TE("○ Waiting for {partner} to join…")}</div>
+      ${safetyWordCard()}
       <div class="card-soft mt14">
         <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
         <div class="tiny" style="margin-bottom:8px">Used only to word this phone’s copy. It is not sent to ${TE("{them}")}.</div>
@@ -1212,7 +1543,7 @@ function screenPairing(){
       <input class="field" id="joinname" placeholder="Name or nickname" value="${esc(person("A").name)}" />
     </div>
     <button class="btn mt14" data-action="do-join">Link our devices</button>
-    <div class="foot-legal">Both phones need to be online. Nothing about you is sent — not your name, not your pronouns, not a word you write. Only an anonymous stage number crosses, so the two phones can open the next stage together.</div>
+    <div class="foot-legal">Both phones need to be online. Your name, pronouns and everything you write stay here. The pair code never travels — your phones use it to lock the link, so only they can read what crosses: the stage you have confirmed, and the reflection chips you tapped.</div>
   </div>`;
 }
 
@@ -1285,12 +1616,10 @@ function tabProgram(){
     <div class="mt18">${items}</div></div></div>`;
 }
 function tabCheckins(){
-  /* Your own reflections over time. This is the view whenever the other
-     person's reflections are not on this phone — solo (there is no partner)
-     and paired (their answers stay on their own phone and are never sent).
-     Only shared-device mode can honestly show an overlap, because there both
-     sets were typed here. */
-  if(!canMatchLocally()){
+  /* Your own reflections over time — the view whenever there is nothing to
+     match against: solo (no partner), or live pairing before the encrypted
+     handshake has been confirmed. */
+  if(!canMatch()){
     let own="";
     for(let s=6;s>=1;s--){
       const d=me().debrief[s]; if(!d) continue;
@@ -1304,8 +1633,8 @@ function tabCheckins(){
     }
     return `<div class="view"><div class="pad-tab">
       <div class="eyebrow">Your reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you noticed</h2>
-      <p class="lead mt6" style="font-size:13.5px">After each session you reflect privately. Everything here — chips and written notes alike — stays on this device and is never sent anywhere.</p>
-      ${S.mode==="live"?`<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("{Partner} keeps their reflections on their own phone, and Slow Burn never moves them. Comparing notes is something the two of you do out loud, whenever you want to — the app deliberately isn’t the go-between.")}</p></div>`:""}
+      <p class="lead mt6" style="font-size:13.5px">After each session you reflect privately. Your written note stays on this device and is never sent anywhere.</p>
+      ${S.mode==="live"?`<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("Your two phones haven’t finished setting up their encrypted link yet, so there’s nothing to compare. Once it’s live, the chips you both chose are matched privately between your phones — and your written note still never leaves this one.")}</p></div>`:""}
       ${own||`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
         <p class="lead" style="font-size:14px">No reflections yet.</p>
         <p class="tiny mt6">Run a session and reflect — your pattern over time shows up here.</p></div>`}
@@ -1313,9 +1642,9 @@ function tabCheckins(){
   }
   let blocks="";
   for(let s=6;s>=1;s--){
-    const a=S.data.A.debrief[s],b=S.data.B.debrief[s];
-    if(a&&b){
-      const gm=a.good.filter(x=>b.good.includes(x)),mm=a.more.filter(x=>b.more.includes(x));
+    const mt=matchFor(s);
+    if(mt){
+      const gm=mt.good,mm=mt.more;
       blocks+=`<div class="card mt14">
         <div style="display:flex;justify-content:space-between;align-items:center"><div class="st-title" style="font-size:15px">Stage ${s} · ${esc(stTitle(STAGES[s-1]))}</div><span class="badge done">Matched</span></div>
         <div class="divider" style="margin:14px 0"></div>
@@ -1327,7 +1656,7 @@ function tabCheckins(){
   }
   let pending="";
   for(let s=6;s>=1;s--){
-    const mine=me().debrief[s],theirs=other().debrief[s];
+    const mine=myDebrief(s),theirs=theirDebrief(s);
     if(mine&&!theirs){
       pending+=`<div class="card-soft mt14" style="display:flex;gap:12px;align-items:flex-start"><div style="flex:none">${I.chat.replace(/currentColor/g,'#8B7B76')}</div>
         <div><div style="font-weight:700;font-size:13.5px">${TE("Waiting on {partner}")}</div>
@@ -1335,12 +1664,21 @@ function tabCheckins(){
     }
   }
   const empty=(!blocks&&!pending);
+  const live=S.mode==="live";
+  const mismatch=live&&S.partnerChipMismatch
+    ? `<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("{Partner}’s copy of Slow Burn is a different version, so the app won’t try to line your answers up — comparing them could put the wrong words in {their} mouth. Update both phones and they’ll match again.")}</p></div>`
+    : "";
   return `<div class="view"><div class="pad-tab">
     <div class="eyebrow">Shared reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you both felt</h2>
     <p class="lead mt6" style="font-size:13.5px">After each session you each reflect privately. Slow Burn only surfaces what <b>both</b> of you named — never the rest.</p>
+    ${live?`<div class="card-soft mt14" style="display:flex;gap:11px;align-items:flex-start">
+      <div style="flex:none;margin-top:1px">${I.lock}</div>
+      <div><div style="font-weight:700;font-size:13px">End-to-end encrypted</div>
+      <p class="tiny" style="margin-top:3px;line-height:1.55">${TE("Your chip selections travel between your two phones scrambled with a key only your phones hold — the relay in the middle can’t read them. Your written note isn’t sent at all.")}${S.pairSafety?` Safety word: <b>${esc(S.pairSafety)}</b> — it should read the same on ${TE("{partner}")}’s phone.`:""}</p></div></div>`:""}
+    ${mismatch}
     ${empty?`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
       <p class="lead" style="font-size:14px">No shared reflections yet.</p>
-      <p class="tiny mt6">Run a session and reflect. ${S.mode==="live"?TE("When {partner} reflects too, your overlap appears here."):TE("Then switch to {partner} and reflect — the overlap appears here.")}</p></div>`:(blocks+pending)}
+      <p class="tiny mt6">Run a session and reflect. ${live?TE("When {partner} reflects too, your overlap appears here."):TE("Then switch to {partner} and reflect — the overlap appears here.")}</p></div>`:(blocks+pending)}
   </div></div>`;
 }
 function tabPartner(){
@@ -1352,7 +1690,7 @@ function tabPartner(){
        <div class="tiny mt4" style="margin-bottom:6px">Everything here stays on this device.</div>`
     : `<div class="eyebrow">Your pairing</div><h2 class="display" style="font-size:25px;margin-top:8px">${esc(T("You & {partner}"))}</h2>
        ${S.mode==="live"
-         ? `<div class="livebar ${S.partnerOnline?'':'off'} mt4" style="margin-bottom:6px">${S.partnerOnline?'● Live — both devices connected':TE("○ {Partner} is offline right now")}</div>`
+         ? `<div class="livebar ${S.partnerOnline?'':'off'} mt4" style="margin-bottom:6px">${S.partnerOnline?(S.pairSecure?'● Live — both devices connected, end-to-end encrypted':'● Live — securing the link…'):TE("○ {Partner} is offline right now")}</div>`
          : `<div class="tiny mt4" style="margin-bottom:6px">Sharing one device — use the switch up top to change sides.</div>`}`;
 
   const summary = solo
@@ -1393,8 +1731,10 @@ function tabPartner(){
       <p class="tiny" style="line-height:1.6">${solo
         ?"Your readiness answers, reflections, private notes and identity settings never leave this device. Slow Burn has no account and no server."
         :(S.mode==="live"
-          ?"Nothing that identifies you is ever transmitted. Your name, pronouns, gender, orientation, relationship structure, session history, reflections and notes stay on this phone. The pairing link carries exactly one thing — a number from 0 to 6 for the stage you have confirmed you are ready for — plus whether this phone is currently online. There is no account, and nothing is kept on the relay once you disconnect."
-          :"You are both using this one phone, so everything stays here and nothing is transmitted at all. Slow Burn still only shows each of you the reflections you <b>both</b> named positively — never the rest.")}</p></div>
+          ?"Your two phones agree on a key over the link and never send it, so everything they exchange afterwards is scrambled for anyone else — including the relay carrying it, which keeps nothing once you disconnect. Two things cross, both encrypted: the stage you have confirmed you are ready for, and which reflection chips you tapped, so the app can show what you <b>both</b> named. Your name, pronouns, gender, orientation, relationship structure, session counts and every written note are never sent at all. There is no account and no server of ours."
+          :"You are both using this one phone, so everything stays here and nothing is transmitted at all. Slow Burn still only shows each of you the reflections you <b>both</b> named positively — never the rest.")}</p>
+      ${(!solo&&S.mode==="live"&&S.pairSecure)?`<div class="kv mt10" style="border-top:1px solid var(--line);border-bottom:0;padding-top:10px"><span class="k">Safety word</span><span class="v" style="color:var(--sage)">${esc(S.pairSafety)}</span></div>
+      <p class="tiny" style="line-height:1.6">${TE("Should read the same on {partner}’s phone. If it does, no one is in the middle.")}</p>`:""}</div>
     ${isMultiPartner()?`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">More than one partner?</div>
       <p class="tiny" style="line-height:1.6">Slow Burn runs once per partnership, at that partnership’s own pace. To begin a separate run, reset from Identity &amp; language — nothing carries over between them.</p></div>`:""}
     <div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:8px">For clinicians</div>
@@ -1484,7 +1824,7 @@ function screenStage(id){
         <div style="font-weight:700;font-size:15px;font-family:var(--serif)">Ready to progress?</div>
         <p class="tiny mt6" style="line-height:1.6">${TE("Only move on when this stage feels easy and unhurried. When you privately confirm, Stage "+(id+1)+" unlocks as soon as {partner} confirms too.")}</p>
         <button class="btn mt14" data-action="ready" data-id="${id}">I feel ready for Stage ${id+1}</button>
-        <p class="lock-note">${I.lock} ${TE("Nothing you write is shared with {them}. Confirming sends one thing: the stage you’ve reached.")}</p></div>`;
+        <p class="lock-note">${I.lock} ${TE("Nothing you write is shared with {them}. Confirming sends one thing, encrypted: the stage you’ve reached.")}</p></div>`;
     }
   }
   return `<div class="view"><div class="pad">
@@ -1518,8 +1858,11 @@ function screenSession(){
   return `<div class="view"><div class="pad">
     <div class="eyebrow">Private reflection · Stage ${st.id}</div>
     <h2 class="display" style="font-size:24px;margin-top:8px">Just for you${meName()==="you"?"":", "+esc(cap1(meName()))}</h2>
-    <p class="lead mt6" style="font-size:13.5px">${canMatchLocally()
+    <p class="lead mt6" style="font-size:13.5px">${
+      S.mode==="shared"
       ?TE("Answer honestly. On this shared phone, only the things you and {partner} <b>both</b> choose are ever shown back — never the rest.")
+      :canMatch()
+      ?TE("Answer honestly. Your chip selections go to {partner}’s phone end-to-end encrypted, and only the ones you <b>both</b> choose are ever shown back — never the rest. Your note below is never sent.")
       :"Answer honestly. Nothing here leaves this device."}</p>
     <div class="card mt18"><div style="font-weight:700;font-size:14.5px">1 · What felt good this time?</div><div class="tiny mt6">Choose any that fit.</div>
       <div class="chips mt10">${goodChips().map(x=>`<span class="chip ${g.has(x)?'sel':''}" data-action="chip" data-grp="good" data-val="${esc(x)}">${esc(x)}</span>`).join("")}</div></div>
@@ -1541,7 +1884,7 @@ function nudgeText(cur){
   }
   if(mine===0) return T(`You’re on <b>${title}</b>. When {us} have a quiet evening, open the stage and try a first session — there’s nothing to get right.`);
   if(me().ready[cur]&&!partnerReadyFor(cur)) return T(`You’ve confirmed you’re ready for the next stage. {Partner} will get there in {their} own time — you’ll unlock it together.`);
-  return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session${canMatchLocally()?" to see what you share":" — your own pattern builds up over time"}.`;
+  return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session${canMatch()?" to see what you share":" — your own pattern builds up over time"}.`;
 }
 
 /* ---------------- FIND A CLINICIAN ---------------- */
@@ -1577,8 +1920,8 @@ function renderBar(){
   bar.style.display="";
   if(S.mode==="live"){
     bar.innerHTML=`<div class="pb-title"><span class="pb-dot ${S.partnerOnline?'live':'off'}"></span>
-      LIVE · you’re ${esc(cap1(meName()))}
-      <span class="pb-sub">· ${esc(S.partnerOnline?cap1(otherName())+' connected':T('waiting for {partner}'))} · code ${esc(prettyCode(S.code))}</span></div>
+      LIVE${S.pairSecure?" 🔒":""} · you’re ${esc(cap1(meName()))}
+      <span class="pb-sub">· ${esc(S.partnerOnline?cap1(otherName())+' connected':T('waiting for {partner}'))}${S.pairSecure?" · encrypted":""} · code ${esc(prettyCode(S.code))}</span></div>
       <div class="pb-controls"><button class="btn-ghost-lite" data-action="leave">Leave</button></div>`;
   } else if(S.mode==="shared"){
     const nameA=cap1(firstName(person("A").name)||"You"), nameB=cap1(firstName(person("B").name)||cap1(partnerTerm()));
@@ -1767,8 +2110,11 @@ document.addEventListener("click",(e)=>{
     me().debrief[id]={good:[...S.form.good],more:[...S.form.more],note};
     me().sessions[id]=(me().sessions[id]||0)+1;
     S.session=null;S.screen="app";S.stageOpen=id;
-    if(!canMatchLocally()){ S.tab="checkins"; render(); toast("Reflection saved — on this phone, just for you."); return; }
-    const bothIn=S.data.A.debrief[id]&&S.data.B.debrief[id];
+    /* Live: the chip indexes go out inside the encrypted envelope. The note
+       is stored above but stateEnvelope() never reads it. */
+    publishState();
+    if(!canMatch()){ S.tab="checkins"; render(); toast("Reflection saved — on this phone, just for you."); return; }
+    const bothIn=!!matchFor(id);
     S.tab=bothIn?"checkins":"today";render();
     toast(bothIn?"Reflection saved — see what you both shared":T("Saved privately. {Partner} hasn’t reflected yet."));
     return;

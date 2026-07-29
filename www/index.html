@@ -401,7 +401,7 @@ function freshState(){
   return {screen:"welcome",tab:"today",ack:false,
     mode:null,           // null | 'solo' | 'shared' | 'live'
     view:"A",            // shared-device / sample toggle
-    myRole:"A",          // live
+    pairSide:"h",        // live: 'h' created the pairing, 'g' joined it — topic addressing only
     setupStep:"who",
     isSample:false,
     profile:{
@@ -413,6 +413,8 @@ function freshState(){
     },
     code:"",pairPhase:"choose",pending:null,
     mq:null,connected:false,partnerOnline:false,
+    /* the only thing a paired phone ever learns about the other person */
+    partnerStage:0,partnerSeen:0,hb:null,
     stageOpen:null,session:null,form:{good:new Set(),more:new Set(),note:""},
     nextSession:"not-set",
     data:{A:{ready:{},sessions:{},debrief:{}},B:{ready:{},sessions:{},debrief:{}}}
@@ -420,16 +422,46 @@ function freshState(){
 }
 let S=freshState();
 
-/* ---- roles / people ---- */
+/* ---- roles / people ----
+   INVARIANT: slot "A" is always THIS device's user and slot "B" is always
+   the partner, on BOTH phones. The pairing side (host/guest) lives in
+   S.pairSide and is used only to address MQTT topics — it never selects a
+   profile slot. Before, the joining phone ran as slot "B", so its own
+   pronouns (captured into "A" during setup) were read from the wrong slot
+   and then overwritten by whatever the host's device transmitted. With the
+   transmission gone, the device-local invariant is what makes each phone
+   word things correctly from its own owner's setup. */
 function isSolo(){ return S.mode==="solo"; }
-function activeRole(){ return S.mode==="live"?S.myRole:S.view; }
+function activeRole(){ return S.mode==="shared"?S.view:"A"; }
 function partnerRole(){ return activeRole()==="A"?"B":"A"; }
 function me(){ return S.data[activeRole()]; }
 function other(){ return S.data[partnerRole()]; }
 function person(role){ return S.profile.people[role]||blankPerson(); }
 function firstName(n){ return (n||"").split(" ")[0]; }
 function esc(t){return (t||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function genCode(){const a="ACDEFHJKLMNPRTUWXY34679";let c="SB";for(let i=0;i<4;i++)c+=a[Math.floor(Math.random()*a.length)];return c;}
+/* Pair code = the ONLY shared secret between the two phones, and now also
+   the seed for the relay topic (see sessionId()). The old code was "SB" +
+   4 characters — about 280,000 possibilities, i.e. trivially enumerable on
+   a public broker. 10 characters of this alphabet is ~1.1e13, drawn from
+   crypto.getRandomValues where available. Displayed in two groups of five
+   so it stays typeable. */
+const CODE_ALPHA="ACDEFHJKLMNPRTUWXY34679";
+const CODE_LEN=10;
+function randIdx(n){
+  try{
+    const c=window.crypto||window.msCrypto;
+    if(c&&c.getRandomValues){
+      const b=new Uint32Array(1);
+      // rejection-sample so the modulo doesn't bias the alphabet
+      const lim=Math.floor(0xFFFFFFFF/n)*n;
+      for(;;){ c.getRandomValues(b); if(b[0]<lim) return b[0]%n; }
+    }
+  }catch(e){}
+  return Math.floor(Math.random()*n);
+}
+function genCode(){let c="";for(let i=0;i<CODE_LEN;i++)c+=CODE_ALPHA[randIdx(CODE_ALPHA.length)];return c;}
+function normCode(s){return (s||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,CODE_LEN);}
+function prettyCode(s){s=normCode(s);return s.length>5?s.slice(0,5)+" "+s.slice(5):s;}
 
 function meName(){ return firstName(person(activeRole()).name)||"you"; }
 /* The partner's label. A name if we have one; otherwise the term THEY chose
@@ -540,17 +572,35 @@ function moreChips(){ return isSolo()?MORE_SOLO:MORE; }
 /* ---- derived ---- */
 /* Solo unlocks on your own readiness; partnered still requires BOTH — the
    consent gate is the point of the app and it is unchanged. */
+/* How far along this device's own user has consented to go: the highest
+   stage they have confirmed, counting only from stage 1 up without a gap.
+   This single small integer is the ENTIRE payload that crosses between two
+   paired phones. */
+function myStagePointer(){let n=0;for(let s=1;s<=6;s++){if(me().ready[s])n=s;else break;}return n;}
+/* Has the partner consented to move past stage s?
+   · live   → from the received stage pointer, the only thing they send
+   · shared → both people are on this one phone, so read their local answer
+   · solo   → there is no partner */
+function partnerReadyFor(s){
+  if(isSolo())return false;
+  if(S.mode==="live")return s<=(S.partnerStage||0);
+  return !!S.data[partnerRole()].ready[s];
+}
 function maxUnlocked(){
   let n=1;
   for(let s=1;s<=6;s++){
-    const ok=isSolo()?!!S.data[activeRole()].ready[s]:(S.data.A.ready[s]&&S.data.B.ready[s]);
+    const ok=isSolo()?!!S.data[activeRole()].ready[s]:(!!me().ready[s]&&partnerReadyFor(s));
     if(ok)n=Math.max(n,s+1);
   }
   return Math.min(n,6);
 }
 function totalSessions(w){let n=0;for(let s=1;s<=6;s++)n+=(S.data[w].sessions[s]||0);return n;}
+/* Only meaningful when both reflections genuinely live on this phone, i.e.
+   shared-device mode. Paired phones never exchange reflections, so there is
+   nothing to match and nothing to badge. */
+function canMatchLocally(){ return S.mode==="shared"; }
 function hasNewMatch(){
-  if(isSolo())return false;
+  if(!canMatchLocally())return false;
   for(let s=1;s<=6;s++){if(S.data.A.debrief[s]&&S.data.B.debrief[s])return true;}
   return false;
 }
@@ -573,73 +623,168 @@ function loadProfile(){
 function clearProfile(){ try{ localStorage.removeItem(PROFILE_KEY); }catch(e){} }
 
 /* ============================================================
-   LIVE PAIRING — public MQTT relay over WSS (no account, works
-   on any static host: sharemyhtml, tiiny.host, WP Engine, etc.).
-   Private free-text notes are NEVER transmitted. Only readiness,
-   session counts, and chip selections sync. In production this
-   becomes a private backend that computes matches server-side so
-   raw selections never leave a device.
+   LIVE PAIRING — minimal-disclosure protocol.
+   ------------------------------------------------------------
+   WHAT CROSSES THE PAIRING LINK, IN FULL:
+
+     topic  sb3/<sessionId>/p/<side>   payload "1" | "0"   (presence)
+     topic  sb3/<sessionId>/u/<side>   payload "0".."6"    (stage pointer)
+
+   That is the whole protocol. Two topics, one character each, no JSON,
+   no object with room for a field to creep back into. Nothing about a
+   person is in it: no name, no pronouns, no gender, no orientation, no
+   relationship structure, no session counts, no reflection chips and no
+   notes. Those never leave the phone they were typed on — not even
+   encrypted, because they are not sent at all.
+
+   <side> is "h" (created the pairing) or "g" (joined it). It says nothing
+   about who either person is.
+
+   The stage pointer is the consent gate itself and is the reason a link
+   exists: stage N+1 opens only when BOTH people have privately confirmed,
+   which is impossible unless each phone learns that the other has
+   confirmed. One integer is the smallest signal that carries that.
+
+   retain is FALSE on every publish, including the last-will. Nothing is
+   left on the broker once both phones disconnect; a stranger subscribing
+   afterwards receives nothing at all. Because there is no retained state
+   to read on arrival, both sides re-announce on a heartbeat instead.
+
+   The relay is still a public broker, and the topic is derived from the
+   pair code by SHA-256 so the code itself never appears on the wire and
+   the topic cannot be guessed from the app's name. That hardening is
+   worth having, but it is not what protects the user — minimisation is.
+   A private authenticated backend remains the correct long-term home for
+   this link; see PRIVACY.md.
    ============================================================ */
 const RELAY="wss://broker.emqx.io:8084/mqtt";
-function extractChips(deb){const o={};for(let s=1;s<=6;s++){if(deb[s])o[s]={good:deb[s].good||[],more:deb[s].more||[]};}return o;}
-/* What crosses between the two devices, and nothing else:
-   readiness, session counts, chip selections, and how you want to be
-   ADDRESSED (name + pronouns) so the other device can word its prompts
-   for you correctly. Gender, orientation, relationship structure and
-   every free-text note stay local — they are never in this payload. */
-function publishState(){
-  if(S.mode!=="live"||!S.mq||!S.connected) return;
-  const mine=me(),who=person(S.myRole);
-  S.mq.publish("slowburn/"+S.code+"/s/"+S.myRole,
-    JSON.stringify({role:S.myRole,name:who.name,pronouns:who.pronouns,pronounsCustom:who.pronounsCustom,
-      ready:mine.ready,sessions:mine.sessions,chips:extractChips(mine.debrief)}),
-    {retain:true,qos:0});
+const TOPIC_ROOT="sb3";
+
+/* Compact SHA-256 (public-domain construction). Used synchronously and
+   without a network or crypto.subtle dependency, so topic derivation works
+   identically in the WKWebView, on file:// and on any static host. */
+function sha256hex(str){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  // UTF-8 encode
+  const bytes=[];
+  for(let i=0;i<str.length;i++){
+    let c=str.charCodeAt(i);
+    if(c<0x80)bytes.push(c);
+    else if(c<0x800){bytes.push(0xc0|(c>>6),0x80|(c&63));}
+    else if(c<0xd800||c>=0xe000){bytes.push(0xe0|(c>>12),0x80|((c>>6)&63),0x80|(c&63));}
+    else{ c=0x10000+(((c&0x3ff)<<10)|(str.charCodeAt(++i)&0x3ff));
+      bytes.push(0xf0|(c>>18),0x80|((c>>12)&63),0x80|((c>>6)&63),0x80|(c&63)); }
+  }
+  const bitLen=bytes.length*8;
+  bytes.push(0x80);
+  while(bytes.length%64!==56)bytes.push(0);
+  for(let i=7;i>=0;i--)bytes.push((i<4?Math.floor(bitLen/Math.pow(2,i*8)):0)&255);
+  const rr=(x,n)=>(x>>>n)|(x<<(32-n));
+  const w=new Array(64);
+  for(let off=0;off<bytes.length;off+=64){
+    for(let i=0;i<16;i++)w[i]=(bytes[off+i*4]<<24)|(bytes[off+i*4+1]<<16)|(bytes[off+i*4+2]<<8)|bytes[off+i*4+3];
+    for(let i=16;i<64;i++){
+      const s0=rr(w[i-15],7)^rr(w[i-15],18)^(w[i-15]>>>3),
+            s1=rr(w[i-2],17)^rr(w[i-2],19)^(w[i-2]>>>10);
+      w[i]=(w[i-16]+s0+w[i-7]+s1)|0;
+    }
+    let [a,b,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const S1=rr(e,6)^rr(e,11)^rr(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0,
+            S0=rr(a,2)^rr(a,13)^rr(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0;
+      h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;
+    }
+    H=[(H[0]+a)|0,(H[1]+b)|0,(H[2]+c)|0,(H[3]+d)|0,(H[4]+e)|0,(H[5]+f)|0,(H[6]+g)|0,(H[7]+h)|0];
+  }
+  return H.map(x=>((x>>>0).toString(16).padStart(8,"0"))).join("");
 }
-function connectLive(role,name,code){
-  S.mode="live";S.myRole=role;S.code=code;if(name)S.profile.people[role].name=name;
+/* The pair code never travels; only this derivation of it does. */
+function sessionId(code){ return sha256hex("slowburn/pairing/v3|"+normCode(code)).slice(0,32); }
+
+function pairBase(){ return TOPIC_ROOT+"/"+sessionId(S.code); }
+/* The single integer described above, and literally nothing else. */
+function publishProgress(){
+  if(S.mode!=="live"||!S.mq||!S.connected)return;
+  try{ S.mq.publish(pairBase()+"/u/"+S.pairSide,String(myStagePointer()),{retain:false,qos:0}); }catch(e){}
+}
+function publishPresence(v){
+  if(S.mode!=="live"||!S.mq||!S.connected)return;
+  try{ S.mq.publish(pairBase()+"/p/"+S.pairSide,v,{retain:false,qos:0}); }catch(e){}
+}
+/* Nothing is retained on the broker, so a phone that connects later cannot
+   read the other's current state — both sides simply re-announce on a
+   timer, and a partner falls back to "offline" if they go quiet. */
+const HEARTBEAT_MS=12000, PARTNER_STALE_MS=40000;
+function startHeartbeat(){
+  stopHeartbeat();
+  S.hb=setInterval(()=>{
+    publishPresence("1");publishProgress();
+    if(S.partnerOnline&&S.partnerSeen&&(Date.now()-S.partnerSeen)>PARTNER_STALE_MS){S.partnerOnline=false;render();}
+  },HEARTBEAT_MS);
+}
+function stopHeartbeat(){ if(S.hb){clearInterval(S.hb);S.hb=null;} }
+
+function connectLive(side,name,code){
+  S.mode="live";S.pairSide=side;S.code=normCode(code);
+  /* The name is this device owner's own, kept in their own slot, and used
+     only to word this phone's copy. It is not published. */
+  if(name)S.profile.people.A.name=name;
   if(!window.mqtt){liveFail();return;}
-  const base="slowburn/"+code;
+  const base=pairBase();
   let opened=false,client;
   try{
     client=mqtt.connect(RELAY,{clientId:"sb_"+Math.random().toString(16).slice(2),clean:true,
       connectTimeout:6000,reconnectPeriod:4000,keepalive:30,
-      will:{topic:base+"/p/"+role,payload:"0",retain:true,qos:0}});
+      will:{topic:base+"/p/"+side,payload:"0",retain:false,qos:0}});
   }catch(e){liveFail();return;}
   S.mq=client;
   const to=setTimeout(()=>{if(!opened){try{client.end(true);}catch(e){}liveFail();}},8000);
   client.on("connect",()=>{
     opened=true;clearTimeout(to);S.connected=true;
-    client.subscribe(base+"/s/+");client.subscribe(base+"/p/+");
-    client.publish(base+"/p/"+role,"1",{retain:true,qos:0});
-    publishState();
+    client.subscribe(base+"/u/+");client.subscribe(base+"/p/+");
+    publishPresence("1");publishProgress();
+    startHeartbeat();
     if(S.pairPhase==="join"){S.screen="app";S.tab="today";}
     render();
   });
   client.on("message",(t,payload)=>{
-    const p=t.split("/"),kind=p[2],r=p[3];
-    if(r===S.myRole)return;
-    if(kind==="p"){S.partnerOnline=payload.toString()==="1";render();return;}
-    if(kind==="s"){let m;try{m=JSON.parse(payload.toString());}catch(e){return;}applyPartner(m);}
+    const p=t.split("/"),kind=p[2],sd=p[3];
+    if(sd===S.pairSide)return;
+    const v=payload.toString();
+    if(kind==="p"){
+      if(v==="0"){S.partnerOnline=false;render();return;}
+      S.partnerOnline=true;S.partnerSeen=Date.now();
+      /* They just arrived and nothing is retained for them to read, so
+         say where we are. */
+      publishProgress();render();return;
+    }
+    if(kind==="u"){
+      const n=parseInt(v,10);
+      if(!(n>=0&&n<=6))return;                 // anything else is not ours
+      S.partnerStage=n;S.partnerOnline=true;S.partnerSeen=Date.now();render();
+    }
   });
   client.on("error",()=>{});
 }
-function applyPartner(m){
-  const pr=partnerRole();
-  S.data[pr].ready=m.ready||{};S.data[pr].sessions=m.sessions||{};
-  const deb={},ch=m.chips||{};for(const k in ch)deb[k]={good:ch[k].good||[],more:ch[k].more||[]};
-  S.data[pr].debrief=deb;
-  /* Let the other person's OWN pronouns win over anything we guessed for them. */
-  if(m.name)S.profile.people[pr].name=m.name;
-  if(m.pronouns){S.profile.people[pr].pronouns=m.pronouns;S.profile.people[pr].pronounsCustom=m.pronounsCustom||"";}
-  saveProfile();
-  S.partnerOnline=true;render();
-}
 function liveFail(){
   // Relay unreachable (offline / blocked network) → graceful solo fallback.
+  stopHeartbeat();
   S.mode="solo";S.mq=null;S.connected=false;S.screen="app";S.tab="today";
   toast("Couldn’t reach the live relay — running in solo mode.");render();
 }
-function leaveLive(){try{if(S.mq){S.mq.publish("slowburn/"+S.code+"/p/"+S.myRole,"0",{retain:true});S.mq.end(true);}}catch(e){}S.mq=null;}
+function leaveLive(){
+  stopHeartbeat();
+  try{if(S.mq){S.mq.publish(pairBase()+"/p/"+S.pairSide,"0",{retain:false,qos:0});S.mq.end(true);}}catch(e){}
+  S.mq=null;S.connected=false;S.partnerOnline=false;S.partnerStage=0;S.partnerSeen=0;
+}
 
 /* ============================================================
    EXTERNAL LINKS — Capacitor Browser.open with window.open
@@ -822,7 +967,8 @@ function screenDisclaimer(){
    ------------------------------------------------------------
    Runs once on first launch and is fully editable afterwards
    from the last tab. Everything captured here is stored on the
-   device only and is NEVER published over the pairing relay.
+   device only and is NEVER published over the pairing relay — the relay
+   carries a single stage number and nothing else (see LIVE PAIRING).
    Every field is skippable; skipping resolves to inclusive,
    gender-neutral language rather than to any default identity.
    ============================================================ */
@@ -881,7 +1027,7 @@ function screenSetup(){
       <div class="divider"></div>
       <div class="opt" data-action="who-sample"><div class="oic">${I.spark}</div>
         <div><div class="ttl">See a sample walkthrough</div><div class="dsc">A clearly-labelled example (Rowan &amp; Ari, both they/them) to look around without entering anything about yourself.</div></div></div>
-      <div class="foot-legal">Everything you enter about yourself stays on this device. It is never sent to us, and never sent over the pairing link.</div>
+      <div class="foot-legal">Everything you enter about yourself — your name, pronouns, identity, reflections and private notes — stays on this device. It is never sent to us. If you pair two phones, the only thing that crosses is an anonymous number: which stage you have said you are ready for. Nothing is stored anywhere afterwards.</div>
     </div>`;
   }
 
@@ -908,7 +1054,7 @@ function screenSetup(){
       <div class="mt10">${setupProgress(3)}</div>
       <div class="eyebrow">About your partner</div>
       <h2 class="display" style="font-size:25px;margin-top:8px">And them?</h2>
-      <p class="lead mt6" style="font-size:13.5px">Fill this in together if you like — or leave it blank and let them set their own on their device when you pair.</p>
+      <p class="lead mt6" style="font-size:13.5px">This is only ever used to word <em>your</em> copy of the app, on this phone. Fill it in together if you like, or skip it — nothing here is sent to them, and their own phone words itself from their own answers.</p>
       <div class="card mt14">
         <div style="font-weight:700;font-size:14.5px">What do you call them?</div>
         <div class="tiny mt6">A label of your choosing. It never implies a gender.</div>
@@ -920,7 +1066,7 @@ function screenSetup(){
       ${S.editReturn
         ?`<button class="btn mt18" data-action="setup-save">Save</button>`
         :`<button class="btn mt18" data-action="setup-next">Continue</button>
-          <div class="center mt6"><button class="link" data-action="setup-next">Skip — they’ll set their own</button></div>`}
+          <div class="center mt6"><button class="link" data-action="setup-next">Skip — I’d rather not say</button></div>`}
     </div>`;
   }
 
@@ -1021,7 +1167,7 @@ function screenPairing(){
       <button class="back" data-action="pair-to-setup">‹ Back</button>
       <div class="eyebrow mt10">Set up</div>
       <h2 class="display" style="font-size:25px;margin-top:8px">One device or two?</h2>
-      <p class="lead mt6" style="font-size:13.5px">Two devices keeps each person’s answers genuinely private. One device works too.</p>
+      <p class="lead mt6" style="font-size:13.5px">Two phones keeps each person’s answers on their own phone. One phone works too — you just hand it back and forth.</p>
       <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
         <div class="opt" data-action="pair-create"><div class="oic">${I.phone}</div>
           <div><div class="ttl">Pair two devices</div><div class="dsc">Invite ${esc(otherName())} with a code or QR. The consent gate unlocks live across both.</div></div></div>
@@ -1030,7 +1176,7 @@ function screenPairing(){
         <div class="opt" data-action="pair-shared"><div class="oic">${I.solo}</div>
           <div><div class="ttl">Share this one device</div><div class="dsc">Hand the phone back and forth, switching sides with a toggle at the top.</div></div></div>
       </div>
-      <div class="foot-legal">Live pairing keeps each person’s private notes on their own device — only what you both choose is ever shared. Your name and pronouns sync so each device words things correctly; your gender, orientation and structure never leave this phone.</div>
+      <div class="foot-legal">Pairing sends one thing between the two phones: an anonymous number saying which stage you have confirmed you are ready for. That is what makes the consent gate work. Your name, pronouns, gender, orientation, relationship structure, reflections and notes never leave the phone you typed them on.</div>
     </div>`;
   }
   if(S.pairPhase==="create"){
@@ -1041,12 +1187,13 @@ function screenPairing(){
       <h2 class="display" style="font-size:24px;margin-top:8px">Scan to join</h2>
       <p class="lead mt6" style="font-size:13.5px">${TE("On {their} device, scan this or open the link and enter the code.")}</p>
       <div class="qrbox mt14" id="qrbox"></div>
-      <div class="codepill mt14">${S.code}</div>
+      <div class="codepill mt14">${prettyCode(S.code)}</div>
       <p class="tiny center mt6">${esc(inviteUrl)}</p>
       <div class="livebar ${online?'':'off'} mt14">${online?TE("● {Partner} connected — you’re linked"):TE("○ Waiting for {partner} to join…")}</div>
       <div class="card-soft mt14">
         <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
-        <input class="field" id="myname" placeholder="Name or nickname" value="${esc(person(S.myRole).name)}" />
+        <div class="tiny" style="margin-bottom:8px">Used only to word this phone’s copy. It is not sent to ${TE("{them}")}.</div>
+        <input class="field" id="myname" placeholder="Name or nickname" value="${esc(person("A").name)}" />
       </div>
       <button class="btn mt14" data-action="enter-app-host">Continue ${online?'':TE("— {they} can join anytime")}</button>
     </div>`;
@@ -1058,13 +1205,14 @@ function screenPairing(){
     <div class="eyebrow mt10">Join ${TE("{partner}")}</div>
     <h2 class="display" style="font-size:24px;margin-top:8px">Enter the pair code</h2>
     <p class="lead mt6" style="font-size:13.5px">${TE("Type the code from {their} device.")}</p>
-    <input class="field code mt18" id="joincode" maxlength="8" placeholder="SB····" value="${esc(pre)}" />
+    <input class="field code mt18" id="joincode" maxlength="12" placeholder="XXXXX XXXXX" value="${esc(prettyCode(pre))}" />
     <div class="card-soft mt14">
       <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
-      <input class="field" id="joinname" placeholder="Name or nickname" value="${esc(person("B").name)}" />
+      <div class="tiny" style="margin-bottom:8px">Stays on this phone — it is not sent to ${TE("{them}")}.</div>
+      <input class="field" id="joinname" placeholder="Name or nickname" value="${esc(person("A").name)}" />
     </div>
     <button class="btn mt14" data-action="do-join">Link our devices</button>
-    <div class="foot-legal">Both devices need to be online. Nothing you write privately leaves your device; only your name and pronouns are shared, so each side words things correctly.</div>
+    <div class="foot-legal">Both phones need to be online. Nothing about you is sent — not your name, not your pronouns, not a word you write. Only an anonymous stage number crosses, so the two phones can open the next stage together.</div>
   </div>`;
 }
 
@@ -1137,9 +1285,12 @@ function tabProgram(){
     <div class="mt18">${items}</div></div></div>`;
 }
 function tabCheckins(){
-  /* Solo: your own reflections over time — the same private-first idea,
-     without inventing a partner to match against. */
-  if(isSolo()){
+  /* Your own reflections over time. This is the view whenever the other
+     person's reflections are not on this phone — solo (there is no partner)
+     and paired (their answers stay on their own phone and are never sent).
+     Only shared-device mode can honestly show an overlap, because there both
+     sets were typed here. */
+  if(!canMatchLocally()){
     let own="";
     for(let s=6;s>=1;s--){
       const d=me().debrief[s]; if(!d) continue;
@@ -1153,7 +1304,8 @@ function tabCheckins(){
     }
     return `<div class="view"><div class="pad-tab">
       <div class="eyebrow">Your reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you noticed</h2>
-      <p class="lead mt6" style="font-size:13.5px">After each session you reflect privately. Everything here — including your written notes — stays on this device.</p>
+      <p class="lead mt6" style="font-size:13.5px">After each session you reflect privately. Everything here — chips and written notes alike — stays on this device and is never sent anywhere.</p>
+      ${S.mode==="live"?`<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("{Partner} keeps their reflections on their own phone, and Slow Burn never moves them. Comparing notes is something the two of you do out loud, whenever you want to — the app deliberately isn’t the go-between.")}</p></div>`:""}
       ${own||`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
         <p class="lead" style="font-size:14px">No reflections yet.</p>
         <p class="tiny mt6">Run a session and reflect — your pattern over time shows up here.</p></div>`}
@@ -1218,11 +1370,14 @@ function tabPartner(){
           <div class="avatar A">${initial("A")}</div>
           <div class="avatar B" style="margin-left:-14px">${initial("B")}</div>
           <div style="margin-left:6px"><div style="font-weight:700">${esc(cap1(firstName(person("A").name)||"You"))} &amp; ${esc(cap1(otherName()))}</div>
-            <div class="tiny">${esc(structureLabel())}${S.code?" · code "+esc(S.code):""}</div></div></div>
+            <div class="tiny">${esc(structureLabel())}${S.code?" · code "+esc(prettyCode(S.code)):""}</div></div></div>
         <div class="divider"></div>
         <div class="kv"><span class="k">Current stage</span><span class="v">Stage ${cur} — ${esc(stTitle(STAGES[cur-1]))}</span></div>
-        <div class="kv"><span class="k">${esc(cap1(firstName(person("A").name)||"You"))} · sessions</span><span class="v">${totalSessions('A')}</span></div>
-        <div class="kv"><span class="k">${esc(cap1(otherName()))} · sessions</span><span class="v">${totalSessions('B')}</span></div></div>`;
+        ${S.mode==="live"
+          ? `<div class="kv"><span class="k">Your sessions</span><span class="v">${totalSessions(activeRole())}</span></div>
+             <div class="kv"><span class="k">${esc(cap1(otherName()))} · ready through</span><span class="v">${(S.partnerStage||0)?("Stage "+(S.partnerStage||0)):"Not yet confirmed"}</span></div>`
+          : `<div class="kv"><span class="k">${esc(cap1(firstName(person("A").name)||"You"))} · sessions</span><span class="v">${totalSessions('A')}</span></div>
+             <div class="kv"><span class="k">${esc(cap1(otherName()))} · sessions</span><span class="v">${totalSessions('B')}</span></div>`}</div>`;
 
   return `<div class="view"><div class="pad-tab">
     ${header}
@@ -1232,12 +1387,14 @@ function tabPartner(){
         <div><div style="font-weight:700;font-size:14px">Identity &amp; language</div>
           <p class="tiny" style="margin-top:4px;line-height:1.6">${solo
             ?esc(T("Pronouns: {they}/{them}. Slow Burn words everything around how you describe yourself."))
-            :esc(T("You use "+pronounLabel("A")+"; {partner} uses "+pronounLabel("B")+". Every prompt in the app is worded from this."))}</p></div>
+            :esc(T("You use "+pronounLabel("A")+"; {partner} uses "+pronounLabel("B")+". Every prompt in the app is worded from this, on this phone only."))}</p></div>
         <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div></div>
     <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Privacy, by design</div>
       <p class="tiny" style="line-height:1.6">${solo
         ?"Your readiness answers, reflections, private notes and identity settings never leave this device. Slow Burn has no account and no server."
-        :"Your readiness answers and private notes stay on your own device. Slow Burn only ever shows the reflections you <b>both</b> named positively. The only identity detail that crosses between your devices is how you want to be addressed — your name and pronouns. Your gender, orientation and relationship structure never leave your own phone."}</p></div>
+        :(S.mode==="live"
+          ?"Nothing that identifies you is ever transmitted. Your name, pronouns, gender, orientation, relationship structure, session history, reflections and notes stay on this phone. The pairing link carries exactly one thing — a number from 0 to 6 for the stage you have confirmed you are ready for — plus whether this phone is currently online. There is no account, and nothing is kept on the relay once you disconnect."
+          :"You are both using this one phone, so everything stays here and nothing is transmitted at all. Slow Burn still only shows each of you the reflections you <b>both</b> named positively — never the rest.")}</p></div>
     ${isMultiPartner()?`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">More than one partner?</div>
       <p class="tiny" style="line-height:1.6">Slow Burn runs once per partnership, at that partnership’s own pace. To begin a separate run, reset from Identity &amp; language — nothing carries over between them.</p></div>`:""}
     <div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:8px">For clinicians</div>
@@ -1281,7 +1438,7 @@ function supportCard(){
 
 function screenStage(id){
   const st=STAGES[id-1],cur=maxUnlocked(),isCurrent=id===cur,solo=isSolo();
-  const mySess=me().sessions[id]||0,iReady=!!me().ready[id],theyReady=!!other().ready[id];
+  const mySess=me().sessions[id]||0,iReady=!!me().ready[id],theyReady=partnerReadyFor(id);
   const unlockedNext=solo?iReady:(iReady&&theyReady);
   let gate="";
   if(id<6&&solo){
@@ -1327,7 +1484,7 @@ function screenStage(id){
         <div style="font-weight:700;font-size:15px;font-family:var(--serif)">Ready to progress?</div>
         <p class="tiny mt6" style="line-height:1.6">${TE("Only move on when this stage feels easy and unhurried. When you privately confirm, Stage "+(id+1)+" unlocks as soon as {partner} confirms too.")}</p>
         <button class="btn mt14" data-action="ready" data-id="${id}">I feel ready for Stage ${id+1}</button>
-        <p class="lock-note">${I.lock} ${TE("{Partner}’s answer stays private until you’ve both confirmed.")}</p></div>`;
+        <p class="lock-note">${I.lock} ${TE("Nothing you write is shared with {them}. Confirming sends one thing: the stage you’ve reached.")}</p></div>`;
     }
   }
   return `<div class="view"><div class="pad">
@@ -1361,9 +1518,9 @@ function screenSession(){
   return `<div class="view"><div class="pad">
     <div class="eyebrow">Private reflection · Stage ${st.id}</div>
     <h2 class="display" style="font-size:24px;margin-top:8px">Just for you${meName()==="you"?"":", "+esc(cap1(meName()))}</h2>
-    <p class="lead mt6" style="font-size:13.5px">${solo
-      ?"Answer honestly. Nothing here leaves this device."
-      :TE("Answer honestly. Only the things you and {partner} <b>both</b> choose will ever be shown to either of you.")}</p>
+    <p class="lead mt6" style="font-size:13.5px">${canMatchLocally()
+      ?TE("Answer honestly. On this shared phone, only the things you and {partner} <b>both</b> choose are ever shown back — never the rest.")
+      :"Answer honestly. Nothing here leaves this device."}</p>
     <div class="card mt18"><div style="font-weight:700;font-size:14.5px">1 · What felt good this time?</div><div class="tiny mt6">Choose any that fit.</div>
       <div class="chips mt10">${goodChips().map(x=>`<span class="chip ${g.has(x)?'sel':''}" data-action="chip" data-grp="good" data-val="${esc(x)}">${esc(x)}</span>`).join("")}</div></div>
     <div class="card mt14"><div style="font-weight:700;font-size:14.5px">2 · Anything you’d welcome more of?</div><div class="tiny mt6">Gentle wishes, not complaints.</div>
@@ -1383,8 +1540,8 @@ function nudgeText(cur){
     return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session to see your pattern.`;
   }
   if(mine===0) return T(`You’re on <b>${title}</b>. When {us} have a quiet evening, open the stage and try a first session — there’s nothing to get right.`);
-  if(me().ready[cur]&&!other().ready[cur]) return T(`You’ve confirmed you’re ready for the next stage. {Partner} will get there in {their} own time — you’ll unlock it together.`);
-  return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session to see what you share.`;
+  if(me().ready[cur]&&!partnerReadyFor(cur)) return T(`You’ve confirmed you’re ready for the next stage. {Partner} will get there in {their} own time — you’ll unlock it together.`);
+  return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session${canMatchLocally()?" to see what you share":" — your own pattern builds up over time"}.`;
 }
 
 /* ---------------- FIND A CLINICIAN ---------------- */
@@ -1421,7 +1578,7 @@ function renderBar(){
   if(S.mode==="live"){
     bar.innerHTML=`<div class="pb-title"><span class="pb-dot ${S.partnerOnline?'live':'off'}"></span>
       LIVE · you’re ${esc(cap1(meName()))}
-      <span class="pb-sub">· ${esc(S.partnerOnline?cap1(otherName())+' connected':T('waiting for {partner}'))} · code ${esc(S.code)}</span></div>
+      <span class="pb-sub">· ${esc(S.partnerOnline?cap1(otherName())+' connected':T('waiting for {partner}'))} · code ${esc(prettyCode(S.code))}</span></div>
       <div class="pb-controls"><button class="btn-ghost-lite" data-action="leave">Leave</button></div>`;
   } else if(S.mode==="shared"){
     const nameA=cap1(firstName(person("A").name)||"You"), nameB=cap1(firstName(person("B").name)||cap1(partnerTerm()));
@@ -1523,7 +1680,6 @@ document.addEventListener("click",(e)=>{
   }
   if(a==="setup-save"){
     captureSetup(); S.editReturn=false; saveProfile();
-    if(S.mode==="live") publishState();
     S.screen="profile"; render(); toast("Saved."); return;
   }
   if(a==="setup-back"){
@@ -1573,21 +1729,21 @@ document.addEventListener("click",(e)=>{
   if(a==="clin-back"){const r=S.clinReturn||{screen:"app",tab:"today"};S.screen=r.screen||"app";if(r.tab)S.tab=r.tab;if(r.stageOpen)S.stageOpen=r.stageOpen;render();return;}
 
   // pairing
-  if(a==="pair-create"){S.pairPhase="create";S.code=genCode();connectLive("A","",S.code);render();return;}
+  if(a==="pair-create"){S.pairPhase="create";S.code=genCode();connectLive("h","",S.code);render();return;}
   if(a==="pair-join"){S.pairPhase="join";render();return;}
   if(a==="pair-shared"){S.mode="shared";S.view="A";S.screen="app";S.tab="today";saveProfile();render();return;}
   if(a==="pair-to-setup"){leaveLive();S.mode=null;S.screen="setup";S.setupStep="structure";render();return;}
   if(a==="pair-back"){leaveLive();S.mode=null;S.pairPhase="choose";render();return;}
   if(a==="enter-app-host"){
     const nm=(document.getElementById("myname")||{}).value||"";
-    if(nm.trim())S.profile.people[S.myRole].name=nm.trim();
-    saveProfile();publishState();S.screen="app";S.tab="today";render();return;
+    if(nm.trim())S.profile.people.A.name=nm.trim();
+    saveProfile();S.screen="app";S.tab="today";render();return;
   }
   if(a==="do-join"){
-    const code=((document.getElementById("joincode")||{}).value||"").trim().toUpperCase();
+    const code=normCode((document.getElementById("joincode")||{}).value||"");
     const nm=((document.getElementById("joinname")||{}).value||"").trim();
-    if(code.length<4){toast("Enter the code from the other phone");return;}
-    connectLive("B",nm,code);toast("Linking…");return;
+    if(code.length<CODE_LEN){toast("Enter the whole code from the other phone");return;}
+    connectLive("g",nm,code);toast("Linking…");return;
   }
   if(a==="leave"||a==="reset"){
     leaveLive();
@@ -1610,24 +1766,23 @@ document.addEventListener("click",(e)=>{
     const id=+el.dataset.id;const note=(document.getElementById("privnote")||{}).value||"";
     me().debrief[id]={good:[...S.form.good],more:[...S.form.more],note};
     me().sessions[id]=(me().sessions[id]||0)+1;
-    publishState();
     S.session=null;S.screen="app";S.stageOpen=id;
+    if(!canMatchLocally()){ S.tab="checkins"; render(); toast("Reflection saved — on this phone, just for you."); return; }
     const bothIn=S.data.A.debrief[id]&&S.data.B.debrief[id];
-    if(isSolo()){ S.tab="checkins"; render(); toast("Reflection saved — just for you."); return; }
     S.tab=bothIn?"checkins":"today";render();
     toast(bothIn?"Reflection saved — see what you both shared":T("Saved privately. {Partner} hasn’t reflected yet."));
     return;
   }
-  if(a==="ready"){const id=+el.dataset.id;me().ready[id]=true;publishState();render();
+  if(a==="ready"){const id=+el.dataset.id;me().ready[id]=true;publishProgress();render();
     if(isSolo()){ toast("Confirmed — Stage "+(id+1)+" unlocked."); return; }
-    const both=S.data.A.ready[id]&&S.data.B.ready[id];
+    const both=partnerReadyFor(id);
     toast(both?"You both confirmed — Stage "+(id+1)+" unlocked":T("Confirmed privately. Waiting for {partner}."));return;}
-  if(a==="unready"){const id=+el.dataset.id;me().ready[id]=false;publishState();render();toast("No problem — staying here.");return;}
+  if(a==="unready"){const id=+el.dataset.id;me().ready[id]=false;publishProgress();render();toast("No problem — staying here.");return;}
 });
 
 /* init: honor ?pair=CODE deep link for the joining partner */
 (function init(){
-  try{const p=new URL(location.href).searchParams.get("pair");if(p)S.pending=p.toUpperCase().slice(0,8);}catch(e){}
+  try{const p=new URL(location.href).searchParams.get("pair");if(p)S.pending=normCode(p);}catch(e){}
   // A returning user shouldn't have to re-declare who they are.
   if(loadProfile()&&!S.pending){
     S.ack=true;

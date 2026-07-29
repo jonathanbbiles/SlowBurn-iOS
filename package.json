@@ -10,6 +10,10 @@
     "cordova-plugin-purchase": "^13.18.0"
   },
   "devDependencies": {
-    "@capacitor/cli": "latest"
+    "@capacitor/cli": "latest",
+    "jsdom": "^24.0.0"
+  },
+  "scripts": {
+    "audit:privacy": "node scripts/privacy-wire-audit.mjs"
   }
 }

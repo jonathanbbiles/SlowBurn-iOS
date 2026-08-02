@@ -1,5 +1,5 @@
 Slow Burn — App Store screenshots
-captured from www/index.html at commit: 18bd147
+captured from www/index.html at commit: 74d0a3a
 source: www/index.html rendered in Chrome at the exact required pixel sizes
 devices: iPhone 6.9" (1290x2796), iPhone 6.5" (1284x2778) — iPhone-only app, no iPad
 screens: 1. welcome  2. program  3. consent  4. checkins  5. pairing-choice  6. pair-code

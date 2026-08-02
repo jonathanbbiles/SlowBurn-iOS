@@ -10,6 +10,9 @@
 <title>Slow Burn</title>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- QR DECODER — vendored, not from a CDN. Two people trying to pair should
+     not need a third-party host to be reachable. Decoding is on-device. -->
+<script src="vendor/jsQR.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@600;700&family=Oswald:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -108,6 +111,11 @@
   .field{width:100%;border:1.5px solid var(--line-2);border-radius:13px;padding:14px;font-family:var(--sans);font-size:16px;color:var(--ink);background:var(--surface)}
   .field:focus{outline:none;border-color:var(--rose)}
   .field.code{letter-spacing:.22em;text-transform:uppercase;font-weight:700;text-align:center;font-family:var(--serif);font-size:22px;color:var(--plum)}
+  .scanbox{position:relative;width:100%;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:#2B2126;
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+  .scanbox video{width:100%;height:100%;object-fit:cover;display:block}
+  .scanframe{position:absolute;inset:14%;border-radius:16px;border:3px solid rgba(255,255,255,.9);
+    box-shadow:0 0 0 100vmax rgba(0,0,0,.28)}
   .qrbox{display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;min-height:170px}
   .qrbox img,.qrbox canvas{border-radius:6px}
   .codepill{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:.14em;color:var(--plum);text-align:center}
@@ -412,6 +420,8 @@ function freshState(){
       areas:"inclusive"
     },
     code:"",pairPhase:"choose",pending:null,
+    /* in-app pair-code scanner (camera stays on-device; see Scanner) */
+    scanning:false,scanError:"",
     mq:null,connected:false,partnerOnline:false,
     /* Live-pairing link state. pairSecure only turns true once the ECDH
        handshake has been CONFIRMED with the pair code; nothing is sent or
@@ -1049,6 +1059,139 @@ function onWire(topic,body){
   }
 }
 
+/* ============================================================
+   PAIR-CODE SCANNER — the app reads its own QR, on-device.
+   ------------------------------------------------------------
+   Both people must already have Slow Burn installed in order to pair, so
+   there is nothing for a web URL to accomplish. The QR therefore encodes the
+   BARE PAIR CODE and nothing else, and only this scanner reads it:
+
+     · no URL is opened, so no universal link / custom scheme is involved
+     · the system Camera app, if someone points it at the QR, just shows the
+       ten characters — which is harmless, and readable enough to type in
+     · a stray QR from the world cannot do anything: a scan is accepted only
+       if it normalises to exactly CODE_LEN characters of our alphabet
+
+   The camera frame never leaves the device: getUserMedia → <video> → an
+   offscreen <canvas> → jsQR, all in this process. Nothing is recorded,
+   uploaded, or kept, and the stream is stopped the moment a code is read or
+   the sheet is closed. See PRIVACY.md.
+
+   No camera, or permission refused → the scan button is never shown at all
+   (same discipline as the tip jar: no dead buttons), and typing the code
+   remains the primary path it always was.
+   ============================================================ */
+/* Is this scanned text one of OUR pair codes?
+
+   It must be validated on the RAW string, never through normCode(): normCode
+   strips every character outside [A-Z0-9] and then truncates to CODE_LEN, so
+   "https://example.com/not-a-pair-code" comes out as a well-formed-looking
+   "HTTPSEXAMP" and any sufficiently long text would be accepted as a pair
+   code. Here the whole string, after nothing but whitespace removal, has to
+   be exactly CODE_LEN characters drawn from the pair-code alphabet — which
+   deliberately omits B, G, I, O, Q, S, V, Z and 0/1/2/5/8.
+   Returns the code, or "" if it is not ours. */
+function asPairCode(raw){
+  const s=String(raw==null?"":raw).replace(/\s+/g,"").toUpperCase();
+  if(s.length!==CODE_LEN) return "";
+  for(let i=0;i<s.length;i++) if(CODE_ALPHA.indexOf(s.charAt(i))<0) return "";
+  return s;
+}
+
+const Scanner=(function(){
+  let stream=null,raf=null,video=null,canvas=null,ctx=null,onFound=null,active=false;
+  /* Only offer scanning if this device can actually do it. */
+  function supported(){
+    try{ return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.jsQR); }
+    catch(e){ return false; }
+  }
+  function stop(){
+    active=false;
+    if(raf){cancelAnimationFrame(raf);raf=null;}
+    try{ if(stream) stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+    stream=null;
+    if(video){ try{video.pause();video.srcObject=null;}catch(e){} }
+    video=null;canvas=null;ctx=null;onFound=null;
+  }
+  function tick(){
+    if(!active) return;
+    if(video&&video.readyState===video.HAVE_ENOUGH_DATA){
+      const w=video.videoWidth,h=video.videoHeight;
+      if(w&&h){
+        /* Downscale: jsQR is plenty accurate at ~640px and this keeps the
+           scan loop cheap enough not to heat the phone. */
+        const scale=Math.min(1,640/Math.max(w,h));
+        canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+        let res=null;
+        try{ res=window.jsQR(img.data,img.width,img.height,{inversionAttempts:"dontInvert"}); }catch(e){}
+        if(res&&res.data){
+          const code=asPairCode(res.data);      // strict — see asPairCode()
+          if(code){ const cb=onFound; stop(); if(cb) cb(code); return; }
+          /* Not ours: keep looking rather than acting on it. */
+        }
+      }
+    }
+    raf=requestAnimationFrame(tick);
+  }
+  /* Returns a promise that resolves once the camera is live, or rejects with
+     a reason the caller can show the user. */
+  async function start(videoEl,cb){
+    if(!supported()) throw new Error("unsupported");
+    stop();
+    video=videoEl;onFound=cb;
+    canvas=document.createElement("canvas");ctx=canvas.getContext("2d",{willReadFrequently:true});
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:"environment"},audio:false});
+    video.srcObject=stream;
+    video.setAttribute("playsinline","");video.muted=true;
+    await video.play().catch(()=>{});
+    active=true;raf=requestAnimationFrame(tick);
+  }
+  return {supported,start,stop};
+})();
+
+function closeScan(msg){
+  Scanner.stop();
+  S.scanning=false;S.scanError="";
+  render(); if(msg) toast(msg);
+}
+function openScan(){
+  if(!Scanner.supported()){ toast("This device can’t scan — type the code instead."); return; }
+  S.scanning=true;S.scanError="";render();
+  /* The <video> only exists after the render above. */
+  setTimeout(()=>{
+    const v=document.getElementById("scanvideo");
+    if(!v){ closeScan(); return; }
+    Scanner.start(v,(code)=>{
+      S.scanning=false;S.scanError="";
+      S.pending=code;S.pairPhase="join";render();
+      const f=document.getElementById("joincode"); if(f) f.value=prettyCode(code);
+      toast("Code scanned — linking…");
+      const nm=((document.getElementById("joinname")||{}).value||"").trim();
+      connectLive("g",nm,code);
+    }).catch((e)=>{
+      /* Denied or unavailable: say so plainly and fall back to typing. */
+      S.scanning=false;
+      S.scanError=(e&&(e.name==="NotAllowedError"||e.name==="SecurityError"))
+        ? "Camera access is off for Slow Burn. You can turn it on in Settings — or just type the code."
+        : "Couldn’t open the camera. Type the code instead — it works exactly the same.";
+      render();
+    });
+  },0);
+}
+function screenScan(){
+  return `<div class="pad">
+    <button class="back" data-action="scan-cancel">‹ Cancel</button>
+    <div class="eyebrow mt10">Pairing</div>
+    <h2 class="display" style="font-size:24px;margin-top:8px">Point at their code</h2>
+    <p class="lead mt6" style="font-size:13.5px">${TE("Hold this over the QR on {their} phone. Slow Burn reads it right here — nothing opens, and no picture is taken or kept.")}</p>
+    <div class="scanbox mt18"><video id="scanvideo" playsinline muted></video><div class="scanframe"></div></div>
+    <button class="btn btn-soft mt18" data-action="scan-cancel">Type the code instead</button>
+  </div>`;
+}
+
 function connectLive(side,name,code){
   /* No WebCrypto ⇒ no encrypted link ⇒ we do NOT pair. There is no
      plaintext fallback path in this app. */
@@ -1491,7 +1634,6 @@ function safetyWordCard(){
     <p class="tiny mt6" style="line-height:1.6">${TE("If this reads the same on {partner}’s phone, no one is in the middle. You only need to check it once, and only if you want to.")}</p></div>`;
 }
 function screenPairing(){
-  const inviteUrl=location.origin+location.pathname+"?pair="+S.code;
   if(S.pairPhase==="choose"){
     return `<div class="pad">
       <button class="back" data-action="pair-to-setup">‹ Back</button>
@@ -1514,11 +1656,14 @@ function screenPairing(){
     return `<div class="pad">
       <button class="back" data-action="pair-back">‹ Back</button>
       <div class="eyebrow mt10">Invite ${TE("{partner}")}</div>
-      <h2 class="display" style="font-size:24px;margin-top:8px">Scan to join</h2>
-      <p class="lead mt6" style="font-size:13.5px">${TE("On {their} device, scan this or open the link and enter the code.")}</p>
+      <h2 class="display" style="font-size:24px;margin-top:8px">Your pair code</h2>
+      <p class="lead mt6" style="font-size:13.5px">${TE("Read it out to {them}, or let {them} scan the square — either way it’s Slow Burn on {their} phone that reads it, not a browser.")}</p>
+      <div class="codepill mt14" style="font-size:30px">${prettyCode(S.code)}</div>
+      <p class="tiny center mt6">${TE("In Slow Burn on {their} phone: “Join with a code”.")}</p>
       <div class="qrbox mt14" id="qrbox"></div>
-      <div class="codepill mt14">${prettyCode(S.code)}</div>
-      <p class="tiny center mt6">${esc(inviteUrl)}</p>
+      <p class="tiny center mt6">${Scanner.supported()
+        ? TE("Or {they} can tap Scan on that screen and point {their} camera here.")
+        : TE("{They} can type the code above.")}</p>
       <div class="livebar ${online?'':'off'} mt14">${online?TE("● {Partner} connected — you’re linked"):TE("○ Waiting for {partner} to join…")}</div>
       ${safetyWordCard()}
       <div class="card-soft mt14">
@@ -1535,8 +1680,10 @@ function screenPairing(){
     <button class="back" data-action="pair-back">‹ Back</button>
     <div class="eyebrow mt10">Join ${TE("{partner}")}</div>
     <h2 class="display" style="font-size:24px;margin-top:8px">Enter the pair code</h2>
-    <p class="lead mt6" style="font-size:13.5px">${TE("Type the code from {their} device.")}</p>
+    <p class="lead mt6" style="font-size:13.5px">${TE("Type the ten characters from {their} device.")}</p>
     <input class="field code mt18" id="joincode" maxlength="12" placeholder="XXXXX XXXXX" value="${esc(prettyCode(pre))}" />
+    ${S.scanError?`<div class="callout mt10" style="background:#FFF0F7;border-color:#F3D2E6;color:var(--plum-d)">${esc(S.scanError)}</div>`:""}
+    ${Scanner.supported()?`<button class="btn btn-soft mt10" data-action="scan-open" style="font-size:14px">Scan ${TE("{their}")} code instead</button>`:""}
     <div class="card-soft mt14">
       <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
       <div class="tiny" style="margin-bottom:8px">Stays on this phone — it is not sent to ${TE("{them}")}.</div>
@@ -1945,7 +2092,7 @@ function render(){
   else if(S.screen==="disclaimer")html=screenDisclaimer();
   else if(S.screen==="setup")html=screenSetup();
   else if(S.screen==="profile")html=screenProfile();
-  else if(S.screen==="pairing")html=screenPairing();
+  else if(S.screen==="pairing")html=S.scanning?screenScan():screenPairing();
   else if(S.screen==="stage")html=appChrome(screenStage(S.stageOpen));
   else if(S.screen==="session")html=screenSession();
   else if(S.screen==="clinicians")html=screenClinicians();
@@ -1956,14 +2103,18 @@ function render(){
   root.innerHTML=html;root.scrollTop=0;
   if(S.screen==="pairing"&&S.pairPhase==="create")drawQR();
 }
+/* The QR carries the PAIR CODE and nothing else — no URL, no origin. It used
+   to encode location.origin + "?pair=…", which inside the native app is
+   capacitor://localhost/?pair=… : a string no other phone can open. Scanning
+   it did nothing. Now the app's own scanner reads this, and a system camera
+   pointed at it simply shows the ten characters to type. */
 function drawQR(){
   const box=document.getElementById("qrbox");if(!box)return;
-  const url=location.origin+location.pathname+"?pair="+S.code;
   box.innerHTML="";
   try{
-    if(window.QRCode){new QRCode(box,{text:url,width:172,height:172,colorDark:"#2B2126",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});return;}
+    if(window.QRCode){new QRCode(box,{text:S.code,width:172,height:172,colorDark:"#2B2126",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});return;}
   }catch(e){}
-  box.innerHTML=`<div class="tiny center">Open this link on the other phone:<br/><b>${esc(url)}</b></div>`;
+  box.innerHTML=`<div class="tiny center">Type this code on the other phone:<br/><b>${esc(prettyCode(S.code))}</b></div>`;
 }
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2800);}
 
@@ -2073,10 +2224,12 @@ document.addEventListener("click",(e)=>{
 
   // pairing
   if(a==="pair-create"){S.pairPhase="create";S.code=genCode();connectLive("h","",S.code);render();return;}
-  if(a==="pair-join"){S.pairPhase="join";render();return;}
+  if(a==="pair-join"){S.pairPhase="join";S.scanError="";render();return;}
+  if(a==="scan-open"){openScan();return;}
+  if(a==="scan-cancel"){closeScan();return;}
   if(a==="pair-shared"){S.mode="shared";S.view="A";S.screen="app";S.tab="today";saveProfile();render();return;}
-  if(a==="pair-to-setup"){leaveLive();S.mode=null;S.screen="setup";S.setupStep="structure";render();return;}
-  if(a==="pair-back"){leaveLive();S.mode=null;S.pairPhase="choose";render();return;}
+  if(a==="pair-to-setup"){Scanner.stop();S.scanning=false;leaveLive();S.mode=null;S.screen="setup";S.setupStep="structure";render();return;}
+  if(a==="pair-back"){Scanner.stop();S.scanning=false;S.scanError="";leaveLive();S.mode=null;S.pairPhase="choose";render();return;}
   if(a==="enter-app-host"){
     const nm=(document.getElementById("myname")||{}).value||"";
     if(nm.trim())S.profile.people.A.name=nm.trim();

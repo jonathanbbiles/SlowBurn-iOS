@@ -28,8 +28,8 @@ const DEVICES = {
   iphone65: { w: 428, h: 926, s: 3 },
 };
 /* Numbered so App Store Connect keeps the order. */
-const ORDER = ["welcome", "program", "consent", "checkins", "pairchoose"];
-const NAME = { welcome: "welcome", program: "program", consent: "consent", checkins: "checkins", pairchoose: "pairing-choice" };
+const ORDER = ["welcome", "program", "consent", "checkins", "pairchoose", "invite"];
+const NAME = { welcome: "welcome", program: "program", consent: "consent", checkins: "checkins", pairchoose: "pairing-choice", invite: "pair-code" };
 
 if (!fs.existsSync(CHROME)) { console.error("Chrome not found at " + CHROME + " — set CHROME_PATH"); process.exit(1); }
 fs.mkdirSync(OUT, { recursive: true });
@@ -51,6 +51,11 @@ for (const [dev, d] of Object.entries(DEVICES)) {
        render, not something a user would ever see. Refuse to ship one. */
     const body = await page.evaluate(() => document.body.innerText);
     if (/file:\/\/|localhost:/.test(body)) problems.push(`${dev}/${scene}: capture leaks a local URL into the frame`);
+    /* A scene that failed to load the vendored decoder would silently render
+       the "this device can't scan" copy — wrong for every real iPhone. */
+    const ready = await page.evaluate(() => ({ jsQR: typeof window.jsQR === "function", qr: typeof window.QRCode === "function" }));
+    if (!ready.jsQR) problems.push(`${dev}/${scene}: jsQR did not load — the scan copy would be wrong`);
+    if (!ready.qr) problems.push(`${dev}/${scene}: QRCode did not load — the invite QR would be missing`);
     const out = path.join(OUT, `${dev}_0${i + 1}_${NAME[scene]}.png`);
     await page.screenshot({ path: out });
     await page.close();

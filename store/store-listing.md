@@ -84,6 +84,8 @@ TO REVIEW THE WHOLE APP ON ONE DEVICE, NO SECOND PHONE AND NO ACCOUNT:
 
 No login is required at any point. Nothing is collected about the user. The optional two-phone pairing feature uses an anonymous randomly generated pair code; the two phones perform an ephemeral ECDH key exchange and encrypt everything they exchange with AES-GCM, so the relay carries only ciphertext and retains nothing. The pair code itself is never transmitted.
 
+PAIRING AND THE CAMERA (not required to review the app): pairing two phones is optional and the reviewer does not need it — steps 2 and 3 above exercise everything on one device. If you do try it, the pair code can be typed, or scanned: the QR contains ONLY the ten-character pair code, and the app's own in-app scanner reads it. No URL is opened and no web page is involved. The camera is used solely to decode that code on-device; no image is recorded, stored or transmitted, which is why the app declares no data collection. Declining the camera permission simply hides the scan button and leaves the typed-code path, which is identical.
+
 The tip jar (Us tab → Support Slow Burn) is optional and unlocks nothing — the entire program is free. Tip buttons render only once StoreKit has returned purchasable products, so they are never dead.
 ```
 
@@ -94,6 +96,10 @@ The tip jar (Us tab → Support Slow Burn) is optional and unlocks nothing — t
   us or by the relay, is not retained, and is not linked to any identity; no
   analytics; no ads; no tracking. Tips are handled by Apple; we receive no
   customer data.
+- **Camera:** requested only to decode a pair code on-device. No image or
+  derived data is collected, transmitted or stored, so there is nothing to
+  declare — "Data Not Collected" is still the correct answer. The permission
+  string users see is set by the build lane (see codemagic.yaml).
 
 ## Export compliance
 - **Does your app use encryption?** Yes.

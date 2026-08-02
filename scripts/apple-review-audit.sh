@@ -45,7 +45,40 @@ else
   block "privacy page did not return 200 (got $CODE): $PRIVACY_URL"
 fi
 
-sec "2. Guideline 4 — iPad"
+sec "2. Pairing actually works — QR + scanner"
+if command -v node >/dev/null && [ -d node_modules/puppeteer-core ] && [ -x "${CHROME_PATH:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}" ]; then
+  if npm run --silent test:qr >/tmp/sb-audit-qr.log 2>&1; then
+    pass "pairing QR test green — QR carries the bare code, the scanner reads it and pairs"
+  else
+    block "pairing QR test FAILED — see /tmp/sb-audit-qr.log"
+  fi
+else
+  warn "skipped the pairing QR test (needs Chrome + puppeteer-core) — run \`npm run test:qr\` before shipping"
+fi
+# The original defect, guarded directly: the QR must never carry a URL again.
+if grep -q 'new QRCode(box,{text:S.code' "$APP"; then
+  pass "QR encodes the pair code itself, not a URL"
+else
+  block "the pairing QR does not encode S.code — if it encodes location.origin it is capacitor://localhost and cannot be scanned by anything"
+fi
+if grep -q 'Scan to join' "$APP"; then
+  block "the invite screen still says \"Scan to join\" — copy must match what actually works"
+else
+  pass "invite-screen copy matches the working flow"
+fi
+grep -q 'Scanner.supported()?`<button class="btn btn-soft mt10" data-action="scan-open"' "$APP" \
+  && pass "the Scan button appears only when the device can scan (no dead button)" \
+  || warn "could not confirm the Scan button is gated on Scanner.supported()"
+if grep -q 'NSCameraUsageDescription' "$CM"; then
+  pass "build lane sets NSCameraUsageDescription (without it, touching the camera kills the app)"
+else
+  block "NSCameraUsageDescription is not set by the build lane — the scanner will crash the app on first use"
+fi
+[ -f www/vendor/jsQR.js ] && [ -f www/vendor/jsQR-LICENSE.txt ] \
+  && pass "QR decoder vendored locally with its licence (pairing does not depend on a CDN)" \
+  || block "www/vendor/jsQR.js or its licence is missing"
+
+sec "3. Guideline 4 — iPad"
 if grep -q 'TARGETED_DEVICE_FAMILY = "1"' "$CM"; then
   pass "build lane forces iPhone-only (TARGETED_DEVICE_FAMILY = 1)"
 else
@@ -59,7 +92,7 @@ fi
 grep -q 'min-height:100vh' "$APP" && pass "app fills the viewport at any size" \
   || warn "app may not fill the viewport — check the shell CSS"
 
-sec "3. Export compliance"
+sec "4. Export compliance"
 if grep -q 'ITSAppUsesNonExemptEncryption' "$CM"; then
   if grep -q 'ITSAppUsesNonExemptEncryption bool false' "$CM"; then
     pass "ITSAppUsesNonExemptEncryption=false is set by the build lane"
@@ -76,7 +109,7 @@ grep -q "crypto.subtle" "$APP" \
   && pass "encryption is WebCrypto (provided by iOS/WebKit), not a bundled crypto library" \
   || warn "could not confirm the app uses the OS WebCrypto implementation"
 
-sec "4. App icon"
+sec "5. App icon"
 if [ -f appicon-1024.png ]; then
   ALPHA=$(sips -g hasAlpha appicon-1024.png 2>/dev/null | awk '/hasAlpha/{print $2}')
   W=$(sips -g pixelWidth appicon-1024.png 2>/dev/null | awk '/pixelWidth/{print $2}')
@@ -88,7 +121,7 @@ else
   block "appicon-1024.png is missing"
 fi
 
-sec "5. Guideline 2.1(b) — no dead purchase buttons"
+sec "6. Guideline 2.1(b) — no dead purchase buttons"
 if grep -q 'Monetize.ready()' "$APP"; then
   pass "tip buttons render only when Apple returned purchasable products"
 else
@@ -98,7 +131,7 @@ grep -q 'verified(r=>{ r.finish(); recordTip(); })' "$APP" \
   && pass "a tip is recorded only inside .verified() — no mock grants" \
   || warn "could not confirm tips are granted only from .verified()"
 
-sec "6. Network + links"
+sec "7. Network + links"
 if grep -qE 'http://[^"]' "$APP"; then
   block "app references a plaintext http:// resource — ATS will block it"
 else
@@ -111,7 +144,7 @@ grep -q 'find-clinician' "$APP" \
   && pass "clinician-referral path present (wellness-app expectation)" \
   || warn "no clinician referral path"
 
-sec "7. Store assets"
+sec "8. Store assets"
 SHOTS=store/screenshots
 need_shot(){ # label WxH
   local n; n=$(find "$SHOTS" -name '*.png' 2>/dev/null | while read -r f; do
@@ -147,7 +180,7 @@ else
 fi
 [ -f store/store-listing.md ] && pass "store listing copy present" || warn "no store/store-listing.md"
 
-sec "8. Config sanity"
+sec "9. Config sanity"
 grep -q "\"appId\": \"$BUNDLE_ID\"" capacitor.config.json \
   && pass "bundle id is $BUNDLE_ID" || block "capacitor.config.json appId does not match $BUNDLE_ID"
 # Only an UNcommented line counts — the lane documents the toggle in a comment.

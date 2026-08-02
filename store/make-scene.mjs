@@ -45,6 +45,11 @@ export const SCENES = {
     S.partnerDebrief={1:{good:["Feeling unhurried","Eye contact","Warmth & closeness"],more:["More time","Softer touch"]}};
     canMatch=function(){return true;};render();`,
 
+  /* The invite screen — the one that was broken. It now shows the pair code as
+     the hero and a QR that carries only that code. No origin/URL line at all. */
+  invite: `setProfile();S.mode="live";S.pairSide="h";S.code="RTT77MH4JN";
+    S.screen="pairing";S.pairPhase="create";S.partnerOnline=false;render();`,
+
   /* Deliberately the CHOICE screen, not the invite screen: the invite screen
      prints location.origin, which is a capture artefact outside the real app. */
   pairchoose: `setProfile();S.mode=null;S.screen="pairing";S.pairPhase="choose";render();`,
@@ -54,7 +59,13 @@ export function buildScene(name) {
   if (!SCENES[name]) throw new Error("unknown scene: " + name);
   fs.mkdirSync(OUT, { recursive: true });
   const file = path.join(OUT, `scene-${name}.html`);
-  fs.writeFileSync(file, html.replace("</body>", `<script>${PROFILE}\n${SCENES[name]}<\/script>\n</body>`));
+  /* The scene lives outside www/, so www-relative <script src> would 404 —
+     and a missing jsQR silently flips Scanner.supported() to false, which
+     changes the invite screen's copy. Absolutise them. */
+  const wwwDir = path.join(ROOT, "www");
+  const fixed = html.replace(/(<script[^>]*\bsrc=")(?!https?:|file:)([^"]+)(")/g,
+    (_, a, rel, b) => a + "file://" + path.join(wwwDir, rel) + b);
+  fs.writeFileSync(file, fixed.replace("</body>", `<script>${PROFILE}\n${SCENES[name]}<\/script>\n</body>`));
   return file;
 }
 

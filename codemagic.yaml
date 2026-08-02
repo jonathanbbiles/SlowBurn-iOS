@@ -82,6 +82,21 @@ workflows:
             echo "FAILED: project still targets iPad."; exit 1
           fi
           echo "TARGETED_DEVICE_FAMILY now:"; grep -c 'TARGETED_DEVICE_FAMILY = "1";' "$PBX"
+      # --- CAMERA (pair-code scanner) ------------------------------------------
+      # iOS KILLS the app instantly if it touches the camera with no usage
+      # description — this is not optional, and Capacitor does not add it.
+      # The string is what the user reads in the permission dialog, so it says
+      # exactly what the camera is for and nothing more.
+      - name: Add NSCameraUsageDescription (pair-code scanner)
+        script: |
+          PLIST=ios/App/App/Info.plist
+          DESC="Slow Burn uses the camera only to read your partner's pair code from their screen. The image stays on your phone — nothing is recorded, saved or sent."
+          # plutil, not PlistBuddy: the string contains an apostrophe and an em
+          # dash, which PlistBuddy's -c parser rejects ("Unclosed Quotes").
+          # plutil takes the value as its own argument, so it just works.
+          plutil -replace NSCameraUsageDescription -string "$DESC" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Print :NSCameraUsageDescription" "$PLIST" \
+            || { echo "FAILED: NSCameraUsageDescription not set — the scanner would crash the app."; exit 1; }
       - name: Set build number + export-compliance flag
         script: |
           LATEST=$(app-store-connect get-latest-testflight-build-number "6787719986" 2>/dev/null || echo 0)

@@ -91,6 +91,29 @@ Both phones re-announce on a 12-second heartbeat instead.
 If `crypto.subtle` is unavailable, **live pairing refuses to run**. There is no
 plaintext fallback path in the app.
 
+## The camera
+
+Pairing offers an optional scan of the other phone's pair code. The QR encodes
+**the bare pair code and nothing else** — no URL, no origin, no scheme — and
+only Slow Burn's own scanner reads it.
+
+- The frame goes `getUserMedia` → a `<video>` → an offscreen `<canvas>` →
+  `jsQR`, entirely in the app's own process. **No image is recorded, saved,
+  uploaded or kept**, and there is no code path that could send one.
+- The stream is stopped the instant a code is read or the sheet is closed;
+  `scripts/pairing-qr-test.mjs` asserts zero live camera tracks afterwards.
+- A scan is accepted only if it normalises to exactly ten characters of the
+  pair-code alphabet, so a stray QR from the world does nothing.
+- If the device has no camera API, or permission is refused, the scan button is
+  never shown and typing the code — the original path — is unchanged.
+- `jsQR` is vendored into `www/vendor/` (Apache-2.0) rather than loaded from a
+  CDN, so pairing does not depend on a third-party host and no third party
+  learns that you are pairing.
+
+Earlier builds encoded `location.origin + "?pair=<code>"` in that QR, which
+inside the native app is `capacitor://localhost/?pair=…`. Nothing could open
+it, so scanning did nothing at all; it was a broken affordance, not a leak.
+
 ## Threat model
 
 **What this defends against.**
@@ -142,9 +165,13 @@ plaintext fallback path in the app.
    messages or refuse service. It cannot read them.
 
 `scripts/privacy-wire-audit.mjs` (`npm run audit:privacy`) enforces the wire
-format against the real `www/index.html`, and
+format against the real `www/index.html`;
 `scripts/e2e-crypto-test.mjs` (`npm run test:crypto`) enforces the threat model
-above. `npm test` runs both. **Add a field to the protocol and the audit
+above; and `scripts/pairing-qr-test.mjs` (`npm run test:qr`) drives the real app
+in a real browser to prove the pairing QR carries only the pair code and that
+the scanner reads it, ignores foreign codes and releases the camera.
+`npm test` runs the first two (no browser needed, so it gates every build);
+`npm run audit:apple` additionally runs the QR test. **Add a field to the protocol and the audit
 fails.** That is the point — fix the protocol, not the test.
 
 ## Prior exposure — remediation
@@ -176,3 +203,9 @@ party: there is no account, no analytics, no SDK that phones home, and the only
 network payload is ciphertext exchanged directly between two paired phones,
 which we cannot read, do not receive, and which is not retained anywhere.
 StoreKit tips are handled by Apple; we receive no customer data from them.
+
+The camera permission does not change this answer. Camera access is used only
+to decode a pair code on-device; no image or derived data is collected,
+transmitted or stored, so there is nothing to declare on the nutrition label.
+The usage string shown in the iOS permission dialog is set by the build lane —
+see `codemagic.yaml`.

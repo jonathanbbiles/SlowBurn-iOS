@@ -24,6 +24,8 @@ WATCH=0
 LIST_APPS=0
 SAVE_APP_ID=0
 POLL_SECONDS="${CM_POLL_SECONDS:-20}"
+# Build-time environment variables sent with POST /builds (KEY=VALUE strings).
+ENV_VARS=()
 
 die()  { printf 'cm-build: %s\n' "$*" >&2; exit 1; }
 info() { printf '==> %s\n' "$*"; }
@@ -48,6 +50,13 @@ OPTIONS
                       override with $CODEMAGIC_WORKFLOW_ID).
   -b, --branch NAME   Branch to build (default: current git branch, else main).
       --watch         Poll the build until it finishes. Exit 0 only on success.
+      --submit        Submit this app for App Store review as part of this build.
+                      Shorthand for --env SUBMIT_FOR_REVIEW=true. That variable is
+                      NOT set anywhere in the repo, so ONLY a build started with
+                      this flag can submit — a push never can.
+      --env K=V       Send a build-time environment variable. Repeatable.
+                      Never pass a secret this way: it travels over the API and is
+                      visible in the build's configuration.
       --list-apps     List the team's apps and exit.
       --save-app-id   Write the resolved app id to ./.codemagic-app-id (an identifier,
                       not a secret — safe to commit).
@@ -67,6 +76,8 @@ while [ $# -gt 0 ]; do
     -w|--workflow) WORKFLOW_ID="${2:-}"; shift 2 ;;
     -b|--branch)   BRANCH="${2:-}";      shift 2 ;;
     --watch)       WATCH=1;       shift ;;
+    --submit)      ENV_VARS+=("SUBMIT_FOR_REVIEW=true"); shift ;;
+    --env)         ENV_VARS+=("${2:-}"); shift 2 ;;
     --list-apps)   LIST_APPS=1;   shift ;;
     --save-app-id) SAVE_APP_ID=1; shift ;;
     -h|--help)     usage; exit 0 ;;
@@ -183,11 +194,32 @@ fi
 
 # ------------------------------------------------------------------ start build
 info "starting workflow '$WORKFLOW_ID' on branch '$BRANCH'"
-BODY="$(CM_APP="$APP_ID" CM_WF="$WORKFLOW_ID" CM_BRANCH="$BRANCH" python3 - <<'PY'
-import json, os
-print(json.dumps({"appId":      os.environ["CM_APP"],
-                  "workflowId": os.environ["CM_WF"],
-                  "branch":     os.environ["CM_BRANCH"]}))
+if [ "${#ENV_VARS[@]}" -gt 0 ]; then
+  info "build-time variables: $(printf '%s ' "${ENV_VARS[@]}")"
+  case " ${ENV_VARS[*]} " in
+    *SUBMIT_FOR_REVIEW=true*)
+      info "THIS BUILD WILL SUBMIT FOR APP STORE REVIEW if it goes green." ;;
+  esac
+fi
+
+BODY="$(CM_APP="$APP_ID" CM_WF="$WORKFLOW_ID" CM_BRANCH="$BRANCH" \
+        CM_ENV="$(printf '%s\n' ${ENV_VARS[@]+"${ENV_VARS[@]}"})" python3 - <<'PY'
+import json, os, sys
+body = {"appId":      os.environ["CM_APP"],
+        "workflowId": os.environ["CM_WF"],
+        "branch":     os.environ["CM_BRANCH"]}
+variables = {}
+for line in os.environ.get("CM_ENV", "").splitlines():
+    line = line.strip()
+    if not line:
+        continue
+    if "=" not in line or line.startswith("="):
+        sys.exit("cm-build: --env expects KEY=VALUE, got %r" % line)
+    k, v = line.split("=", 1)
+    variables[k] = v
+if variables:
+    body["environment"] = {"variables": variables}
+print(json.dumps(body))
 PY
 )"
 

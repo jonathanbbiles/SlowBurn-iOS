@@ -34,6 +34,8 @@ workflows:
           - JB_Shared_Distribution
       vars:
         BUNDLE_ID: "com.jonathanbiles.slowburn"
+        # Apple's numeric App ID. An identifier, not a secret.
+        ASC_APP_ID: "6787719986"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
       node: 22
@@ -130,17 +132,40 @@ workflows:
         auth: integration
         submit_to_testflight: true
 
-        # --- REVIEW-SUBMIT TOGGLE — deliberately OFF ---------------------------
-        # As written, every green build goes to TestFlight and stops there.
-        # Uncommenting submit_to_app_store makes EVERY subsequent green build
-        # submit itself for App Store review, so flip it on with intent and flip
-        # it back off after the release.
-        # Prerequisites in App Store Connect, or the submit step fails the build:
-        #   - screenshots for every required device size
-        #   - description, keywords, promotional text, support + marketing URLs
-        #   - privacy policy URL and the App Privacy answers
-        #   - age rating, category, and export-compliance answers
-        #   - a "What's New" note for this version string
-        # See PLAYBOOK.md "Submitting for review without the browser".
-        # submit_to_app_store: true
-        # release_type: MANUAL      # MANUAL | AFTER_APPROVAL | SCHEDULED
+        # submit_to_app_store is deliberately NOT used here. It would submit on
+        # EVERY green build, and it cannot supply screenshots or release notes.
+        # The review submit is the opt-in post-publish step below instead.
+
+      # --- Post-publish: submit for App Store review (opt-in, per build) --------
+      # Runs AFTER the block above has uploaded the signed IPA, so a build exists
+      # for the submission to attach to.
+      #
+      # This does nothing unless SUBMIT_FOR_REVIEW=true, and that variable is
+      # deliberately NOT defined anywhere in this repo. It can only arrive as a
+      # per-build override from the Codemagic REST API:
+      #     scripts/cm-build.sh --submit --watch
+      # So an ordinary build — and any push — stops at TestFlight by construction,
+      # rather than by remembering to keep a toggle switched off.
+      scripts:
+        - name: Submit for App Store review (only when explicitly requested)
+          script: bash scripts/asc-submit.sh
+
+  # ---------------------------------------------------------------------------
+  # On-demand, READ-ONLY check that the App Store Connect key stored in Codemagic
+  # can actually drive a submission. Submits nothing, signs nothing, builds nothing.
+  # Deliberately has no `triggering:` block, so a push can never run it.
+  #     scripts/cm-build.sh -w asc-auth-check --watch
+  # ---------------------------------------------------------------------------
+  asc-auth-check:
+    name: Slow Burn — ASC auth check (read-only)
+    instance_type: mac_mini_m2
+    max_build_duration: 15
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        ASC_APP_ID: "6787719986"
+      xcode: latest
+    scripts:
+      - name: Prove the ASC key authenticates for a submission (submits nothing)
+        script: bash scripts/asc-auth-check.sh

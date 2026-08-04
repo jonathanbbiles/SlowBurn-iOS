@@ -78,12 +78,18 @@ export function bootPhone(broker, label, opts = {}) {
     : webcrypto;
   Object.defineProperty(w, "crypto", { value: cryptoObj, configurable: true });
   w.mqtt = { connect: makeClientFactory(broker, label) };
+  /* Anything that must exist BEFORE the app script runs — window.Capacitor,
+     a stubbed StoreKit bridge — goes in here. The app decides "am I native?"
+     at parse time, so setting it afterwards would be testing a different app. */
+  if (typeof opts.preload === "function") opts.preload(w);
 
   const src = html.match(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/)[1];
   w.eval(src + `
 ;window.__api={get S(){return S},set S(v){S=v},render,activeRole,partnerRole,publishProgress,publishState,
   pairBase,sessionId,maxUnlocked,matchFor,canMatch,myDebrief,theirDebrief,E2E,GOOD,MORE,CHIPS_FP,
-  connectLive,leaveLive,onWire,stateEnvelope,PROTO_V,TOPIC_ROOT,myStagePointer,hasNewMatch};`);
+  connectLive,leaveLive,onWire,stateEnvelope,PROTO_V,TOPIC_ROOT,myStagePointer,hasNewMatch,
+  DECKS,PRACTICES,THEMES,STARTER,Pro,Monetize,goodChips,moreChips,decksOpen,decksLocked,
+  practicesOpen,practicesLocked,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal};`);
 
   const api = w.__api;
   return {

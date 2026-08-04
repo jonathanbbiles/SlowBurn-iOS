@@ -17,9 +17,10 @@
   "scripts": {
     "audit:privacy": "node scripts/privacy-wire-audit.mjs",
     "test:crypto": "node scripts/e2e-crypto-test.mjs",
-    "test": "npm run audit:privacy && npm run test:crypto",
+    "test": "npm run audit:privacy && npm run test:crypto && npm run test:iap",
     "audit:apple": "bash scripts/apple-review-audit.sh",
     "shots": "node store/capture-screenshots.mjs",
-    "test:qr": "node scripts/pairing-qr-test.mjs"
+    "test:qr": "node scripts/pairing-qr-test.mjs",
+    "test:iap": "node scripts/iap-test.mjs"
   }
 }

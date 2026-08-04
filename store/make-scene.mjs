@@ -50,6 +50,11 @@ export const SCENES = {
   invite: `setProfile();S.mode="live";S.pairSide="h";S.code="RTT77MH4JN";
     S.screen="pairing";S.pairPhase="create";S.partnerOnline=false;render();`,
 
+  /* The Pro screen as a free user sees it: what the purchase adds, and the
+     price slot. The price is blank here because a browser has no StoreKit —
+     on device it reads live from Apple. */
+  pro: `setProfile();S.mode="solo";S.screen="pro";S.proReturn={screen:"app",tab:"partner"};render();`,
+
   /* Deliberately the CHOICE screen, not the invite screen: the invite screen
      prints location.origin, which is a capture artefact outside the real app. */
   pairchoose: `setProfile();S.mode=null;S.screen="pairing";S.pairPhase="choose";render();`,

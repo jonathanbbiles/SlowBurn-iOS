@@ -53,7 +53,17 @@ export const SCENES = {
   /* The Pro screen as a free user sees it: what the purchase adds, and the
      price slot. The price is blank here because a browser has no StoreKit —
      on device it reads live from Apple. */
-  pro: `setProfile();S.mode="solo";S.screen="pro";S.proReturn={screen:"app",tab:"partner"};render();`,
+  /* The Pro screen as a real iPhone shows it. A browser has no StoreKit, so
+     without this the capture renders the honest "this preview build can't take
+     payments" fallback — true in a browser, wrong for the App Store. Only the
+     three StoreKit answers are stubbed; the screen itself is the real one.
+     PRICE: this is the TARGET tier. If Jonathan sets a different tier in App
+     Store Connect, change it here and re-run \`npm run shots\`. */
+  pro: `setProfile();S.mode="solo";
+    Monetize.native=function(){return true;};
+    Monetize.ready=function(){return true;};
+    Monetize.proPrice=function(){return "$2.99";};
+    S.screen="pro";S.proReturn={screen:"app",tab:"partner"};render();`,
 
   /* Deliberately the CHOICE screen, not the invite screen: the invite screen
      prints location.origin, which is a capture artefact outside the real app. */

@@ -28,8 +28,8 @@ const DEVICES = {
   iphone65: { w: 428, h: 926, s: 3 },
 };
 /* Numbered so App Store Connect keeps the order. */
-const ORDER = ["welcome", "program", "consent", "checkins", "pairchoose", "invite", "pro"];
-const NAME = { welcome: "welcome", program: "program", consent: "consent", checkins: "checkins", pairchoose: "pairing-choice", invite: "pair-code", pro: "pro" };
+const ORDER = ["welcome", "program", "consent", "checkins", "pairchoose", "invite"];
+const NAME = { welcome: "welcome", program: "program", consent: "consent", checkins: "checkins", pairchoose: "pairing-choice", invite: "pair-code" };
 
 if (!fs.existsSync(CHROME)) { console.error("Chrome not found at " + CHROME + " — set CHROME_PATH"); process.exit(1); }
 fs.mkdirSync(OUT, { recursive: true });

@@ -423,35 +423,35 @@ const STAGES=[
    Adding a deck is safe. Editing `starter` is not.
    ============================================================ */
 const DECKS=[
- {id:"starter",pro:false,title:"The essentials",
+ {id:"starter",title:"The essentials",
   blurb:"The reflection you'll use most — pace, attention, safety.",
   good:["Feeling unhurried","Being touched slowly","Eye contact","Full attention","Warmth & closeness","Laughing","Feeling safe","The pace we set"],
   more:["More time","A slower pace","More talking","Less talking","Softer touch","Firmer touch","A calmer setting","Starting earlier"],
   goodSolo:["Feeling unhurried","Slow touch","Full attention","Warmth","Feeling safe","Being present","Curiosity","The pace I set"],
   moreSolo:["More time","A slower pace","Softer touch","Firmer touch","A calmer setting","Starting earlier","Fewer distractions","Less self-judgement"]},
 
- {id:"presence",pro:true,title:"Presence & attention",
+ {id:"presence",title:"Presence & attention",
   blurb:"What it felt like to actually be there — and to be noticed.",
   good:["Not rushing to the next thing","Being properly looked at","Breathing together","The quiet between us","Feeling wanted","Being allowed to just receive","Nothing to perform","Time that felt ours"],
   more:["Longer to settle first","Phones further away","Starting with talking","Starting without talking","A longer wind-down","More stillness","Fewer interruptions","Somewhere we won't be overheard"],
   goodSolo:["Not rushing","Being properly with myself","Following my breath","The quiet","Feeling at home in my body","Letting it be enough","Nothing to prove","Time that felt mine"],
   moreSolo:["Longer to settle first","Phone in another room","A longer wind-down","More stillness","Fewer interruptions","Somewhere I won't be disturbed","Less checking the clock","A gentler start"]},
 
- {id:"body",pro:true,title:"Sensation & body",
+ {id:"body",title:"Sensation & body",
   blurb:"The texture of it — pressure, warmth, pace, weight.",
   good:["Warmth on my skin","Slow pressure","Light fingertips","Firm, steady hands","Being held still","Movement neither of us planned","A texture I liked","Noticing before reacting"],
   more:["A warmer room","Something soft underneath","Less tickling","More weight","Slower hands","Longer in one place","A different position","More or less light"],
   goodSolo:["Warmth on my skin","Slow pressure","Light fingertips","Firm, steady hands","Being still","Movement I didn't plan","A texture I liked","Noticing before reacting"],
   moreSolo:["A warmer room","Something soft underneath","Less tickling","More weight","Slower hands","Longer in one place","A different position","More or less light"]},
 
- {id:"voice",pro:true,title:"Asking & telling",
+ {id:"voice",title:"Asking & telling",
   blurb:"The consent conversation — how it went, not just that it did.",
   good:["Being asked what I wanted","Saying no easily","Saying yes clearly","Being believed","Changing my mind part-way","Not having to explain","Checking in without breaking the mood","Hearing what they liked"],
   more:["More checking in","Less checking in","Words for what I like","A signal instead of words","Talking afterwards","Agreeing the ending first","Naming a stop word","Hearing more from them"],
   goodSolo:["Asking myself what I wanted","Stopping easily","Letting it be a yes","Believing myself","Changing my mind part-way","Not having to justify it","Checking in with myself","Noticing what I liked"],
   moreSolo:["More checking in with myself","A kinder inner voice","Words for what I like","Deciding the ending first","Permission to stop early","Less analysing","Writing it down after"]},
 
- {id:"after",pro:true,title:"Afterwards",
+ {id:"after",title:"Afterwards",
   blurb:"The part most programs skip: how it ended, and how you landed.",
   good:["Staying close after","Not getting straight up","Something to drink","Being covered up","Quiet company","A short talk about it","Falling asleep near each other","Feeling looked after"],
   more:["A longer wind-down","Less talking after","More talking after","Something to eat","Warming up together","Time on my own after","A note to read later","Planning the next one"],
@@ -479,7 +479,7 @@ const STARTER=DECKS[0];
    Same rule as the decks — flip the pro: flag to move one across.
    ============================================================ */
 const PRACTICES=[
- {id:"arrive",pro:false,title:"Three-minute arrival",mins:"3 min",
+ {id:"arrive",title:"Three-minute arrival",mins:"3 min",
   blurb:"For when you've both had a day. Do this before anything else.",
   steps:["Sit or lie somewhere comfortable, not touching yet.",
     "Let your breathing slow down without forcing it. Three slow breaths each.",
@@ -490,7 +490,7 @@ const PRACTICES=[
     "Say or think one true sentence about how you're arriving.",
     "That's it. Begin when you're ready, or don't."]},
 
- {id:"handsonly",pro:false,title:"Hands only",mins:"10 min",
+ {id:"handsonly",title:"Hands only",mins:"10 min",
   blurb:"The lowest-pressure session there is. Good for a first night, or a hard week.",
   steps:["Sit facing each other. Only hands and forearms are in scope.",
     "One of you explores the other's hands — palms, knuckles, wrists — with no goal.",
@@ -501,7 +501,7 @@ const PRACTICES=[
     "Swap hands after five minutes.",
     "Stop there. Going no further is the point, not a shortfall."]},
 
- {id:"exhale",pro:true,title:"The long exhale",mins:"12 min",
+ {id:"exhale",title:"The long exhale",mins:"12 min",
   blurb:"Breath-led. Useful when one of you is carrying more tension than the other.",
   steps:["Lie down, one of you resting a hand flat on the other's back or chest.",
     "The person being touched breathes out for longer than they breathe in.",
@@ -512,7 +512,7 @@ const PRACTICES=[
     "Keep the hand still and warm. Let it rise and fall.",
     "Ten breaths. Notice what changed."]},
 
- {id:"map",pro:true,title:"Map and name",mins:"20 min",
+ {id:"map",title:"Map and name",mins:"20 min",
   blurb:"Turns vague preference into something you can both actually use.",
   steps:["Take turns. The giver moves slowly over in-scope areas.",
     "The receiver names what they notice out loud in one or two words — warm, ticklish, nice, too fast.",
@@ -523,7 +523,7 @@ const PRACTICES=[
     "No judging it. Naming is the whole task.",
     "Afterwards, note one thing that surprised you."]},
 
- {id:"timer",pro:true,title:"Switch on a timer",mins:"20 min",
+ {id:"timer",title:"Switch on a timer",mins:"20 min",
   blurb:"For couples where one person always ends up giving.",
   steps:["Set a timer for five minutes. One gives, one receives. No negotiating during.",
     "When it rings, swap immediately, even mid-stroke.",
@@ -534,7 +534,7 @@ const PRACTICES=[
     "Two rounds.",
     "The rigidity is the feature: nobody has to decide when it's enough."]},
 
- {id:"stillness",pro:true,title:"Stillness practice",mins:"15 min",
+ {id:"stillness",title:"Stillness practice",mins:"15 min",
   blurb:"Harder than it sounds, and it teaches more than movement does.",
   steps:["Make contact — a hand, a forearm, a back — and then stop moving entirely.",
     "Stay there far longer than is comfortable. Two minutes, then three.",
@@ -545,7 +545,7 @@ const PRACTICES=[
     "Notice the urge to do something, and don't.",
     "Come out of it slowly."]},
 
- {id:"onesense",pro:true,title:"One sense at a time",mins:"25 min",
+ {id:"onesense",title:"One sense at a time",mins:"25 min",
   blurb:"Take one thing away and the others get louder.",
   steps:["Agree which sense to remove — usually sight, with eyes closed rather than covered.",
     "Run the stage you're on as normal, with that one sense out.",
@@ -556,7 +556,7 @@ const PRACTICES=[
     "Open your eyes whenever you want, no explanation.",
     "Afterwards: what got louder?"]},
 
- {id:"finish",pro:true,title:"The unhurried finish",mins:"10 min",
+ {id:"finish",title:"The unhurried finish",mins:"10 min",
   blurb:"Most sessions end by stopping. This one ends on purpose.",
   steps:["Decide before you start that you'll spend the last ten minutes doing nothing new.",
     "Stay in contact, get warm, drink something.",
@@ -574,54 +574,32 @@ const PRACTICES=[
    the pairing, or the privacy posture changes with the palette.
    ============================================================ */
 const THEMES=[
- {id:"ember",pro:false,label:"Ember",swatch:["#FF42B3","#F94F5C","#FFF8F1"],vars:{}},
- {id:"midnight",pro:true,label:"Midnight",swatch:["#8B7BE8","#5FB3C9","#141026"],
+ {id:"ember",label:"Ember",swatch:["#FF42B3","#F94F5C","#FFF8F1"],vars:{}},
+ {id:"midnight",label:"Midnight",swatch:["#8B7BE8","#5FB3C9","#141026"],
   vars:{"--app-bg":"#171128","--surface":"#211936","--surface-2":"#2A2044","--primary":"#9B8BF0",
    "--primary-d":"#8272E4","--plum":"#5FB3C9","--plum-d":"#4A9DB3","--rose":"#B3A6F5",
    "--ink":"#EFE9FF","--muted":"#A99CC9","--muted-2":"#7F739E","--line":"#2F2450","--line-2":"#3C2F63",
    "--sage":"#7FC9A0","--sage-bg":"#1E3A2C","--gold":"#E8C46A","--page":"#0E0A1C","--page-2":"#171128"}},
- {id:"sage",pro:true,label:"Sage",swatch:["#6E8B6E","#B08968","#F5F3EC"],
+ {id:"sage",label:"Sage",swatch:["#6E8B6E","#B08968","#F5F3EC"],
   vars:{"--app-bg":"#F5F3EC","--surface":"#FFFFFF","--surface-2":"#EDF1E9","--primary":"#6E8B6E",
    "--primary-d":"#5A745A","--plum":"#B08968","--plum-d":"#957256","--rose":"#A8BFA3",
    "--ink":"#2C3A2C","--muted":"#7C8A78","--muted-2":"#A4AF9F","--line":"#E0E6DA","--line-2":"#CDD6C5",
    "--page":"#2C3A2C","--page-2":"#3D5140"}},
- {id:"dawn",pro:true,label:"Dawn",swatch:["#E8734A","#C9527E","#FFF6F0"],
+ {id:"dawn",label:"Dawn",swatch:["#E8734A","#C9527E","#FFF6F0"],
   vars:{"--app-bg":"#FFF6F0","--surface":"#FFFFFF","--surface-2":"#FFEDE3","--primary":"#E8734A",
    "--primary-d":"#CE5C36","--plum":"#C9527E","--plum-d":"#AC4168","--rose":"#F2A583",
    "--ink":"#4A2418","--muted":"#9C7361","--muted-2":"#C2A08F","--line":"#F7E0D2","--line-2":"#EFCBB6",
    "--page":"#4A2418","--page-2":"#6B3524"}}
 ];
 
-/* ============================================================
-   PRO — the entitlement.
-   ------------------------------------------------------------
-   The ONLY thing that flips this on is a StoreKit purchase or
-   restore that the plugin reported as verified/owned (see
-   Monetize.grantPro). There is no developer switch, no debug
-   unlock, and no code path that sets it from a tap. The local
-   flag is the app's source of truth for gating because
-   product.owned can read false on some platforms — but it is
-   only ever WRITTEN from a receipt.
-   ============================================================ */
-const Pro=(function(){
-  const KEY="sb_pro_v1";
-  let on=false;
-  try{ on=localStorage.getItem(KEY)==="1"; }catch(e){}
-  return {
-    active(){ return on; },
-    /* Idempotent: receipts re-fire on every launch. Returns true only the
-       first time, so the app can toast once instead of on every cold start. */
-    grant(){ if(on) return false; on=true; try{ localStorage.setItem(KEY,"1"); }catch(e){} return true; },
-    KEY:KEY
-  };
-})();
 
-/* Which decks / practices / themes this person can actually use. */
-function decksOpen(){ return DECKS.filter(d=>!d.pro||Pro.active()); }
-function decksLocked(){ return DECKS.filter(d=>d.pro&&!Pro.active()); }
-function practicesOpen(){ return PRACTICES.filter(p=>!p.pro||Pro.active()); }
-function practicesLocked(){ return PRACTICES.filter(p=>p.pro&&!Pro.active()); }
-function themesOpen(){ return THEMES.filter(t=>!t.pro||Pro.active()); }
+/* Slow Burn is a paid app: everything in it is included, for everyone.
+   These stay as functions rather than being inlined so there is exactly one
+   place that answers "what content exists" — and no seam for a gate to creep
+   back into. */
+function decksOpen(){ return DECKS.slice(); }
+function practicesOpen(){ return PRACTICES.slice(); }
+function themesOpen(){ return THEMES.slice(); }
 function deckGood(d){ return isSolo()?d.goodSolo:d.good; }
 function deckMore(d){ return isSolo()?d.moreSolo:d.more; }
 
@@ -644,7 +622,7 @@ function freshState(){
     },
     code:"",pairPhase:"choose",pending:null,
     /* Pro-side, all on-device: chosen theme, and the opt-in keepsake journal. */
-    theme:"ember",journalOn:false,journal:[],proReturn:null,
+    theme:"ember",journalOn:false,journal:[],
     /* in-app pair-code scanner (camera stays on-device; see Scanner) */
     scanning:false,scanError:"",
     mq:null,connected:false,partnerOnline:false,
@@ -891,9 +869,7 @@ function clearProfile(){ try{ localStorage.removeItem(PROFILE_KEY); }catch(e){} 
 const THEME_KEY="sb_theme_v1";
 function themeById(id){ return THEMES.find(t=>t.id===id)||THEMES[0]; }
 function applyTheme(id){
-  const t=themeById(id);
-  /* A Pro theme must not survive a lost entitlement. */
-  const use=(t.pro&&!Pro.active())?THEMES[0]:t;
+  const use=themeById(id);
   S.theme=use.id;
   const root=document.documentElement;
   /* Reset first so switching themes never leaves a stale variable behind. */
@@ -907,10 +883,11 @@ function loadTheme(){
   applyTheme(id);
 }
 
-/* ---- keepsake journal (Pro, opt-in, never leaves the device) ----
-   OFF by default on purpose. Reflections are the most personal thing in the
-   app, and writing them to disk is a decision the person should make, not one
-   they discover later. Turning it off deletes what is already there. */
+/* ---- keepsake journal (opt-in, never leaves the device) ----
+   OFF by default on purpose — a PRIVACY call, not a commercial one. A
+   reflection is the most personal thing in the app, and writing one to disk
+   should be a decision somebody makes rather than one they discover later.
+   Turning it off deletes what is already there. */
 const JOURNAL_KEY="sb_journal_v1", JOURNAL_ON_KEY="sb_journal_on_v1";
 function loadJournal(){
   try{ S.journalOn=localStorage.getItem(JOURNAL_ON_KEY)==="1"; }catch(e){ S.journalOn=false; }
@@ -921,7 +898,7 @@ function saveJournal(){
   try{ localStorage.setItem(JOURNAL_KEY,JSON.stringify(S.journal.slice(-300))); }catch(e){}
 }
 function journalAdd(stage,good,more,note){
-  if(!Pro.active()||!S.journalOn) return;
+  if(!S.journalOn) return;
   S.journal.push({ts:Date.now(),stage:stage,good:good.slice(),more:more.slice(),note:note||""});
   saveJournal();
 }
@@ -1589,9 +1566,8 @@ const Monetize=(function(){
     medium:"com.jonathanbiles.slowburn.tip.medium",
     large: "com.jonathanbiles.slowburn.tip.large"
   };
-  const PRO_ID="com.jonathanbiles.slowburn.pro";
   const LABEL={small:"Small",medium:"Medium",large:"Generous"};
-  const st={ready:false,wired:false,prices:{},proPrice:"",store:null,P:null,
+  const st={ready:false,wired:false,prices:{},store:null,P:null,
             initError:null,missingHooks:[],lastError:null};
 
   /* RULE 1: native is decided from window.Capacitor, which the webview injects
@@ -1608,27 +1584,11 @@ const Monetize=(function(){
 
   function ready(){ return !!st.ready; }
   function tipsReady(){ return !!(st.ready&&Object.keys(st.prices).length); }
-  function proReady(){ return !!(st.ready&&st.proPrice); }
-  function proPrice(){ return st.proPrice||""; }
   function hasSupported(){ try{ return localStorage.getItem(TIP_KEY)==="1"; }catch(e){ return false; } }
   function priceOf(k){ return st.prices[k]||""; }
   function keys(){ return ["small","medium","large"].filter(k=>st.prices[k]); }
   function labelOf(k){ return LABEL[k]||k; }
 
-  /* Reads the StoreKit receipt rather than any local flag. */
-  function ownsPro(){
-    try{ return !!(st.store&&st.store.owned({id:PRO_ID,platform:st.P.Platform.APPLE_APPSTORE})); }
-    catch(e){ try{ return !!(st.store&&st.store.owned(PRO_ID)); }catch(e2){ return false; } }
-  }
-  /* The ONLY place Pro is ever switched on. Idempotent: receipt hooks re-fire
-     on every launch, so an owner must not be re-toasted each cold start. */
-  function grantPro(how){
-    const fresh=Pro.grant();
-    if(!fresh) return false;
-    paint();
-    say(how==="restore"?"Slow Burn Pro restored — welcome back.":"Slow Burn Pro unlocked. Thank you.");
-    return true;
-  }
   function recordTip(){
     try{ localStorage.setItem(TIP_KEY,"1"); }catch(e){}
     paint(); say("Thank you — that genuinely helps.");
@@ -1654,10 +1614,6 @@ const Monetize=(function(){
       const p=st.store.get(TIPS[k],AP);
       if(p&&p.pricing&&p.pricing.price) st.prices[k]=p.pricing.price;
     });
-    /* Price comes from Apple, live. Nothing about the price is hardcoded — the
-       tier is whatever Jonathan sets in App Store Connect. */
-    const pro=st.store.get(PRO_ID,AP);
-    if(pro&&pro.pricing&&pro.pricing.price) st.proPrice=pro.pricing.price;
   }
 
   function wireStore(){
@@ -1667,26 +1623,17 @@ const Monetize=(function(){
     st.P=Plug; st.store=Plug.store;
     const store=st.store, AP=Plug.Platform.APPLE_APPSTORE;
     try{
-      store.register(
-        Object.keys(TIPS).map(k=>({id:TIPS[k],type:Plug.ProductType.CONSUMABLE,platform:AP}))
-        .concat([{id:PRO_ID,type:Plug.ProductType.NON_CONSUMABLE,platform:AP}])
-      );
+      /* Consumable tips only. Slow Burn is a PAID app — there is no unlock to
+         sell, and no non-consumable is registered anywhere. */
+      store.register(Object.keys(TIPS).map(k=>({id:TIPS[k],type:Plug.ProductType.CONSUMABLE,platform:AP})));
       /* Each hook gets its OWN function object — Callbacks.push() throws
          "REGISTERING THE SAME CALLBACK TWICE" on a repeated reference. */
       listen(store,"approved",function(t){ try{ t.verify(); }catch(e){} });
       listen(store,"verified",function(r){
         try{ r.finish(); }catch(e){}
-        /* A verified receipt is the grant point for both kinds of product. */
-        if(ownsPro()) grantPro("purchase");
-        else recordTip();
+        recordTip();
       });
-      listen(store,"receiptUpdated",function(){ if(ownsPro()) grantPro("restore"); });
-      listen(store,"receiptsReady", function(){ if(ownsPro()) grantPro("restore"); });
-      listen(store,"productUpdated",function(){
-        refreshPrices();
-        if(ownsPro()) grantPro("restore");
-        paint();
-      });
+      listen(store,"productUpdated",function(){ refreshPrices(); paint(); });
       try{ store.error(function(err){
         if(err&&err.code===st.P.ErrorCode.PAYMENT_CANCELLED) return;   // user tapped Cancel
         st.lastError=err&&(err.message||err.code);
@@ -1702,7 +1649,6 @@ const Monetize=(function(){
         st.ready=true;
         if(errs&&errs.length) st.initError=(errs[0]&&(errs[0].message||errs[0].code))||"store unavailable";
         refreshPrices();
-        if(ownsPro()) grantPro("restore");
         paint();
       }).catch(function(e){ st.initError="init: "+(e&&e.message||e); });
     }catch(e){ st.initError="init: "+(e&&e.message||e); }
@@ -1721,42 +1667,7 @@ const Monetize=(function(){
   }
 
   /* RULE 4: never fail silently. Every path either opens the StoreKit sheet or
-     says why it cannot. A purchase button that does nothing is the 2.1(b) bug. */
-  function buyPro(){
-    if(Pro.active()){ say("You already have Slow Burn Pro."); return false; }
-    if(!native()){ say("Purchases are only available in the App Store version of Slow Burn."); return false; }
-    if(!window.CdvPurchase){ say("The App Store isn’t connected yet. Give it a moment and try again."); wireStore(); return false; }
-    if(!st.ready){ say(st.initError?("Couldn’t reach the App Store ("+st.initError+"). Please try again."):"Still connecting to the App Store — one moment."); return false; }
-    if(ownsPro()){ grantPro("restore"); return true; }
-    const p=st.store.get(PRO_ID,st.P.Platform.APPLE_APPSTORE);
-    const offer=p&&p.getOffer&&p.getOffer();
-    if(!offer){
-      say("Couldn’t load Slow Burn Pro from the App Store. Check your connection and try again.");
-      try{ st.store.update(); }catch(e){}
-      return false;
-    }
-    try{ st.store.order(offer); return true; }
-    catch(e){ say("Couldn’t start the purchase — please try again."); return false; }
-  }
-
-  /* Apple requires a working restore for non-consumables, and tests it. */
-  function restorePro(){
-    if(!native()){ say("Restoring only works in the App Store version of Slow Burn."); return false; }
-    if(!st.ready){ say("Still connecting to the App Store — one moment."); return false; }
-    say("Checking for a previous purchase…");
-    try{
-      Promise.resolve(st.store.restorePurchases()).then(function(err){
-        if(err){ say("Couldn’t restore: "+((err&&err.message)||"please try again.")); return; }
-        /* restorePurchases resolves before the receipt hooks land. */
-        setTimeout(function(){
-          if(Pro.active()||ownsPro()){ if(!grantPro("restore")) say("Slow Burn Pro is already active on this phone."); }
-          else say("No previous Slow Burn Pro purchase found on this Apple ID.");
-        },600);
-      }).catch(function(){ say("Couldn’t restore — please try again."); });
-    }catch(e){ say("Couldn’t restore — please try again."); return false; }
-    return true;
-  }
-
+     says why it cannot. A tip button that does nothing is the 2.1(b) bug. */
   function tip(k){
     if(!native()){ say("Tipping is only available in the App Store version."); return false; }
     if(!tipsReady()){ say("Still connecting to the App Store — one moment."); return false; }
@@ -1769,13 +1680,12 @@ const Monetize=(function(){
   /* Safari Web Inspector: SlowBurnIAP.diagnose() when something is off. */
   function diagnose(){
     return {native:native(),ready:st.ready,pluginPresent:!!window.CdvPurchase,
-            proLoaded:!!st.proPrice,proPrice:st.proPrice,ownsPro:ownsPro(),
-            proPersisted:Pro.active(),tipPrices:st.prices,
+            tipPrices:st.prices,
             initError:st.initError,lastError:st.lastError,missingHooks:st.missingHooks};
   }
 
-  return {native,ready,tipsReady,proReady,proPrice,hasSupported,priceOf,keys,labelOf,
-          tip,buyPro,restorePro,init,diagnose,ownsPro,TIPS,PRO_ID};
+  return {native,ready,tipsReady,hasSupported,priceOf,keys,labelOf,
+          tip,init,diagnose,TIPS};
 })();
 /* Published for the Web Inspector, exactly as ChordLoop/Receiptless do. */
 try{ window.SlowBurnIAP=Monetize; }catch(e){}
@@ -2022,6 +1932,9 @@ function screenProfile(){
       <p class="tiny" style="line-height:1.6">Pronouns and the name you chose rewrite the app’s wording. Gender and orientation are recorded for you alone — no stage, prompt, or boundary is gated on them, and no combination is treated as the norm. Anything left blank stays neutral.</p>
     </div>
 
+    ${themePicker()}
+    ${journalCard()}
+
     <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Start over</div>
       <p class="tiny" style="line-height:1.6">Clears this setup and your progress on this device — useful if you want to begin a separate run${isMultiPartner()?" with another partner":""}.</p>
       <button class="btn btn-soft mt10" data-action="reset-all" style="font-size:13.5px">Reset Slow Burn</button></div>
@@ -2177,7 +2090,7 @@ function tabProgram(){
     <div class="card card-tap mt18" data-action="open-practices">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div><div style="font-weight:700;font-size:14px">Practices</div>
-          <p class="tiny" style="margin-top:4px;line-height:1.55">${practicesOpen().length} short session${practicesOpen().length===1?"":"s"} you can run alongside any stage${practicesLocked().length?", plus "+practicesLocked().length+" in Pro":""}.</p></div>
+          <p class="tiny" style="margin-top:4px;line-height:1.55">${PRACTICES.length} short sessions you can run alongside any stage.</p></div>
         <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div></div>
     </div></div>`;
 }
@@ -2312,7 +2225,6 @@ function tabPartner(){
     <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jonathan Biles</div>
       <p class="tiny" style="line-height:1.6">The other half of Slow Burn — Jonathan writes and builds the apps behind the program. More of his work, and the best way to reach us, lives at jonathanscribbles.com.</p>
       <a class="btn btn-plum mt10" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:14px;text-decoration:none">Visit jonathanscribbles.com &#8599;</a></div>
-    ${proCard()}
     ${supportCard()}
     <div class="foot-legal">Wellness &amp; education only · not medical advice · consult a licensed clinician for pain or medical concerns.</div>
   </div></div>`;
@@ -2322,23 +2234,6 @@ function tabPartner(){
    locked behind it. Real tip buttons render ONLY when Apple has returned
    purchasable products (Monetize.ready()); otherwise the card is an honest
    "share it / say hello" note, so there is never a dead buy button. */
-/* The one place Pro is sold from, plus where an owner manages it. Deliberately
-   below the fold of the Us tab: the free app should never feel like a trailer. */
-function proCard(){
-  if(Pro.active()){
-    return `<div class="card card-tap mt14" data-action="open-pro" style="border-color:var(--line-2)">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <div><div style="font-weight:700;font-size:14px">Slow Burn Pro ${I.check.replace(/#fff/g,'var(--sage)').replace('width="14"','')}</div>
-          <p class="tiny" style="margin-top:4px;line-height:1.6">Active on this phone. Themes, your keepsake journal, and every deck and practice.</p></div>
-        <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div></div>`;
-  }
-  const nD=DECKS.filter(d=>d.pro).length, nP=PRACTICES.filter(p=>p.pro).length;
-  return `<div class="card card-tap mt14" data-action="open-pro" style="border-color:var(--line-2)">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-      <div><div style="font-weight:700;font-size:14px">Slow Burn Pro</div>
-        <p class="tiny" style="margin-top:4px;line-height:1.6">${nD} more reflection decks, ${nP} more guided practices, extra themes and a private keepsake journal. A one-off purchase — the six stages stay free.</p></div>
-      <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div></div>`;
-}
 function supportCard(){
   const thanks=Monetize.hasSupported()
     ? `<div class="tiny mt10" style="color:var(--sage);font-weight:700">&#9829; Thank you — you've supported Slow Burn.</div>` : "";
@@ -2440,73 +2335,7 @@ function deckChipsHtml(grp,sel){
     <div class="chips mt6">${list(d).map(x=>
       `<span class="chip ${sel.has(x)?'sel':''}" data-action="chip" data-grp="${grp}" data-val="${esc(x)}">${esc(x)}</span>`).join("")}</div></div>`).join("");
 }
-/* One quiet card, only when something is actually locked. Never a nag. */
-function lockedDecksCard(){
-  const locked=decksLocked();
-  if(!locked.length) return "";
-  return `<div class="card-soft mt14">
-    <div style="display:flex;gap:11px;align-items:flex-start">
-      <div style="flex:none;margin-top:1px">${I.lock}</div>
-      <div><div style="font-weight:700;font-size:13.5px">${locked.length} more reflection decks in Pro</div>
-      <p class="tiny" style="margin-top:4px;line-height:1.55">${locked.map(d=>esc(d.title)).join(" · ")} — ${locked.length*8*2} more ways to say what you noticed.</p>
-      <button class="btn btn-soft mt10" data-action="open-pro" style="font-size:13px">See what's in Pro</button></div></div></div>`;
-}
 
-/* ---------------- PRO ---------------- */
-function proFeatureList(){
-  const lockedD=DECKS.filter(d=>d.pro), lockedP=PRACTICES.filter(p=>p.pro), lockedT=THEMES.filter(t=>t.pro);
-  const row=(icon,title,body)=>`<div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--line)">
-    <div style="flex:none;margin-top:2px">${icon}</div>
-    <div><div style="font-weight:700;font-size:14px">${title}</div>
-    <p class="tiny" style="margin-top:3px;line-height:1.55">${body}</p></div></div>`;
-  return row(I.chat,"${n} more reflection decks".replace("${n}",lockedD.length),
-      lockedD.map(d=>"<b>"+esc(d.title)+"</b> — "+esc(d.blurb)).join("<br/>"))
-    + row(I.spark,lockedP.length+" more guided practices",
-      "Short sessions to run alongside the six stages: "+lockedP.map(p=>esc(p.title)).join(", ")+".")
-    + row(I.heart,lockedT.length+" more themes",
-      "Read Slow Burn in "+lockedT.map(t=>esc(t.label)).join(", ")+" as well as Ember.")
-    + row(I.lock,"A private keepsake journal",
-      "Keep your past reflections on this phone, with dates, so you can look back. Off until you switch it on, and switching it off deletes it.");
-}
-function screenPro(){
-  const active=Pro.active();
-  const price=Monetize.proPrice();
-  const canBuy=Monetize.native();
-  const head=`<button class="back" data-action="pro-back">‹ Back</button>
-    <div class="eyebrow mt10">${active?"You have":"Slow Burn"} Pro</div>
-    <h2 class="display" style="font-size:26px;margin-top:8px">${active?"Pro is active":"More of the program"}</h2>`;
-
-  if(active){
-    return `<div class="view"><div class="pad">${head}
-      <p class="lead mt6" style="font-size:13.5px">Everything below is yours, on this phone, for good. Thank you — it genuinely keeps Slow Burn going.</p>
-      ${themePicker()}
-      ${journalCard()}
-      <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">What you unlocked</div>
-        ${proFeatureList()}</div>
-      <div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">On another phone?</div>
-        <p class="tiny" style="line-height:1.6">Slow Burn Pro follows your Apple ID. Install Slow Burn there and tap Restore.</p>
-        <button class="btn btn-soft mt10" data-action="pro-restore" style="font-size:13.5px">Restore purchase</button></div>
-      <div class="foot-legal">Nothing about Pro changes what leaves your phone. See Privacy, by design.</div>
-    </div></div>`;
-  }
-
-  /* The buy row. It must never be a button that does nothing — if StoreKit
-     is not ready it says so rather than sitting there. */
-  const buyRow = !canBuy
-    ? `<div class="callout mt18">Slow Burn Pro is purchased through the App Store. This preview build can't take payments — everything free is fully working.</div>`
-    : `<button class="btn mt18" data-action="pro-buy">${price?("Unlock Pro · "+esc(price)):"Unlock Slow Burn Pro"}</button>
-       ${price?"":`<p class="tiny center mt6">${Monetize.ready()?"Loading the price from the App Store…":"Connecting to the App Store…"}</p>`}
-       <div class="center mt6"><button class="link" data-action="pro-restore">Restore a previous purchase</button></div>`;
-
-  return `<div class="view"><div class="pad">${head}
-    <p class="lead mt6" style="font-size:13.5px">A one-off purchase. No subscription, nothing recurring, and the whole six-stage program stays free either way.</p>
-    <div class="card mt18">${proFeatureList()}</div>
-    ${buyRow}
-    <div class="card-soft mt18"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">What stays free, always</div>
-      <p class="tiny" style="line-height:1.6">All six stages, solo and partnered. Pairing two phones, end-to-end encrypted, with the safety word. The consent gate. The ${STARTER.good.length*2}-chip essentials deck and the reflection match. Slow Burn without Pro is a whole program, not a trial.</p></div>
-    <div class="foot-legal">Purchases are handled by Apple. Slow Burn never sees your payment details, and buying Pro changes nothing about what leaves your phone.</div>
-  </div></div>`;
-}
 function themePicker(){
   const open=themesOpen();
   return `<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:8px">Theme</div>
@@ -2529,7 +2358,7 @@ function journalCard(){
 function screenJournal(){
   const items=S.journal.slice().reverse();
   return `<div class="view"><div class="pad">
-    <button class="back" data-action="open-pro">‹ Pro</button>
+    <button class="back" data-action="open-profile">‹ Back</button>
     <div class="eyebrow mt10">On this phone only</div>
     <h2 class="display" style="font-size:25px;margin-top:8px">Your keepsake journal</h2>
     <p class="lead mt6" style="font-size:13.5px">${items.length?"Newest first. Nothing here has ever left this device.":"Nothing saved yet — your next reflection will appear here."}</p>
@@ -2549,28 +2378,24 @@ function screenJournal(){
 }
 /* Practices — free ones usable, Pro ones shown honestly as locked. */
 function screenPractices(){
-  const open=practicesOpen(), locked=practicesLocked();
-  const card=(p,lock)=>`<div class="card ${lock?"":"card-tap"} mt14" ${lock?'':`data-action="open-practice" data-id="${p.id}"`} style="${lock?'opacity:.72':''}">
+  const open=practicesOpen();
+  const card=(p)=>`<div class="card card-tap mt14" data-action="open-practice" data-id="${p.id}">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
       <div><div class="st-title" style="font-size:16px">${esc(p.title)}</div>
-        <div class="tiny" style="margin-top:3px">${esc(p.mins)}${p.pro?" · Pro":""}</div></div>
-      ${lock?`<div style="flex:none">${I.lock}</div>`:`<div style="flex:none;color:var(--muted-2);font-size:18px">›</div>`}</div>
+        <div class="tiny" style="margin-top:3px">${esc(p.mins)}</div></div>
+      <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div>
     <p class="tiny" style="margin-top:8px;line-height:1.55">${esc(p.blurb)}</p></div>`;
   return `<div class="view"><div class="pad">
     <button class="back" data-action="tab" data-tab="program">‹ Program</button>
     <div class="eyebrow mt10">Alongside the stages</div>
     <h2 class="display" style="font-size:25px;margin-top:8px">Practices</h2>
     <p class="lead mt6" style="font-size:13.5px">Short sessions you can run instead of, or before, a normal stage. The six stages themselves are always free.</p>
-    ${open.map(p=>card(p,false)).join("")}
-    ${locked.length?`<div class="divider mt18"></div>
-      <div class="tiny" style="font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">In Slow Burn Pro</div>
-      ${locked.map(p=>card(p,true)).join("")}
-      <button class="btn btn-soft mt14" data-action="open-pro" style="font-size:13.5px">See what's in Pro</button>`:""}
+    ${open.map(p=>card(p)).join("")}
   </div></div>`;
 }
 function screenPractice(id){
   const p=PRACTICES.find(x=>x.id===id);
-  if(!p||(p.pro&&!Pro.active())) return screenPractices();
+  if(!p) return screenPractices();
   const steps=(isSolo()&&p.soloSteps)||p.steps;
   return `<div class="view"><div class="pad">
     <button class="back" data-action="open-practices">‹ Practices</button>
@@ -2608,7 +2433,6 @@ function screenSession(){
       ${deckChipsHtml("good",g)}</div>
     <div class="card mt14"><div style="font-weight:700;font-size:14.5px">2 · Anything you'd welcome more of?</div><div class="tiny mt6">Gentle wishes, not complaints.</div>
       ${deckChipsHtml("more",m)}</div>
-    ${lockedDecksCard()}
     <div class="card mt14"><div style="font-weight:700;font-size:14.5px">3 · A private note to yourself</div><div class="tiny mt6">${solo?"Only ever yours.":TE("Never shared with {partner} — this is only ever yours.")}</div>
       <textarea class="note mt10" id="privnote" placeholder="Anything you noticed, felt, or want to remember…">${esc(S.form.note)}</textarea>
       <div class="lock-note">${I.lock} Stays on your phone, always.</div></div>
@@ -2657,7 +2481,7 @@ function screenClinicians(){
 function renderBar(){
   const bar=document.getElementById("protobar");
   const pre=(S.screen==="welcome"||S.screen==="disclaimer"||S.screen==="setup"||S.screen==="pairing"||S.screen==="clinicians"
-    ||S.screen==="pro"||S.screen==="journal"||S.screen==="practices"||S.screen==="practice");
+    ||S.screen==="journal"||S.screen==="practices"||S.screen==="practice");
   if(pre){bar.style.display="none";return;}
   bar.style.display="";
   if(S.mode==="live"){
@@ -2691,7 +2515,6 @@ function render(){
   else if(S.screen==="stage")html=appChrome(screenStage(S.stageOpen));
   else if(S.screen==="session")html=screenSession();
   else if(S.screen==="clinicians")html=screenClinicians();
-  else if(S.screen==="pro")html=screenPro();
   else if(S.screen==="journal")html=screenJournal();
   else if(S.screen==="practices")html=screenPractices();
   else if(S.screen==="practice")html=screenPractice(S.practiceOpen);
@@ -2823,31 +2646,19 @@ document.addEventListener("click",(e)=>{
     leaveLive(); clearProfile(); S=freshState(); loadTheme(); loadJournal();
     render(); toast("Reset. Slow Burn starts fresh."); return;
   }
-  /* ---------- Pro ---------- */
-  if(a==="open-pro"){ S.proReturn={screen:S.screen,tab:S.tab,stageOpen:S.stageOpen,session:S.session}; S.screen="pro"; render(); return; }
-  if(a==="pro-back"){
-    const r=S.proReturn||{screen:"app",tab:"partner"};
-    S.screen=r.screen||"app"; if(r.tab)S.tab=r.tab; if(r.stageOpen)S.stageOpen=r.stageOpen;
-    if(S.screen==="session"&&!S.session) S.screen="app";
-    render(); return;
-  }
-  /* Click-time routing: on native this ALWAYS goes to StoreKit. There is no
-     other branch — no demo unlock exists anywhere in this app. */
-  if(a==="pro-buy"){ Monetize.buyPro(); return; }
-  if(a==="pro-restore"){ Monetize.restorePro(); return; }
+  /* ---------- personalisation (everything is included; nothing is gated) ---------- */
   if(a==="set-theme"){
     const t=THEMES.find(x=>x.id===el.dataset.theme);
-    if(t&&(!t.pro||Pro.active())) applyTheme(t.id);
+    if(t) applyTheme(t.id);
     render(); return;
   }
   if(a==="toggle-journal"){
-    if(!Pro.active()){ toast("The keepsake journal is part of Slow Burn Pro."); return; }
     const turningOff=S.journalOn;
     setJournalOn(!S.journalOn);
     render(); toast(turningOff?"Journal off — everything saved has been deleted.":"Journal on. It stays on this phone.");
     return;
   }
-  if(a==="open-journal"){ if(Pro.active()&&S.journalOn){ S.screen="journal"; render(); } return; }
+  if(a==="open-journal"){ if(S.journalOn){ S.screen="journal"; render(); } return; }
   if(a==="clear-journal"){ journalClear(); render(); toast("Journal deleted from this phone."); return; }
   if(a==="open-practices"){ S.screen="practices"; render(); return; }
   if(a==="open-practice"){ S.practiceOpen=el.dataset.id; S.screen="practice"; render(); return; }

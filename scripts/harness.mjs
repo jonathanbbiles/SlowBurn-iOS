@@ -88,8 +88,8 @@ export function bootPhone(broker, label, opts = {}) {
 ;window.__api={get S(){return S},set S(v){S=v},render,activeRole,partnerRole,publishProgress,publishState,
   pairBase,sessionId,maxUnlocked,matchFor,canMatch,myDebrief,theirDebrief,E2E,GOOD,MORE,CHIPS_FP,
   connectLive,leaveLive,onWire,stateEnvelope,PROTO_V,TOPIC_ROOT,myStagePointer,hasNewMatch,
-  DECKS,PRACTICES,THEMES,STARTER,Pro,Monetize,goodChips,moreChips,decksOpen,decksLocked,
-  practicesOpen,practicesLocked,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal};`);
+  DECKS,PRACTICES,THEMES,STARTER,Monetize,goodChips,moreChips,decksOpen,
+  practicesOpen,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal};`);
 
   const api = w.__api;
   return {

@@ -114,37 +114,26 @@ Earlier builds encoded `location.origin + "?pair=<code>"` in that QR, which
 inside the native app is `capacitor://localhost/?pair=…`. Nothing could open
 it, so scanning did nothing at all; it was a broken affordance, not a leak.
 
-## Purchases, and the keepsake journal (Slow Burn Pro)
+## Purchases, and the keepsake journal
 
-Slow Burn Pro is a one-off non-consumable purchase that unlocks **content
-already inside the app**: more reflection decks, more guided practices, extra
-themes, and the keepsake journal. Nothing it unlocks is downloaded, and nothing
-it unlocks changes the pairing link.
+Slow Burn is a **paid app**: one price on the App Store, and everything in it
+is included. There is no subscription, no unlock, no paywall and no gated
+content — every stage, deck, practice and theme is present for everyone who
+installs it. Nothing about the app changes based on what anybody has paid.
 
-- **The only network path Pro adds is Apple's own.** The purchase and the
-  restore go through StoreKit, device to Apple. Slow Burn never sees your
-  payment details, your Apple ID, or your name, and receives no report from
-  Apple about who bought what. There is no server of ours in the transaction
-  and no analytics on it.
-- **The entitlement is a receipt, not a flag we invent.** Pro turns on only
-  when the StoreKit receipt says the purchase is verified or owned, and the
-  local record of it is only ever written from that receipt. There is no
-  developer switch and no code path that unlocks Pro from a tap.
-- **Resetting the app does not revoke it.** A purchase belongs to the Apple ID,
-  not to the app's state.
+There is an optional tip jar (three consumables). It unlocks nothing; the app
+is identical whether or not it is ever used. If a tip is bought, that
+transaction goes through Apple, device to Apple — we never see payment
+details, an Apple ID or a name, and we get no report of who bought anything.
+No server of ours is involved and there is no analytics on it.
 
 **The keepsake journal is the one thing that writes reflections to disk**, and
-it is **off until you switch it on**. With it on, each saved reflection —
-including the free-text note — is appended to `sb_journal_v1` in the app's own
-storage on that phone. It is never transmitted, never part of pairing, and
-never leaves the device. Switching the journal off **deletes** what is stored;
-so does deleting the app. It defaults to off because a reflection is the most
-personal thing in Slow Burn, and putting it on disk should be a decision
-somebody makes rather than one they discover later.
-
-Everything else in this document is unchanged by Pro. The pairing link, the
-encryption, what crosses and what does not — all identical whether or not
-anybody has paid.
+it is **off until you switch it on**. That is a privacy decision, not a
+commercial one — the journal is included like everything else. With it on,
+each saved reflection, including the free-text note, is appended to
+`sb_journal_v1` in the app's own storage on that phone. It is never
+transmitted, never part of pairing, and never leaves the device. Switching the
+journal off **deletes** what is stored; so does deleting the app.
 
 ## Threat model
 

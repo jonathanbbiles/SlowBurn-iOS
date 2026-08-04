@@ -2,13 +2,12 @@
 
 > Paste each field into **App Store Connect → Slow Burn → (version)**.
 >
-> **CHANGED 2 Aug 2026 — needs Jonathan + Jessica's sign-off on the ⚠️ lines.**
-> The previous listing was written before two things happened: the inclusivity
-> redesign (the app is no longer couples-only — it has a full solo mode and does
-> not assume a gender, orientation or relationship structure), and the
-> end-to-end encrypted pairing link. Three claims in the old copy are now
-> factually wrong and one set of review notes points a reviewer at buttons that
-> no longer exist. Those are corrected below and marked ⚠️.
+> **Slow Burn is a PAID app.** One price up front; everything in it is
+> included. There is no in-app unlock, no subscription and no gated content.
+> Jonathan sets the price tier in App Store Connect (~$2.99 target).
+>
+> ⚠️ lines below were corrected from an older listing that predated the
+> inclusivity redesign and the end-to-end encrypted pairing.
 
 ## Names & identifiers
 - **App Name (30 max):** `Slow Burn`
@@ -86,7 +85,7 @@ No login is required at any point. Nothing is collected about the user. The opti
 
 PAIRING AND THE CAMERA (not required to review the app): pairing two phones is optional and the reviewer does not need it — steps 2 and 3 above exercise everything on one device. If you do try it, the pair code can be typed, or scanned: the QR contains ONLY the ten-character pair code, and the app's own in-app scanner reads it. No URL is opened and no web page is involved. The camera is used solely to decode that code on-device; no image is recorded, stored or transmitted, which is why the app declares no data collection. Declining the camera permission simply hides the scan button and leaves the typed-code path, which is identical.
 
-The tip jar (Us tab → Support Slow Burn) is optional and unlocks nothing — the entire program is free. Tip buttons render only once StoreKit has returned purchasable products, so they are never dead.
+Slow Burn is a paid app and everything in it is included — there is no in-app unlock, no subscription and no gated content. The optional tip jar (Us tab → Support Slow Burn) unlocks nothing; tip buttons render only once StoreKit has returned purchasable products, so they are never dead.
 ```
 
 ## App Privacy ("nutrition label" answers)

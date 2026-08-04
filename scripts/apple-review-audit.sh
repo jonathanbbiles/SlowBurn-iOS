@@ -121,53 +121,30 @@ else
   block "appicon-1024.png is missing"
 fi
 
-sec "6. Guideline 2.1(b) — the purchase chain"
-# ChordLoop was rejected twice here. Both causes are checked directly.
-if npm run --silent test:iap >/tmp/sb-audit-iap.log 2>&1; then
-  pass "StoreKit suite green (purchase, restore, receipt ownership, hook drift, gating)"
+sec "6. Paid app — no paywall, no in-app unlock"
+if npm run --silent test:content >/tmp/sb-audit-content.log 2>&1; then
+  pass "no-paywall suite green (all content reachable, no entitlement, tips only)"
 else
-  block "StoreKit suite FAILED — see /tmp/sb-audit-iap.log"
+  block "no-paywall suite FAILED — see /tmp/sb-audit-content.log"
 fi
-# Trap 1: setup gated on plugin globals at parse time.
-if grep -qE 'if\(!\(window\.CdvPurchase' "$APP"; then
-  block "IAP setup is gated on window.CdvPurchase at parse time — the plugin lands later, so StoreKit would never start"
+if grep -q 'NON_CONSUMABLE' "$APP"; then
+  block "a non-consumable is registered — Slow Burn is a paid app and has nothing to unlock in-app"
 else
-  pass "native detection uses window.Capacitor, not the late-arriving plugin globals"
+  pass "no non-consumable registered (nothing to sell inside a paid app)"
 fi
-# Trap 2: when().owned() does not exist in v13 and aborts initialize().
-if grep -vE '^\s*(\*|//|/\*)' "$APP" | grep -qE '\.when\(\)[^;]*\.owned\('; then
-  block "when().owned() is used — it does not exist in cordova-plugin-purchase v13 and stops StoreKit from ever starting"
-else
-  pass "no when().owned() — hooks go through the listen() wrapper that degrades instead of throwing"
-fi
-grep -q 'function listen(store,name,fn)' "$APP" \
-  && pass "hooks registered through a wrapper, so a missing hook cannot abort initialize()" \
-  || block "no listen() wrapper — a hook that drifts out of the plugin would stop StoreKit silently"
-grep -q 'store.initialize(\[AP\])' "$APP" \
-  && pass "store.initialize() is unconditionally reachable" \
-  || block "store.initialize() may be unreachable"
-grep -q 'ProductType.NON_CONSUMABLE' "$APP" \
-  && pass "Slow Burn Pro is registered as a NON_CONSUMABLE" \
-  || block "the Pro product is not registered as a non-consumable"
-grep -q 'data-action="pro-restore"' "$APP" \
-  && pass "a visible Restore control exists (Apple requires and tests one)" \
-  || block "no Restore button — Apple rejects non-consumables without one"
-# The price must come from Apple, never from us.
-if grep -qE 'proPrice[^;]*=[^;]*"\$' "$APP"; then
-  block "the Pro price looks hardcoded — it must be read live from StoreKit"
-else
-  pass "the Pro price is read live from Apple (no hardcoded price)"
-fi
-# No unlock path that bypasses the receipt.
-PROGRANTS=$(grep -c 'Pro.grant()' "$APP" || true)
-if [ "${PROGRANTS:-0}" -le 1 ]; then
-  pass "Pro.grant() is called from exactly one place (the receipt path)"
-else
-  warn "Pro.grant() appears $PROGRANTS times — every one must come from a StoreKit receipt"
-fi
+for ghost in 'Pro.active' 'screenPro(' 'buyPro' 'PRO_ID' 'sb_pro_v1'; do
+  if grep -q "$ghost" "$APP"; then
+    block "freemium leftover in the app: $ghost"
+  fi
+done
+pass "no freemium leftovers (entitlement, paywall screen, buy/restore, pro flags)"
+# The tip jar predates this and stays — but it must still never be a dead button.
 grep -q 'tipsReady()' "$APP" \
-  && pass "tip buttons still render only when Apple returned purchasable products" \
+  && pass "tip buttons render only when Apple returned purchasable products" \
   || warn "could not confirm the tip jar is gated on loaded products"
+grep -q 'function listen(store,name,fn)' "$APP" \
+  && pass "StoreKit hooks still go through the degrade-not-throw wrapper" \
+  || warn "listen() wrapper missing from the tip-jar bridge"
 
 sec "7. Network + links"
 if grep -qE 'http://[^"]' "$APP"; then

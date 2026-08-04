@@ -104,6 +104,20 @@ export const tick = (ms = 12) => new Promise((r) => setTimeout(r, ms));
 /* Let the promise-driven handshake settle. */
 export async function settle(n = 24) { for (let i = 0; i < n; i++) await tick(6); }
 
+/* Wait for a CONDITION rather than a duration. The handshake is several
+   promise hops plus WebCrypto, so a fixed sleep that is comfortable on an idle
+   machine goes flaky the moment the box is busy — which is exactly when the
+   full suite runs. Fails loudly on timeout instead of leaving a later
+   assertion to report something misleading. */
+export async function waitFor(cond, what, ms = 8000) {
+  const started = Date.now();
+  while (Date.now() - started < ms) {
+    if (cond()) return true;
+    await tick(6);
+  }
+  throw new Error("timed out after " + ms + "ms waiting for: " + what);
+}
+
 /* A realistic, deliberately identifying profile — if any of this reaches the
    wire in readable form, the tests must fail. */
 export function seedProfile(p, self, partner) {

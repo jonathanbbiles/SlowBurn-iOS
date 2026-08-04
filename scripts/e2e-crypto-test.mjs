@@ -17,7 +17,7 @@
    These are assertions about behaviour, driven through the real app code —
    not about what the comments claim. */
 import { webcrypto } from "node:crypto";
-import { makeBroker, bootPhone, settle, seedProfile, reflect, ok, report } from "./harness.mjs";
+import { makeBroker, bootPhone, settle, waitFor, seedProfile, reflect, ok, report } from "./harness.mjs";
 
 const fails = [];
 const A = { name: "Jessica", gender: "woman", pronouns: "she", orientation: "queer" };
@@ -35,7 +35,7 @@ async function pairUp(broker, tagA = "host", tagB = "guest") {
   guest.S.screen = "pairing"; guest.S.pairPhase = "join"; guest.api.render();
   guest.byId("joincode").value = code;
   guest.click('[data-action="do-join"]');
-  await settle(60);
+  await waitFor(() => host.S.pairSecure && guest.S.pairSecure, "both phones to confirm the encrypted link");
   return { host, guest, code };
 }
 

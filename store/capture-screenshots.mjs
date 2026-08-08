@@ -34,6 +34,14 @@ const NAME = { welcome: "welcome", program: "program", consent: "consent", check
 if (!fs.existsSync(CHROME)) { console.error("Chrome not found at " + CHROME + " — set CHROME_PATH"); process.exit(1); }
 fs.mkdirSync(OUT, { recursive: true });
 
+/* Delete every PNG already here before capturing. Without this, removing a
+   scene leaves its screenshot behind for ever — which is how a paywall
+   screenshot survived the removal of the paywall and stayed queued for the
+   App Store. The manifest lists what SHOULD exist; the directory must match. */
+for (const f of fs.readdirSync(OUT)) {
+  if (f.endsWith(".png")) fs.unlinkSync(path.join(OUT, f));
+}
+
 const files = Object.fromEntries(ORDER.map((s) => [s, buildScene(s)]));
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: "new", args: ["--hide-scrollbars"] });
 const problems = [];

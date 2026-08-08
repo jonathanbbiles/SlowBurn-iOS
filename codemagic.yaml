@@ -100,14 +100,15 @@ workflows:
           /usr/libexec/PlistBuddy -c "Print :NSCameraUsageDescription" "$PLIST" \
             || { echo "FAILED: NSCameraUsageDescription not set — the scanner would crash the app."; exit 1; }
       # --- MARKETING VERSION ---------------------------------------------------
-      # 1.0 is IN REVIEW. Everything built from here is the NEXT version, so it
-      # must carry a different CFBundleShortVersionString or App Store Connect
-      # will refuse the upload as a duplicate of a version already submitted.
-      # Bump this line when Jonathan starts a version after 1.1.
-      - name: Set marketing version (1.1 — Slow Burn Pro)
+      # 1.0 was REJECTED (2.1(b), business-model question), not approved. The
+      # normal fix-and-resubmit flow is to upload a new BUILD against the same
+      # version record, so this stays 1.0 and only CFBundleVersion increments.
+      # Shipping 1.1 instead would force a new version record in App Store
+      # Connect for no benefit. Change this only when 1.0 is actually released.
+      - name: Set marketing version (1.0 — resubmission build)
         script: |
           PLIST=ios/App/App/Info.plist
-          plutil -replace CFBundleShortVersionString -string "1.1" "$PLIST"
+          plutil -replace CFBundleShortVersionString -string "1.0" "$PLIST"
           echo "CFBundleShortVersionString = $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
       - name: Set build number + export-compliance flag
         script: |

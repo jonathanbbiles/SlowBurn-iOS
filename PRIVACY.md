@@ -116,24 +116,20 @@ it, so scanning did nothing at all; it was a broken affordance, not a leak.
 
 ## Purchases, and the keepsake journal
 
-Slow Burn is a **paid app**: one price on the App Store, and everything in it
-is included. There is no subscription, no unlock, no paywall and no gated
-content — every stage, deck, practice and theme is present for everyone who
-installs it. Nothing about the app changes based on what anybody has paid.
-
-There is an optional tip jar (three consumables). It unlocks nothing; the app
-is identical whether or not it is ever used. If a tip is bought, that
-transaction goes through Apple, device to Apple — we never see payment
-details, an Apple ID or a name, and we get no report of who bought anything.
-No server of ours is involved and there is no analytics on it.
+Slow Burn is a **paid app**: one price on the App Store and nothing to buy
+inside it. There are **no in-app purchases, no subscriptions, no tip jar and
+no unlockable content** — the binary contains no StoreKit code at all, and
+`cordova-plugin-purchase` is not a dependency. Every stage, deck, practice and
+theme is present for everyone who installs it.
 
 **The keepsake journal is the one thing that writes reflections to disk**, and
-it is **off until you switch it on**. That is a privacy decision, not a
-commercial one — the journal is included like everything else. With it on,
-each saved reflection, including the free-text note, is appended to
-`sb_journal_v1` in the app's own storage on that phone. It is never
-transmitted, never part of pairing, and never leaves the device. Switching the
-journal off **deletes** what is stored; so does deleting the app.
+it is **off until you switch it on**. With it on, each saved reflection,
+including the free-text note, is appended to `sb_journal_v1` in the app's own
+storage on that phone. It is never transmitted, never part of pairing, and
+never leaves the device. Switching the journal off **deletes** what is stored;
+so does deleting the app. It is off by default because a reflection is the
+most personal thing in Slow Burn, and putting one on disk should be a decision
+somebody makes rather than one they discover later.
 
 ## Threat model
 
@@ -223,7 +219,7 @@ anonymous single digits and never retained anything, so it left nothing behind.
 party: there is no account, no analytics, no SDK that phones home, and the only
 network payload is ciphertext exchanged directly between two paired phones,
 which we cannot read, do not receive, and which is not retained anywhere.
-StoreKit tips are handled by Apple; we receive no customer data from them.
+There are no in-app purchases, so there is no purchase data of any kind.
 
 The camera permission does not change this answer. Camera access is used only
 to decode a pair code on-device; no image or derived data is collected,

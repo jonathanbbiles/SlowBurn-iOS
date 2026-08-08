@@ -9,8 +9,8 @@
 
      1. every deck, practice and theme is reachable — nothing is filtered
      2. there is no entitlement, no paywall screen and no lock UI anywhere
-     3. no non-consumable is registered with StoreKit; the only products are
-        the three optional tips, which unlock nothing
+     3. there is NO in-app purchasing of any kind — no StoreKit code, no
+        products, and the purchase plugin is not even a dependency
      4. the reflection screen offers the WHOLE chip vocabulary
      5. the keepsake journal is opt-in for privacy reasons and works without
         any purchase
@@ -51,12 +51,24 @@ ok(fails, !api.PRACTICES.some((p) => "pro" in p), "2: a practice still carries a
 ok(fails, !api.THEMES.some((t) => "pro" in t), "2: a theme still carries a pro flag");
 console.log("2  no entitlement, no paywall screen, no pro flags on any content");
 
-/* ---------- 3. StoreKit: tips only, no unlock to sell ---------- */
-ok(fails, !CODE.includes("NON_CONSUMABLE"), "3: a non-consumable is still registered — a paid app has nothing to sell in-app");
-ok(fails, CODE.includes("ProductType.CONSUMABLE"), "3: the pre-existing tip jar was removed — it was not part of this change");
-ok(fails, Object.keys(api.Monetize.TIPS).length === 3, "3: the tip products changed");
-ok(fails, typeof api.Monetize.buyPro === "undefined", "3: a buyPro() entry point still exists");
-console.log("3  StoreKit registers only the 3 optional tips; nothing unlocks content");
+/* ---------- 3. No in-app purchasing of any kind ----------
+   Apple rejected under 2.1(b) asking about paid content and subscriptions.
+   The only thing in the binary that could have prompted that was a tip jar of
+   three consumables. A paid app should contain no purchase machinery at all,
+   so the strongest assertion is that none of it exists — not that it is
+   harmless. */
+for (const ghost of ["Monetize", "CdvPurchase", "SlowBurnIAP", "StoreKit", "ProductType",
+                     "NON_CONSUMABLE", "CONSUMABLE", "supportCard", "restorePurchases",
+                     "store.order", "tip.small", 'data-action="tip"']) {
+  ok(fails, !CODE.includes(ghost), `3: in-app purchase machinery remains: "${ghost}"`);
+}
+{
+  const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url).pathname, "utf8"));
+  const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
+  ok(fails, !deps["cordova-plugin-purchase"],
+     "3: cordova-plugin-purchase is still a dependency — it would be linked into the binary");
+}
+console.log("3  no StoreKit, no products, purchase plugin not even a dependency");
 
 /* ---------- 4. The reflection screen offers the whole vocabulary ---------- */
 {
@@ -76,8 +88,34 @@ console.log("3  StoreKit registers only the 3 optional tips; nothing unlocks con
   for (const d of api.DECKS) {
     ok(fails, html.includes(escHtml(d.title)), `4: deck "${d.title}" is missing from the reflection screen`);
   }
-  ok(fails, !/unlock|upgrade|in pro\b/i.test(html), "4: the reflection screen still shows upsell copy");
+  ok(fails, !/upgrade|in pro\b|subscribe|purchase|unlock (it|now|everything)/i.test(html),
+     "4: the reflection screen still shows upsell copy");
   console.log(`4  reflection screen shows all ${api.DECKS.length} decks — ${api.GOOD.length}+${api.MORE.length} chips, no upsell`);
+}
+
+/* ---------- 4b. No business-model copy anywhere in the app ----------
+   "unlock"/"locked" survive deliberately: they are the CONSENT GATE — "Stage 3
+   unlocks once you have both confirmed" — which is the product, not a price.
+   What must not appear is anything that reads as a tier, a purchase or a
+   recurring charge. */
+{
+  /* Scan app copy, not code. MQTT's own client.subscribe() is protocol, not a
+     business model, and a naive quoted-string sweep spans across it. */
+  const copy = SRC.replace(/client\.subscribe\([^)]*\)/g, "");
+  const strings = (copy.match(/["'`][^"'`]{8,240}["'`]/g) || []).join(" ");
+  for (const [label, re] of [
+    ["subscription wording", /\bsubscription\b|\bsubscribe (to|now)\b/i],
+    ["upgrade wording", /\bupgrade\b/i],
+    ["premium wording", /\bpremium\b/i],
+    ["Pro tier wording", /\bSlow Burn Pro\b|\bPro tier\b|\bgo Pro\b/i],
+    ["trial wording", /\bfree trial\b|\btrial version\b/i],
+    ["paywall wording", /\bpaywall\b/i],
+    ["tip/donation wording", /\btip jar\b|\bleave a tip\b|\bSupport Slow Burn\b/i],
+    ["in-app purchase wording", /\bin-app purchase\b|\brestore purchase\b/i],
+  ]) {
+    ok(fails, !re.test(strings), `4b: ${label} still appears in app copy`);
+  }
+  console.log("4b no subscription / upgrade / premium / tier / tip copy in the app");
 }
 
 /* ---------- 5. Journal: opt-in, and works with no purchase ---------- */

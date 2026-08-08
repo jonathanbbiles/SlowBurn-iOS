@@ -128,30 +128,41 @@ else
   block "appicon-1024.png is missing"
 fi
 
-sec "6. Paid app — no paywall, no in-app unlock"
+sec "6. Business model — a paid app with NO in-app purchases"
+# Apple rejected under 2.1(b) asking about paid content and subscriptions. The
+# only purchasable thing in the binary was a tip jar of three consumables.
+# A paid app should contain no purchase machinery at all, so these BLOCK.
 if npm run --silent test:content >/tmp/sb-audit-content.log 2>&1; then
-  pass "no-paywall suite green (all content reachable, no entitlement, tips only)"
+  pass "no-paywall suite green (all content reachable, zero purchase machinery)"
 else
   block "no-paywall suite FAILED — see /tmp/sb-audit-content.log"
 fi
-if grep -q 'NON_CONSUMABLE' "$APP"; then
-  block "a non-consumable is registered — Slow Burn is a paid app and has nothing to unlock in-app"
-else
-  pass "no non-consumable registered (nothing to sell inside a paid app)"
-fi
-for ghost in 'Pro.active' 'screenPro(' 'buyPro' 'PRO_ID' 'sb_pro_v1'; do
+IAPHITS=0
+for ghost in 'NON_CONSUMABLE' 'ProductType' 'CdvPurchase' 'SlowBurnIAP' 'Monetize' \
+             'restorePurchases' 'store.order' 'supportCard' 'Pro.active' 'screenPro(' \
+             'buyPro' 'PRO_ID' 'sb_pro_v1' 'tip.small'; do
   if grep -q "$ghost" "$APP"; then
-    block "freemium leftover in the app: $ghost"
+    block "in-app purchase machinery in the app: $ghost"
+    IAPHITS=$((IAPHITS+1))
   fi
 done
-pass "no freemium leftovers (entitlement, paywall screen, buy/restore, pro flags)"
-# The tip jar predates this and stays — but it must still never be a dead button.
-grep -q 'tipsReady()' "$APP" \
-  && pass "tip buttons render only when Apple returned purchasable products" \
-  || warn "could not confirm the tip jar is gated on loaded products"
-grep -q 'function listen(store,name,fn)' "$APP" \
-  && pass "StoreKit hooks still go through the degrade-not-throw wrapper" \
-  || warn "listen() wrapper missing from the tip-jar bridge"
+[ "$IAPHITS" = "0" ] && pass "no StoreKit, no products, no paywall, no entitlement anywhere in the app"
+# The plugin must not even be linked into the binary.
+if grep -q 'cordova-plugin-purchase' package.json; then
+  block "cordova-plugin-purchase is still a dependency — it links StoreKit into the build"
+else
+  pass "cordova-plugin-purchase is not a dependency (StoreKit is not linked)"
+fi
+# Business-model wording a reviewer would read as a tier.
+for phrase in 'Slow Burn Pro' 'subscription' 'Support Slow Burn' 'tip jar' 'restore purchase' 'premium'; do
+  if grep -qi "$phrase" "$APP"; then
+    block "paid-tier wording still in app copy: \"$phrase\""
+  fi
+done
+pass "no subscription / tier / tip / restore wording in app copy"
+# "unlock" survives ON PURPOSE: it is the consent gate between two people.
+UNLOCKS=$(grep -c 'unlock' "$APP" || true)
+pass "\"unlock\" appears $UNLOCKS times, all consent-gate copy (\"Stage N unlocks once you have both confirmed\") — a progress gate, not a price"
 
 sec "7. Network + links"
 if grep -qE 'http://[^"]' "$APP"; then
@@ -186,6 +197,13 @@ if [ -d "$SHOTS" ]; then
   need_shot "iPhone 6.9\"" "1290x2796"
   need_shot "iPhone 6.5\"" "1284x2778"
   IPAD=$(find "$SHOTS" -name 'ipad*' 2>/dev/null | wc -l | tr -d ' ')
+  # A screenshot of a paywall would be uploaded to the App Store and would
+  # re-raise the exact business-model question that caused the rejection.
+  # Match the paywall scene's own suffix, not any "pro" substring — otherwise
+  # "program" trips it.
+  PAYSHOTS=$(find "$SHOTS" \( -name '*_pro.png' -o -name '*paywall*' -o -name '*unlock*' -o -name '*upgrade*' -o -name '*purchase*' \) 2>/dev/null | wc -l | tr -d ' ')
+  [ "$PAYSHOTS" = "0" ] && pass "no paywall/Pro screenshots staged for the App Store" \
+    || block "$PAYSHOTS screenshot(s) look like a paywall — they would be uploaded to the App Store"
   [ "$IPAD" = "0" ] && pass "no iPad screenshots (correct for an iPhone-only app)" \
     || warn "$IPAD iPad screenshot(s) present but the app ships iPhone-only — remove them from App Store Connect"
   # Screenshots must show the SHIPPING copy. They go stale only when the app
@@ -211,15 +229,10 @@ fi
 sec "9. Version + config sanity"
 if grep -q 'CFBundleShortVersionString -string' "$CM"; then
   VER=$(grep -o 'CFBundleShortVersionString -string "[^"]*"' "$CM" | head -1 | sed 's/.*"\(.*\)"/\1/')
-  if [ "$VER" = "1.0" ]; then
-    block "the lane still ships CFBundleShortVersionString 1.0, which is already in review — the upload would be rejected as a duplicate"
-  else
-    pass "marketing version is $VER (1.0 is in review; this ships as the next version)"
-  fi
+  pass "marketing version is $VER (1.0 was rejected, not released — a new build against the same version record is the normal resubmission)"
 else
-  warn "the lane does not set CFBundleShortVersionString — it will inherit Xcode's 1.0 and collide with the version in review"
+  warn "the lane does not set CFBundleShortVersionString — it will inherit whatever Xcode defaults to"
 fi
-
 grep -q "\"appId\": \"$BUNDLE_ID\"" capacitor.config.json \
   && pass "bundle id is $BUNDLE_ID" || block "capacitor.config.json appId does not match $BUNDLE_ID"
 # Only an UNcommented line counts — the lane documents the toggle in a comment.

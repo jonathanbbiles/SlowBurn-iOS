@@ -85,7 +85,9 @@ No login is required at any point. Nothing is collected about the user. The opti
 
 PAIRING AND THE CAMERA (not required to review the app): pairing two phones is optional and the reviewer does not need it — steps 2 and 3 above exercise everything on one device. If you do try it, the pair code can be typed, or scanned: the QR contains ONLY the ten-character pair code, and the app's own in-app scanner reads it. No URL is opened and no web page is involved. The camera is used solely to decode that code on-device; no image is recorded, stored or transmitted, which is why the app declares no data collection. Declining the camera permission simply hides the scan button and leaves the typed-code path, which is identical.
 
-Slow Burn is a paid app and everything in it is included — there is no in-app unlock, no subscription and no gated content. The optional tip jar (Us tab → Support Slow Burn) unlocks nothing; tip buttons render only once StoreKit has returned purchasable products, so they are never dead.
+BUSINESS MODEL: Slow Burn is a one-time PAID app. The purchase price on the App Store is the only transaction. There are NO in-app purchases, NO subscriptions, NO tip jar, and NO unlockable, locked or premium content of any kind. The binary contains no StoreKit code and does not link the in-app purchase framework. Everything described above — all six stages, all five reflection decks, all eight practices, all four themes, the keepsake journal, and two-phone pairing — is available to every user immediately on first launch, with no account and no further payment.
+
+Note on wording: the app says a stage "unlocks" when both partners privately confirm they are ready. That is the consent gate, which is the core feature of the program — it is a progress gate between two people, not a purchase or a paid tier.
 ```
 
 ## App Privacy ("nutrition label" answers)

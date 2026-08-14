@@ -303,7 +303,7 @@ const SAMPLE={A:{name:"Rowan",gender:"nonbinary",pronouns:"they",orientation:"qu
    Copy is written with {tokens} and resolved through T().
    ------------------------------------------------------------ */
 const STAGES=[
- {id:1,title:"Foundations",sub:"Non-genital touch",weeks:"Week 1",mins:"20–30 min",
+ {id:1,title:"Foundations",sub:"Pressure-free touch",weeks:"Week 1",mins:"20–30 min",
   intent:"Rebuild ease with touch — no pressure, no performance, no destination.",
   soloIntent:"Rebuild ease with your own touch — no pressure, no performance, no destination.",
   steps:["Choose an unhurried, private time. Phones away. One of you receives, the other gives — decide however you like.",
@@ -324,17 +324,17 @@ const STAGES=[
   soloTitle:"Following Sensation",soloSub:"Learning your own preferences",
   intent:"Learn each other’s preferences through clear turns and gentle hand-guidance.",
   soloIntent:"Learn your own preferences — what your body actually likes, today.",
-  steps:["Continue non-genital touch, taking clear turns as giver and receiver.",
+  steps:["Continue the same pressure-free touch, taking clear turns as giver and receiver.",
     "The receiver may place a hand over the giver’s to show ‘slower’, ‘softer’, ‘here’ — without words if you prefer.",
     "Stay with sensation rather than trying to create a reaction.",
     "Swap roles at the halfway point."],
-  soloSteps:["Continue non-genital touch, staying with your own hands.",
+  soloSteps:["Continue the same pressure-free touch, staying with your own hands.",
     "Experiment deliberately: slower, softer, firmer, lighter. Notice which your body prefers today.",
     "Stay with sensation rather than trying to create a reaction.",
     "Note anything you’d want a partner to know — now, or someday."],
   focus:"Show, don’t direct.",
-  bounds:"Still non-genital. No expectation of arousal.",
-  soloBounds:"Still non-genital. No expectation of arousal."},
+  bounds:"The same areas stay off-limits. There is still no goal beyond sensation.",
+  soloBounds:"The same areas stay off-limits. There is still no goal beyond sensation."},
 
  {id:3,title:"Whole-Body Mapping",sub:"Including — without demand",weeks:"Weeks 3–4",mins:"30–40 min",
   intent:"Touch may now include the whole body, kept exploratory rather than goal-oriented.",
@@ -367,7 +367,7 @@ const STAGES=[
   bounds:"Continue without any expectation of penetrative sex or climax.",
   soloBounds:"Continue without any expectation of climax."},
 
- {id:5,title:"Sensual Integration",sub:"Movement & closeness",weeks:"Weeks 6–7",mins:"35–45 min",
+ {id:5,title:"Movement & Closeness",sub:"Gentle movement, together",weeks:"Weeks 6–7",mins:"35–45 min",
   soloTitle:"Movement & Breath",soloSub:"Bringing the whole body in",
   intent:"Introduce gentle movement and bodies coming together, still without demand.",
   soloIntent:"Introduce gentle movement and breath, still without demand.",
@@ -1552,7 +1552,7 @@ function screenWelcome(){
       </div></div>
     <div class="pad" style="padding-top:0">
       <button class="btn" data-action="go" data-to="disclaimer">Begin</button>
-      <div class="center mt14"><span class="tiny">Built on Sensate Focus · used by sex therapists since 1970</span></div>
+      <div class="center mt14"><span class="tiny">Built on Sensate Focus · used by licensed therapists since 1970</span></div>
       <div class="center mt6" style="display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap">
         <a class="link" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:12px">Jessica Leigh Biles &#8599;</a>
         <span class="tiny" style="font-size:12px">&middot;</span>
@@ -1567,7 +1567,7 @@ function screenDisclaimer(){
     <h2 class="display" style="font-size:25px;margin-top:16px">Before we begin</h2>
     <p class="lead mt10">A few things to understand. Please read carefully.</p>
     <div class="callout mt18">Slow Burn is a <b>wellness and education program</b>. It is <b>not medical advice</b>, diagnosis, or treatment, and it is not a substitute for care from a qualified clinician.</div>
-    <div class="card-soft mt14"><p style="font-size:13.5px;line-height:1.6;color:var(--ink)">If either partner is managing pain during intimacy, a medical condition, a recent surgery or recovery, or a history of trauma, please work with a licensed clinician — a sex therapist or pelvic-floor physical therapist — before or alongside this program.</p></div>
+    <div class="card-soft mt14"><p style="font-size:13.5px;line-height:1.6;color:var(--ink)">If either partner is managing pain during intimacy, a medical condition, a recent surgery or recovery, or a history of trauma, please work with a licensed clinician — a licensed therapist or pelvic-floor physical therapist — before or alongside this program.</p></div>
     <div class="check-row" data-action="toggle-ack"><div class="cbox ${S.ack?'on':''}">${I.check}</div>
       <div class="ctext">I understand Slow Burn is an educational wellness tool, not medical advice, and I’ll consult a clinician for any pain or medical concern.</div></div>
     <button class="btn mt10" data-action="go" data-to="setup" ${S.ack?'':'disabled'}>Continue</button>
@@ -2049,10 +2049,10 @@ function tabPartner(){
     ${isMultiPartner()?`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:6px">More than one partner?</div>
       <p class="tiny" style="line-height:1.6">Slow Burn runs once per partnership, at that partnership’s own pace. To begin a separate run, reset from Identity &amp; language — nothing carries over between them.</p></div>`:""}
     <div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:8px">For clinicians</div>
-      <p class="tiny" style="line-height:1.6">A sex therapist or pelvic-floor PT can prescribe Slow Burn between sessions and follow your pace.</p>
+      <p class="tiny" style="line-height:1.6">A licensed therapist or pelvic-floor PT can prescribe Slow Burn between sessions and follow your pace.</p>
       <button class="btn btn-soft mt10" data-action="find-clinician" style="font-size:14px">Share with my clinician</button></div>
     <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jessica Leigh Biles</div>
-      <p class="tiny" style="line-height:1.6">Slow Burn is created with Jessica Leigh Biles — SAR-certified sex coach and host of the Freedom Between the Sheets podcast.</p>
+      <p class="tiny" style="line-height:1.6">Slow Burn is created with Jessica Leigh Biles — SAR-certified intimacy coach, educator and podcast host.</p>
       <a class="btn mt10" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:14px;text-decoration:none">Visit jessicaleighbiles.com &#8599;</a></div>
     <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jonathan Biles</div>
       <p class="tiny" style="line-height:1.6">The other half of Slow Burn — Jonathan writes and builds the apps behind the program. More of his work, and the best way to reach us, lives at jonathanscribbles.com.</p>
@@ -2275,9 +2275,9 @@ function screenClinicians(){
     <h2 class="display" style="font-size:25px;margin-top:8px">Find a clinician</h2>
     <p class="lead mt6" style="font-size:13.5px">Slow Burn works best alongside professional care — especially if there’s pain, a medical condition, recovery, or a trauma history. These are independent directories; we’re not affiliated with them.</p>
     <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
-      ${clinCard("AASECT","Certified sex therapists","Search AASECT-certified sex therapists &amp; counselors by location.","https://www.aasect.org/referral-directory")}
+      ${clinCard("AASECT","AASECT-certified therapists","Search AASECT-certified therapists &amp; counselors by location.","https://www.aasect.org/referral-directory")}
       ${clinCard("APTA Pelvic Health","Pelvic-floor physical therapists","Find a licensed pelvic-floor PT — pain, postpartum, post-surgery, menopause.","https://www.aptapelvichealth.org/ptlocator")}
-      ${clinCard("Psychology Today","Sex therapy directory","Browse therapists who list sex therapy, filter by insurance &amp; area.","https://www.psychologytoday.com/us/therapists/sex-therapy")}
+      ${clinCard("Psychology Today","Therapist directory","Browse licensed therapists in this speciality, filter by insurance &amp; area.","https://www.psychologytoday.com/us/therapists/sex-therapy")}
     </div>
     <div class="callout mt18" style="background:#FFF0F7;border-color:#F3D2E6;color:var(--plum-d)">If you’re in crisis or in severe pain, contact a licensed medical professional or your local emergency number directly.</div>
     <div class="foot-legal">Links open in your browser. Slow Burn is a wellness &amp; education program and does not provide medical care.</div>

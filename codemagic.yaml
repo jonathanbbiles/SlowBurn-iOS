@@ -113,40 +113,35 @@ workflows:
       - name: Set build number + export-compliance flag
         script: |
           set -euo pipefail
-          # WHY THIS STEP FAILS LOUDLY.
-          # This used to be `... 2>/dev/null || echo 0`, which swallowed the real
-          # error and fell back to LATEST=0 -> build number 1. App Store Connect
-          # then rejects the upload, because 1.0 already has build 10, and the
-          # only symptom visible anywhere is "Failed to publish App.ipa to App
-          # Store Connect" at the very end of a green 2-minute build. Never
-          # guess a build number: if ASC cannot be read, stop here and say so.
-          # stderr is deliberately NOT redirected -- it carries the auth error.
-          echo "Asking App Store Connect for the latest TestFlight build number..."
-          if ! LATEST=$(app-store-connect get-latest-testflight-build-number "6787719986"); then
-            echo "ERROR: could not read the latest TestFlight build number from App Store Connect." >&2
-            echo "The ASC integration (ChordLoopAPIKey) is the first thing to check. Run the" >&2
-            echo "read-only probe:  scripts/cm-build.sh -w asc-auth-check --watch" >&2
-            exit 1
-          fi
-          LATEST=$(printf '%s' "$LATEST" | tr -d '[:space:]')
-          case "$LATEST" in
-            ''|*[!0-9]*)
-              echo "ERROR: expected a build number, got: '$LATEST'" >&2
-              exit 1 ;;
-          esac
-          # 0 means the query failed, not that no build exists: this app already
-          # has builds 7-10 on App Store Connect. Shipping build 1 on the back of
-          # a 0 is exactly the silent failure this guard exists to prevent.
-          if [ "$LATEST" -lt 1 ]; then
-            echo "ERROR: App Store Connect reported latest build number $LATEST." >&2
-            echo "Slow Burn already has builds on TestFlight, so 0 means the query failed." >&2
-            echo "Refusing to ship build 1 -- ASC would reject it as not higher than 10." >&2
-            exit 1
-          fi
-          NEXT=$(( LATEST + 1 ))
-          echo "Latest TestFlight build is $LATEST; this build will be $NEXT."
+          # MONOTONIC TIMESTAMP BUILD NUMBER — same scheme as moodie-ios.
+          #
+          # This step used to ask App Store Connect for the latest TestFlight
+          # build number and add one. That scheme is broken, and it cost three
+          # failed builds on 2026-08-14 to prove it. Apple's rule is that
+          # CFBundleVersion must be strictly higher than the highest value EVER
+          # uploaded against the version record — but
+          # `get-latest-testflight-build-number` reports the latest build still
+          # AVAILABLE in TestFlight, which can read lower once builds expire or
+          # are removed. Slow Burn's 1.0 record had already seen build 10, so
+          # latest+1 landed at or below 10 and Apple refused the upload:
+          #
+          #   "iris-code": "ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE"
+          #   "bundle version must be higher than the previously uploaded version"
+          #   "previousBundleVersion": "10"
+          #
+          # The only visible symptom was "Failed to publish App.ipa to App Store
+          # Connect" at the end of an otherwise green build.
+          #
+          # A UTC timestamp is always a large integer (2.0e11), so it is always
+          # strictly greater than any hand-numbered build this app will ever
+          # have had, and it always increases build-over-build without asking
+          # anyone. No network round-trip, nothing to authenticate, and no way
+          # for this class of collision to come back. Do not replace this with
+          # a query-and-increment scheme.
+          BUILD_NUMBER="$(date -u +%Y%m%d%H%M)"
           PLIST=ios/App/App/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEXT" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST" \
+            || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD_NUMBER" "$PLIST"
           # EXPORT COMPLIANCE — reviewed 2 Aug 2026, after the app gained real
           # end-to-end encryption (ECDH P-256 + AES-256-GCM).
           # The app implements no cryptography of its own: it calls WebCrypto,
@@ -156,7 +151,9 @@ workflows:
           # per-build export-compliance prompt stays skipped.
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null \
             || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
-          echo "CFBundleVersion set to $NEXT (previous TestFlight latest: $LATEST); ITSAppUsesNonExemptEncryption=false"
+          echo "CFBundleShortVersionString = $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
+          echo "CFBundleVersion            = $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PLIST")"
+          echo "ITSAppUsesNonExemptEncryption=false"
       - name: Set up code signing — apply the stored profile + the ONE shared cert (no mint, no revoke)
         script: |
           security find-identity -v -p codesigning || true

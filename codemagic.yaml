@@ -307,3 +307,64 @@ workflows:
     scripts:
       - name: Complete the in-app purchase (plans unless APPLY_IAP=true)
         script: python3 scripts/asc-iap.py
+
+  # ---------------------------------------------------------------------------
+  # Withdraw 1.0 from review and resubmit it WITH the tip jar attached.
+  #
+  # BUILDS NOTHING. It attaches a build that already exists in App Store
+  # Connect, so resubmitting cannot quietly ship a different binary from the one
+  # that was tested.
+  #
+  # This costs the queue position, on purpose and unavoidably: the open
+  # submission holds the app version and NOT the in-app purchase, and Apple does
+  # not let an item be added to a submission it already has. Withdraw-and-
+  # resubmit is the only route from a 1-item submission to a 2-item one.
+  #
+  # RUN THE `asc-iap` WORKFLOW FIRST. asc-resubmit.py refuses to withdraw
+  # anything while the in-app purchase is still MISSING_METADATA — withdrawing
+  # then would take the app out of the queue AND leave it unable to go back in
+  # with its purchase.
+  #
+  # No `triggering:` block, so a push can never submit anything, and it plans
+  # unless SUBMIT_FOR_REVIEW is exactly "true" — which is deliberately not set
+  # anywhere in this repo.
+  #
+  # RELEASE_BUILD is the CFBundleVersion a human installed and approved. It is
+  # passed per build so it cannot go stale in the file:
+  #     scripts/cm-build.sh -w asc-resubmit --env RELEASE_BUILD=<n> --watch
+  #     scripts/cm-build.sh -w asc-resubmit --env RELEASE_BUILD=<n> \
+  #                                         --env SUBMIT_FOR_REVIEW=true --watch
+  # ---------------------------------------------------------------------------
+  asc-resubmit:
+    name: Slow Burn — resubmit 1.0 with the tip jar
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        ASC_APP_ID: "6787719986"
+        RELEASE_VERSION: "1.0"
+        IAP_PRODUCT_ID: "com.jonathanbiles.slowburn.tip.small"
+    scripts:
+      - name: Withdraw, re-attach, and resubmit with the in-app purchase
+        script: |
+          set -euo pipefail
+          if [ -z "${RELEASE_BUILD:-}" ]; then
+            echo "RELEASE_BUILD is not set — refusing to guess which binary to submit."
+            echo "Start this build with --env RELEASE_BUILD=<CFBundleVersion>."
+            exit 1
+          fi
+          ARGS=""
+          if [ "${SUBMIT_FOR_REVIEW:-false}" = "true" ]; then
+            echo "SUBMIT_FOR_REVIEW=true — this run WILL withdraw the current review and resubmit."
+            ARGS="--submit"
+          else
+            echo "SUBMIT_FOR_REVIEW is not \"true\" — planning only, nothing will be written."
+          fi
+          python3 scripts/asc-resubmit.py \
+            --app-id     "$ASC_APP_ID" \
+            --version    "$RELEASE_VERSION" \
+            --build      "$RELEASE_BUILD" \
+            --product-id "$IAP_PRODUCT_ID" \
+            $ARGS

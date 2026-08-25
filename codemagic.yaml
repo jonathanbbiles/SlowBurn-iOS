@@ -58,27 +58,40 @@ workflows:
       # pick it up, the app still builds, still runs, and still passes every test —
       # it just quietly falls back to the "no purchasable product" Support card. That
       # is safe for the user (no dead button) and fatal for the review: the in-app
-      # purchase would be sitting in the submission with no way for a reviewer to buy
-      # it. So the plugin's absence has to be visible HERE, not discovered in a
-      # rejection.
+      # purchase would sit in the submission with no way for a reviewer to buy it. So
+      # the plugin's absence has to be visible HERE, not discovered in a rejection.
       #
-      # Cordova plugins reach a Capacitor app through the generated CordovaPlugins
-      # PATH pod, so do NOT look for ios/App/Pods/cordova-plugin-purchase/ — Capacitor
-      # plugins are path pods, referenced in place and never copied into Pods/<Name>/,
-      # and a guard that tests for that directory fails 100% of builds (it cost Moodie
-      # a cycle). Check the generated Cordova bridge and the Podfile.lock entry.
+      # This app is on Capacitor 8, which generates an **SPM** project — there is no
+      # Podfile, and a guard that greps Podfile.lock fails 100% of builds (the first
+      # run of this step did exactly that). Capacitor 8 handles a Cordova plugin by
+      # writing it a shim package under ios/capacitor-cordova-ios-plugins/sources/ and
+      # adding it to the app's Package.swift.
+      #
+      # ONLY what is listed in that Package.swift is in the IPA. `npx cap ls` lists
+      # plugins it has merely discovered, and `cap sync` DROPS an SPM-incompatible
+      # plugin with a warning and carries on — which is how three Permission releases
+      # shipped without their native plugin. So this reads the generated manifest, and
+      # it checks the plugin appears BOTH as a package dependency and as a product of
+      # the app target: listed as a dependency but never linked is the silent failure.
       - name: Verify the purchase plugin actually reached the iOS project
         script: |
           set -e
-          BRIDGE=ios/capacitor-cordova-ios-plugins
-          echo "--- Podfile ---"; cat ios/App/Podfile || true
-          grep -q 'CordovaPlugins' ios/App/Podfile.lock \
-            || { echo "ERROR: the CordovaPlugins pod is not in Podfile.lock — no Cordova plugin was linked."; exit 1; }
-          ls -R "$BRIDGE/sources" 2>/dev/null || true
-          grep -ril 'InAppPurchase\|cordova-plugin-purchase' "$BRIDGE" >/dev/null 2>&1 \
-            || { echo "ERROR: cordova-plugin-purchase is not in the generated Cordova bridge."; \
-                 echo "The tip jar would never load a product, and the in-app purchase in review would be unbuyable."; exit 1; }
-          echo "ok  cordova-plugin-purchase is linked into the iOS project"
+          PKG=ios/App/CapApp-SPM/Package.swift
+          SRC=ios/capacitor-cordova-ios-plugins/sources/CordovaPluginPurchase
+          echo "--- generated Package.swift ---"; cat "$PKG"
+          [ -f "$PKG" ] || { echo "ERROR: $PKG was not generated — cap sync did not run."; exit 1; }
+          grep -q 'name: "CordovaPluginPurchase", path:' "$PKG" \
+            || { echo "ERROR: CordovaPluginPurchase is not a package dependency in Package.swift."; \
+                 echo "cap sync dropped the plugin. The tip jar would never load a product, and the"; \
+                 echo "in-app purchase in review would be unbuyable."; exit 1; }
+          grep -q '.product(name: "CordovaPluginPurchase"' "$PKG" \
+            || { echo "ERROR: CordovaPluginPurchase is declared but NOT linked into the app target."; exit 1; }
+          [ -f "$SRC/InAppPurchase.m" ] \
+            || { echo "ERROR: the plugin's StoreKit implementation is missing from $SRC."; exit 1; }
+          grep -q 'linkedFramework("StoreKit")' "$SRC/Package.swift" \
+            || { echo "ERROR: the plugin package does not link StoreKit."; exit 1; }
+          echo "ok  cordova-plugin-purchase is linked into the iOS project (SPM), StoreKit framework included"
+
       - name: Embed the Slow Burn app icon (replace Capacitor default)
         script: |
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"

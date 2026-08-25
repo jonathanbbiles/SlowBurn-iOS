@@ -21,6 +21,7 @@
     "audit:apple": "bash scripts/apple-review-audit.sh",
     "shots": "node store/capture-screenshots.mjs",
     "test:qr": "node scripts/pairing-qr-test.mjs",
-    "test:content": "node scripts/tipjar-and-no-gating-test.mjs"
+    "test:content": "node scripts/tipjar-and-no-gating-test.mjs",
+    "shots:iap": "node store/capture-iap-screenshot.mjs"
   }
 }

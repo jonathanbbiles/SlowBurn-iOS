@@ -50,12 +50,40 @@ export const SCENES = {
   invite: `setProfile();S.mode="live";S.pairSide="h";S.code="RTT77MH4JN";
     S.screen="pairing";S.pairPhase="create";S.partnerOnline=false;render();`,
 
-  /* The Pro screen as a free user sees it: what the purchase adds, and the
-     price slot. The price is blank here because a browser has no StoreKit —
-     on device it reads live from Apple. */
   /* Deliberately the CHOICE screen, not the invite screen: the invite screen
      prints location.origin, which is a capture artefact outside the real app. */
   pairchoose: `setProfile();S.mode=null;S.screen="pairing";S.pairPhase="choose";render();`,
+
+  /* The Support card with a live tip button — this is the App Review
+     screenshot App Store Connect requires for the "Small Tip" in-app purchase.
+     It is NOT one of the six App Store screenshots and must never be added to
+     ORDER in capture-screenshots.mjs; it goes to Apple attached to the
+     product, not to the listing.
+
+     A browser has no StoreKit, so the card would otherwise render its honest
+     "no purchasable product" fallback and the screenshot would show no
+     purchase at all. The stub below is the App Store's side of the
+     conversation and nothing more: it hands the REAL Monetize module the same
+     shapes CdvPurchase would, at the same price Apple has on file, and the
+     real code decides what to draw. Nothing about the purchase path is
+     reimplemented or bypassed — Monetize.init()'s own arrival poll picks this
+     up within 200ms, exactly as it picks up the real plugin on a device. */
+  support: `setProfile();
+    window.CdvPurchase={
+      Platform:{APPLE_APPSTORE:"ios-appstore"},
+      ProductType:{CONSUMABLE:"consumable"},
+      ErrorCode:{PAYMENT_CANCELLED:6500},
+      store:{
+        register:function(){},
+        when:function(){var w={};["approved","verified","productUpdated"].forEach(function(h){w[h]=function(){return w;};});return w;},
+        error:function(){},
+        initialize:function(){return Promise.resolve([]);},
+        get:function(id){ return id==="com.jonathanbiles.slowburn.tip.small"
+          ? {pricing:{price:"$1.99"},getOffer:function(){return {order:function(){}};}} : null; }
+      }};
+    S.mode="live";S.screen="app";S.tab="partner";
+    S.pairSecure=true;S.pairSafety="X4A-RTW";S.partnerOnline=true;S.code="RTT77MH4JN";
+    render();`,
 };
 
 export function buildScene(name) {

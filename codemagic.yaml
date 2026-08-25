@@ -208,3 +208,30 @@ workflows:
     scripts:
       - name: Prove the ASC key authenticates for a submission (submits nothing)
         script: bash scripts/asc-auth-check.sh
+
+  # ---------------------------------------------------------------------------
+  # On-demand, READ-ONLY dump of everything App Store Connect holds for this app:
+  # every version and its state, the full listing copy, the open review submission
+  # and WHAT IS IN IT, and every in-app purchase with the exact reason it is or is
+  # not submittable.
+  #
+  # It answers, from the source of truth, the question the repo cannot: whether the
+  # store listing and the in-app purchases agree with each other and with what Apple
+  # has been told. Every call is a GET; there is no write path in asc-inspect.py.
+  #
+  # No `triggering:` block, so a push can never run it.
+  #     scripts/cm-build.sh -w asc-inspect --watch
+  # ---------------------------------------------------------------------------
+  asc-inspect:
+    name: Slow Burn — App Store Connect state (read-only)
+    instance_type: mac_mini_m2
+    max_build_duration: 15
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        ASC_APP_ID: "6787719986"
+      xcode: latest
+    scripts:
+      - name: Dump the App Store Connect state (reads only, writes nothing)
+        script: python3 scripts/asc-inspect.py "$ASC_APP_ID"

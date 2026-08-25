@@ -32,6 +32,7 @@ GATES
 import argparse
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 import asc_submit  # noqa: E402
@@ -41,6 +42,32 @@ from asc_submit import (Asc, AscError, Credentials, attrs, iap_state, log,  # no
 NOTES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                      "store", "review-notes.txt")
 NOTES_MAX = 4000          # App Store Connect's limit on the App Review notes field
+
+
+def wait_version_editable(api, app_id, version_string, tries=20):
+    """Apple releases the VERSION some time after the submission finishes cancelling.
+
+    _wait_cancelled() waits for the SUBMISSION to leave its open state, and that is not
+    the same moment: the first run of this script saw the submission cancel cleanly and
+    then took a 409 on the very next call — "The specified pre-release build could not be
+    added" — because the version was still on its way out of WAITING_FOR_REVIEW. It
+    landed in DEVELOPER_REJECTED about a minute later and the same call then worked.
+
+    The 409's text points at the IAP and at an open submission, neither of which was the
+    problem, so this is worth waiting for explicitly rather than rediscovering."""
+    for attempt in range(tries):
+        versions = api.get_all(f"/v1/apps/{app_id}/appStoreVersions?limit=50")
+        v = next((x for x in versions
+                  if attrs(x).get("versionString") == version_string), None)
+        state = version_state(v) if v else "?"
+        if state in asc_submit.SUBMITTABLE_VERSION_STATES:
+            log(f"   version is {state} — editable again")
+            return
+        log(f"   waiting for the version to become editable (currently {state})…")
+        time.sleep(6)
+    raise AscError(
+        f"version {version_string} is still {state} after the withdrawal.\n"
+        "  Apple has not released it yet. Nothing is broken — re-run this in a minute.")
 
 
 def find_iap(api, app_id, product_id):
@@ -142,6 +169,8 @@ def main(argv=None):
                     {"data": {"type": "reviewSubmissions", "id": sid,
                               "attributes": {"canceled": True}}})
         _wait_cancelled(api, args.app_id, sid)
+        # The submission being cancelled does not mean the version is free yet.
+        wait_version_editable(api, args.app_id, args.version)
 
     # --- 5. attach the build ------------------------------------------------------------
     current = api.request("GET", f"/v1/appStoreVersions/{vid}/build").get("data")

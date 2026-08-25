@@ -274,3 +274,36 @@ workflows:
     scripts:
       - name: Dump the App Store Connect state (reads only, writes nothing)
         script: python3 scripts/asc-inspect.py "$ASC_APP_ID"
+
+  # ---------------------------------------------------------------------------
+  # Finish the "Small Tip" in-app purchase so it can be submitted.
+  #
+  # The product exists in App Store Connect but has never been completed, so it
+  # sits in MISSING_METADATA — and an IAP in that state cannot be attached to a
+  # review submission at all. This fills in the price, the territory
+  # availability and the mandatory App Review screenshot, and it is idempotent:
+  # anything already correct is reported and skipped.
+  #
+  # It touches ONE product id and nothing else. It never touches the app
+  # version or a review submission — that is asc-release.py's job, behind its
+  # own gates.
+  #
+  # No `triggering:` block, so a push can never run it, and it writes NOTHING
+  # unless APPLY_IAP is exactly "true" — which is deliberately not set here, so
+  # the safe state is the default rather than a toggle someone has to remember.
+  #     scripts/cm-build.sh -w asc-iap --watch                       # plan
+  #     scripts/cm-build.sh -w asc-iap --env APPLY_IAP=true --watch  # write
+  # ---------------------------------------------------------------------------
+  asc-iap:
+    name: Slow Burn — complete the Small Tip in-app purchase
+    instance_type: mac_mini_m2
+    max_build_duration: 15
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        ASC_APP_ID: "6787719986"
+      xcode: latest
+    scripts:
+      - name: Complete the in-app purchase (plans unless APPLY_IAP=true)
+        script: python3 scripts/asc-iap.py

@@ -246,9 +246,24 @@ class Asc:
 def _explain(code, detail):
     try:
         errs = json.loads(detail).get("errors", [])
-        lines = [f"  {e.get('title', '')}: {e.get('detail', '')}" for e in errs]
+        lines = []
+        for e in errs:
+            lines.append(f"  {e.get('title', '')}: {e.get('detail', '')}")
+            # "Please check associated errors" is LITERAL, not a shrug. Apple names
+            # every missing prerequisite by resource in meta.associatedErrors, and a
+            # helper that reads only title/detail throws that enumeration away — which
+            # is what turned a one-line fix on ShaveMe into several blind iterations.
+            # Most of what it names (a version copyright, an app price schedule, an
+            # IAP availability) never appears on the resource being written.
+            assoc = (e.get("meta") or {}).get("associatedErrors") or {}
+            if isinstance(assoc, dict):
+                nested = [x for group in assoc.values() for x in group]
+            else:
+                nested = list(assoc)
+            for n in nested:
+                lines.append(f"      - {n.get('title', '')}: {n.get('detail', '')}")
         detail = "\n".join(lines) or detail
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError, TypeError):
         pass
     hints = {
         401: "  The key was rejected. Check ASC_KEY_ID / ASC_ISSUER_ID, and that the key\n"

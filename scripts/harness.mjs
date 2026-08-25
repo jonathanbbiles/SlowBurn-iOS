@@ -89,7 +89,8 @@ export function bootPhone(broker, label, opts = {}) {
   pairBase,sessionId,maxUnlocked,matchFor,canMatch,myDebrief,theirDebrief,E2E,GOOD,MORE,CHIPS_FP,
   connectLive,leaveLive,onWire,stateEnvelope,PROTO_V,TOPIC_ROOT,myStagePointer,hasNewMatch,
   DECKS,PRACTICES,THEMES,STARTER,goodChips,moreChips,decksOpen,
-  practicesOpen,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal};`);
+  practicesOpen,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal,
+  Monetize,supportCard,tabPartner};`);
 
   const api = w.__api;
   return {

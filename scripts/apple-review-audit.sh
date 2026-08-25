@@ -128,38 +128,90 @@ else
   block "appicon-1024.png is missing"
 fi
 
-sec "6. Business model — a paid app with NO in-app purchases"
-# Apple rejected under 2.1(b) asking about paid content and subscriptions. The
-# only purchasable thing in the binary was a tip jar of three consumables.
-# A paid app should contain no purchase machinery at all, so these BLOCK.
+sec "6. Business model — a paid app, plus ONE tip jar that unlocks nothing"
+# EVERY check in this section reads the app with its comments stripped. The
+# comments here deliberately name the things the checks forbid — "no
+# subscription is registered anywhere", "sb_supported is the only consumer" —
+# because that is where the reasoning belongs. A naked grep over the raw file
+# counts those explanations as violations, so the build would fail for
+# documenting the invariant it is enforcing. What a reviewer sees is code and
+# copy; that is what gets scanned.
+APP_CODE=$(mktemp /tmp/sb-app-code.XXXXXX.js)
+python3 - "$APP" >"$APP_CODE" <<'STRIP'
+import re, sys
+src = open(sys.argv[1], encoding="utf-8").read()
+src = re.sub(r"/\*[\s\S]*?\*/", "", src)
+src = re.sub(r"^\s*//.*$", "", src, flags=re.M)
+sys.stdout.write(src)
+STRIP
+# Apple rejected under 2.1(b) in Aug 2026 asking about paid content. The binary
+# then held a tip jar of three consumables while the review submission held only
+# the app — so the purchase Apple could see in the binary was not in front of it
+# to review. The fix for that is NOT "have no in-app purchase". It is: ship one
+# product that really exists in App Store Connect, gate nothing on it, and
+# submit it in the SAME review submission as the version.
+#
+# So these checks changed shape. They no longer block on purchase machinery
+# existing; they block on the three ways a tip jar goes wrong:
+#   a dead button, an optimistic grant, or a tip that gates content.
 if npm run --silent test:content >/tmp/sb-audit-content.log 2>&1; then
-  pass "no-paywall suite green (all content reachable, zero purchase machinery)"
+  pass "tip-jar / no-gating suite green (all content reachable, no dead button, no optimistic grant)"
 else
-  block "no-paywall suite FAILED — see /tmp/sb-audit-content.log"
+  block "tip-jar / no-gating suite FAILED — see /tmp/sb-audit-content.log"
 fi
+
+# --- the product list must match App Store Connect exactly -------------------
+# Registering a product Apple does not have means a button that can never load,
+# which is the dead-button form of 2.1(b). Keep this list in step with ASC.
+ASC_PRODUCTS='com.jonathanbiles.slowburn.tip.small'
+APP_PRODUCTS=$(grep -o 'com\.jonathanbiles\.slowburn\.tip\.[a-z]*' "$APP_CODE" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$APP_PRODUCTS" = "$ASC_PRODUCTS" ]; then
+  pass "the app registers exactly the in-app purchase App Store Connect has ($ASC_PRODUCTS)"
+else
+  block "product mismatch — app has [$APP_PRODUCTS], App Store Connect has [$ASC_PRODUCTS]. \
+A product Apple does not have can never load, so its button would do nothing (2.1(b))."
+fi
+
+# --- entitlement machinery must NOT exist -----------------------------------
+# A tip buys no content, so nothing here may look like an unlock. These stay
+# blocking: they are the freemium build, not the tip jar.
 IAPHITS=0
-for ghost in 'NON_CONSUMABLE' 'ProductType' 'CdvPurchase' 'SlowBurnIAP' 'Monetize' \
-             'restorePurchases' 'store.order' 'supportCard' 'Pro.active' 'screenPro(' \
-             'buyPro' 'PRO_ID' 'sb_pro_v1' 'tip.small'; do
-  if grep -q "$ghost" "$APP"; then
-    block "in-app purchase machinery in the app: $ghost"
+for ghost in 'NON_CONSUMABLE' 'restorePurchases' 'Pro.active' 'screenPro(' \
+             'buyPro' 'PRO_ID' 'sb_pro_v1' 'decksLocked' 'practicesLocked'; do
+  if grep -q "$ghost" "$APP_CODE"; then
+    block "entitlement / paywall machinery in the app: $ghost"
     IAPHITS=$((IAPHITS+1))
   fi
 done
-[ "$IAPHITS" = "0" ] && pass "no StoreKit, no products, no paywall, no entitlement anywhere in the app"
-# The plugin must not even be linked into the binary.
-if grep -q 'cordova-plugin-purchase' package.json; then
-  block "cordova-plugin-purchase is still a dependency — it links StoreKit into the build"
+[ "$IAPHITS" = "0" ] && pass "no entitlement, no non-consumable, no restore, no paywall anywhere in the app"
+
+# --- the tipped flag must gate nothing ---------------------------------------
+# If anything but Monetize reads sb_supported, the tip has become an
+# entitlement and "everything is included" stops being true.
+SUPPORTED_READS=$(grep -c 'sb_supported' "$APP_CODE" || true)
+if [ "$SUPPORTED_READS" = "1" ]; then
+  pass "\"sb_supported\" is read in exactly one place (Monetize's own key) — a tip gates nothing"
 else
-  pass "cordova-plugin-purchase is not a dependency (StoreKit is not linked)"
+  block "\"sb_supported\" appears $SUPPORTED_READS times in code — more than one reader means a tip unlocks something"
 fi
-# Business-model wording a reviewer would read as a tier.
-for phrase in 'Slow Burn Pro' 'subscription' 'Support Slow Burn' 'tip jar' 'restore purchase' 'premium'; do
-  if grep -qi "$phrase" "$APP"; then
+rm -f "$APP_CODE"
+
+# --- the plugin must be a dependency, or the buttons cannot work -------------
+if grep -q 'cordova-plugin-purchase' package.json; then
+  pass "cordova-plugin-purchase is a dependency (StoreKit is linked, so the tip can complete)"
+else
+  block "cordova-plugin-purchase is NOT a dependency — the tip button would be dead"
+fi
+
+# --- business-model wording a reviewer would read as a tier ------------------
+# "Support Slow Burn" and "tip" are now legitimate and expected. A subscription,
+# a Pro tier or a restore flow is not.
+for phrase in 'Slow Burn Pro' 'subscription' 'restore purchase' 'premium' 'free trial'; do
+  if grep -qi "$phrase" "$APP_CODE"; then
     block "paid-tier wording still in app copy: \"$phrase\""
   fi
 done
-pass "no subscription / tier / tip / restore wording in app copy"
+pass "no subscription / tier / restore wording in app copy"
 # "unlock" survives ON PURPOSE: it is the consent gate between two people.
 UNLOCKS=$(grep -c 'unlock' "$APP" || true)
 pass "\"unlock\" appears $UNLOCKS times, all consent-gate copy (\"Stage N unlocks once you have both confirmed\") — a progress gate, not a price"

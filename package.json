@@ -2,11 +2,12 @@
   "name": "slowburn",
   "version": "1.0.0",
   "private": true,
-  "description": "Slow Burn — guided intimacy program, solo or with a partner, inclusive of all genders and relationship structures (native iOS via Capacitor). Paid app: no in-app purchases.",
+  "description": "Slow Burn — guided intimacy program, solo or with a partner, inclusive of all genders and relationship structures (native iOS via Capacitor). Paid app: everything included, nothing gated, plus an optional tip jar that unlocks nothing.",
   "dependencies": {
     "@capacitor/browser": "^8.0.0",
     "@capacitor/core": "latest",
-    "@capacitor/ios": "latest"
+    "@capacitor/ios": "latest",
+    "cordova-plugin-purchase": "^13.18.0"
   },
   "devDependencies": {
     "@capacitor/cli": "latest",
@@ -20,6 +21,6 @@
     "audit:apple": "bash scripts/apple-review-audit.sh",
     "shots": "node store/capture-screenshots.mjs",
     "test:qr": "node scripts/pairing-qr-test.mjs",
-    "test:content": "node scripts/no-paywall-test.mjs"
+    "test:content": "node scripts/tipjar-and-no-gating-test.mjs"
   }
 }

@@ -116,11 +116,25 @@ it, so scanning did nothing at all; it was a broken affordance, not a leak.
 
 ## Purchases, and the keepsake journal
 
-Slow Burn is a **paid app**: one price on the App Store and nothing to buy
-inside it. There are **no in-app purchases, no subscriptions, no tip jar and
-no unlockable content** — the binary contains no StoreKit code at all, and
-`cordova-plugin-purchase` is not a dependency. Every stage, deck, practice and
-theme is present for everyone who installs it.
+Slow Burn is a **paid app**: one price on the App Store, and every stage,
+deck, practice and theme is present for everyone who installs it. There are
+**no subscriptions and no unlockable content** — nothing in the app is behind
+a payment.
+
+There is **one in-app purchase: a tip jar** (`com.jonathanbiles.slowburn.tip.small`,
+a consumable). It is voluntary, it buys nothing, and the app is identical
+before and after one — the only thing that changes is a thank-you line on the
+Support card. Tapping it is what makes this true rather than a promise: the
+flag it sets, `sb_supported`, is read in exactly one place in the whole app,
+and no stage, deck, practice, theme or setting consults it. There is a test
+that fails the build if a second reader ever appears.
+
+**Apple handles the transaction, not us.** The purchase goes through StoreKit;
+we never see a name, an email, a card, or an Apple ID, and the app sends
+nothing anywhere as a result of one. What we receive is what any developer
+receives — an aggregate sales figure in App Store Connect, not attached to a
+person. So "Data Not Collected" is unchanged by the tip jar, and the tipped
+flag stays on the device that set it.
 
 **The keepsake journal is the one thing that writes reflections to disk**, and
 it is **off until you switch it on**. With it on, each saved reflection,
@@ -219,7 +233,10 @@ anonymous single digits and never retained anything, so it left nothing behind.
 party: there is no account, no analytics, no SDK that phones home, and the only
 network payload is ciphertext exchanged directly between two paired phones,
 which we cannot read, do not receive, and which is not retained anywhere.
-There are no in-app purchases, so there is no purchase data of any kind.
+The one in-app purchase — the optional tip jar — does not change this. Apple
+processes it end to end; we receive no customer data from it, the app transmits
+nothing when one happens, and the only record it leaves is a single on-device
+flag that gates nothing.
 
 The camera permission does not change this answer. Camera access is used only
 to decode a pair code on-device; no image or derived data is collected,

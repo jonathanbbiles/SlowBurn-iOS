@@ -53,6 +53,32 @@ workflows:
         script: |
           [ -d ios ] || npx cap add ios
           npx cap sync ios
+      # --- WHY THIS STEP EXISTS -------------------------------------------------
+      # cordova-plugin-purchase is what makes the tip jar real. If `cap sync` does not
+      # pick it up, the app still builds, still runs, and still passes every test —
+      # it just quietly falls back to the "no purchasable product" Support card. That
+      # is safe for the user (no dead button) and fatal for the review: the in-app
+      # purchase would be sitting in the submission with no way for a reviewer to buy
+      # it. So the plugin's absence has to be visible HERE, not discovered in a
+      # rejection.
+      #
+      # Cordova plugins reach a Capacitor app through the generated CordovaPlugins
+      # PATH pod, so do NOT look for ios/App/Pods/cordova-plugin-purchase/ — Capacitor
+      # plugins are path pods, referenced in place and never copied into Pods/<Name>/,
+      # and a guard that tests for that directory fails 100% of builds (it cost Moodie
+      # a cycle). Check the generated Cordova bridge and the Podfile.lock entry.
+      - name: Verify the purchase plugin actually reached the iOS project
+        script: |
+          set -e
+          BRIDGE=ios/capacitor-cordova-ios-plugins
+          echo "--- Podfile ---"; cat ios/App/Podfile || true
+          grep -q 'CordovaPlugins' ios/App/Podfile.lock \
+            || { echo "ERROR: the CordovaPlugins pod is not in Podfile.lock — no Cordova plugin was linked."; exit 1; }
+          ls -R "$BRIDGE/sources" 2>/dev/null || true
+          grep -ril 'InAppPurchase\|cordova-plugin-purchase' "$BRIDGE" >/dev/null 2>&1 \
+            || { echo "ERROR: cordova-plugin-purchase is not in the generated Cordova bridge."; \
+                 echo "The tip jar would never load a product, and the in-app purchase in review would be unbuyable."; exit 1; }
+          echo "ok  cordova-plugin-purchase is linked into the iOS project"
       - name: Embed the Slow Burn app icon (replace Capacitor default)
         script: |
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"

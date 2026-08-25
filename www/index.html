@@ -1521,6 +1521,184 @@ function openSite(url){
   catch(e){ try{ window.open(url,"_blank","noopener"); }catch(e2){ location.href=url; } }
 }
 
+/* ============================================================
+   SUPPORT / TIP JAR — one real StoreKit CONSUMABLE via
+   cordova-plugin-purchase (CdvPurchase v13), the same
+   IAP_PATTERN used by ScootStep / ChordLoop / Receiptless.
+
+   WHAT THIS IS, AND WHAT IT IS NOT
+   Slow Burn is a PAID app and everything in it is included in
+   that price. This tip jar unlocks nothing, gates nothing and
+   hides nothing: it is a voluntary thank-you, and the app is
+   byte-for-byte the same app before and after one. There is no
+   entitlement, no tier, no subscription and no restore, because
+   there is nothing to restore — a consumable buys no content.
+
+   ONE PRODUCT, DELIBERATELY. App Store Connect holds exactly one
+   in-app purchase for this app:
+
+       com.jonathanbiles.slowburn.tip.small   (CONSUMABLE)
+
+   An earlier build registered three (small/medium/large) but only
+   this one was ever created in App Store Connect, so the other two
+   could never have loaded and their buttons could never have
+   rendered. Registering a product Apple does not have is how a
+   dead buy button gets shipped, which is Guideline 2.1(b). If more
+   tiers are wanted later, create them in App Store Connect FIRST
+   and add their ids here second — never the other way round.
+
+   NO DEAD BUTTON. The tip button renders ONLY when Apple has
+   actually returned a purchasable product (Monetize.tipsReady()).
+   Until then the Support card is an honest "share it / say hello"
+   note. So on the web, in the simulator, or if the product were
+   ever removed from App Store Connect, there is no button to press
+   rather than a button that does nothing.
+
+   NO MOCKS, NO OPTIMISTIC GRANT. The thank-you is recorded ONLY
+   inside store.when().verified() — Apple confirming a real
+   transaction. tip() never records anything itself; it only asks
+   Apple, and it no-ops unless the native bridge is present AND
+   Apple returned the product. There is no fallback path, no
+   default-true and no grant-on-error, which is the rule that got
+   Receiptless through review.
+
+   Plugin arrival (IAP_PATTERN rule 3): CdvPurchase lands
+   asynchronously, so setup is never gated on it at parse time —
+   already-present OR deviceready OR a short poll, whichever wins,
+   and wireStore() is idempotent so a double arrival cannot
+   double-register or double-initialize the store.
+   ============================================================ */
+const Monetize=(function(){
+  const TIP_KEY="sb_supported";
+  /* The ONE product that exists in App Store Connect. Keep in sync with it. */
+  const TIPS={ small:"com.jonathanbiles.slowburn.tip.small" };
+  const LABEL={ small:"Leave a tip" };
+  const st={ready:false,wired:false,prices:{},store:null,P:null,
+            initError:null,missingHooks:[],lastError:null};
+
+  /* RULE 1: native is decided from window.Capacitor, which the webview injects
+     BEFORE any page script runs — never from CdvPurchase/cordova, which arrive
+     asynchronously and would make this return false at parse time. */
+  function native(){
+    try{ if(window.Capacitor&&typeof window.Capacitor.isNativePlatform==="function")
+           return !!window.Capacitor.isNativePlatform();
+         return !!(window.Capacitor&&window.Capacitor.platform&&window.Capacitor.platform!=="web");
+    }catch(e){ return false; }
+  }
+  function say(m){ if(typeof toast==="function") toast(m); }
+  function paint(){ if(typeof render==="function") render(); }
+
+  function ready(){ return !!st.ready; }
+  function tipsReady(){ return !!(st.ready&&Object.keys(st.prices).length); }
+  function hasSupported(){ try{ return localStorage.getItem(TIP_KEY)==="1"; }catch(e){ return false; } }
+  function priceOf(k){ return st.prices[k]||""; }
+  function keys(){ return Object.keys(TIPS).filter(k=>st.prices[k]); }
+  function labelOf(k){ return LABEL[k]||k; }
+
+  /* The ONLY thing a tip does. It is on-device, it is cosmetic, and nothing
+     anywhere in the app reads it as permission to show or hide content —
+     grep sb_supported and this is the only consumer. */
+  function recordTip(){
+    try{ localStorage.setItem(TIP_KEY,"1"); }catch(e){}
+    paint(); say("Thank you — that genuinely helps.");
+  }
+
+  /* RULE 5: a hook that does not exist in this plugin version must not throw
+     and abort initialize(). v13.18.0 has NO when().owned() — it is commented
+     out in the plugin source — and calling it is exactly what stopped StoreKit
+     from ever starting in ChordLoop. Degrade, record, carry on. */
+  function listen(store,name,fn){
+    try{
+      const w=store.when();
+      if(w&&typeof w[name]==="function"){ w[name](fn); return true; }
+      st.missingHooks.push(name);
+    }catch(e){ st.missingHooks.push(name); }
+    return false;
+  }
+
+  function refreshPrices(){
+    if(!st.store||!st.P) return;
+    const AP=st.P.Platform.APPLE_APPSTORE;
+    Object.keys(TIPS).forEach(k=>{
+      const p=st.store.get(TIPS[k],AP);
+      if(p&&p.pricing&&p.pricing.price) st.prices[k]=p.pricing.price;
+    });
+  }
+
+  function wireStore(){
+    if(st.wired) return;                       // deviceready + poll can both fire
+    const Plug=window.CdvPurchase; if(!Plug) return;
+    st.wired=true;
+    st.P=Plug; st.store=Plug.store;
+    const store=st.store, AP=Plug.Platform.APPLE_APPSTORE;
+    try{
+      /* CONSUMABLE only. There is no unlock to sell, so no non-consumable and
+         no subscription is registered anywhere in this app. */
+      store.register(Object.keys(TIPS).map(k=>({id:TIPS[k],type:Plug.ProductType.CONSUMABLE,platform:AP})));
+      /* Each hook gets its OWN function object — Callbacks.push() throws
+         "REGISTERING THE SAME CALLBACK TWICE" on a repeated reference. */
+      listen(store,"approved",function(t){ try{ t.verify(); }catch(e){} });
+      listen(store,"verified",function(r){
+        try{ r.finish(); }catch(e){}
+        recordTip();                           // <- the ONLY caller. Verified only.
+      });
+      listen(store,"productUpdated",function(){ refreshPrices(); paint(); });
+      try{ store.error(function(err){
+        if(err&&err.code===st.P.ErrorCode.PAYMENT_CANCELLED) return;   // user tapped Cancel
+        st.lastError=err&&(err.message||err.code);
+        console.warn("[iap] store error",err&&err.code,err&&err.message);
+      }); }catch(e){}
+    }catch(e){
+      /* Even a broken registration must not stop initialize() being reached. */
+      st.initError="setup: "+(e&&e.message||e);
+    }
+    /* RULE 5: unconditionally reachable. */
+    try{
+      Promise.resolve(store.initialize([AP])).then(function(errs){
+        st.ready=true;
+        if(errs&&errs.length) st.initError=(errs[0]&&(errs[0].message||errs[0].code))||"store unavailable";
+        refreshPrices();
+        paint();
+      }).catch(function(e){ st.initError="init: "+(e&&e.message||e); });
+    }catch(e){ st.initError="init: "+(e&&e.message||e); }
+  }
+
+  function init(){
+    /* RULE 3: already-present OR deviceready OR a short poll — any single
+       mechanism can be missed on a cold launch. */
+    try{ document.addEventListener("deviceready",wireStore,false); }catch(e){}
+    wireStore();
+    let tries=0;
+    const t=setInterval(function(){
+      if(st.wired||++tries>50){ clearInterval(t); return; }
+      wireStore();
+    },200);
+  }
+
+  /* RULE 4: never fail silently. Every path either opens the StoreKit sheet or
+     says why it cannot. A tip button that does nothing is the 2.1(b) bug. */
+  function tip(k){
+    if(!native()){ say("Tipping is only available in the App Store version."); return false; }
+    if(!tipsReady()){ say("Still connecting to the App Store — one moment."); return false; }
+    const p=st.store.get(TIPS[k],st.P.Platform.APPLE_APPSTORE);
+    const offer=p&&p.getOffer&&p.getOffer();
+    if(!offer){ say("Couldn’t load that tip from the App Store. Please try again."); return false; }
+    try{ offer.order(); return true; }catch(e){ say("Couldn’t start the purchase — please try again."); return false; }
+  }
+
+  /* Safari Web Inspector: SlowBurnIAP.diagnose() when something is off. */
+  function diagnose(){
+    return {native:native(),ready:st.ready,pluginPresent:!!window.CdvPurchase,
+            tipPrices:st.prices,
+            initError:st.initError,lastError:st.lastError,missingHooks:st.missingHooks};
+  }
+
+  return {native,ready,tipsReady,hasSupported,priceOf,keys,labelOf,
+          tip,init,diagnose,TIPS};
+})();
+/* Published for the Web Inspector, exactly as ChordLoop/Receiptless do. */
+try{ window.SlowBurnIAP=Monetize; }catch(e){}
+
 
 /* ---- icons ---- */
 const I={
@@ -2057,8 +2235,36 @@ function tabPartner(){
     <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jonathan Biles</div>
       <p class="tiny" style="line-height:1.6">The other half of Slow Burn — Jonathan writes and builds the apps behind the program. More of his work, and the best way to reach us, lives at jonathanscribbles.com.</p>
       <a class="btn btn-plum mt10" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:14px;text-decoration:none">Visit jonathanscribbles.com &#8599;</a></div>
+    ${supportCard()}
     <div class="foot-legal">Wellness &amp; education only · not medical advice · consult a licensed clinician for pain or medical concerns.</div>
   </div></div>`;
+}
+
+/* Support card — a thank-you, never a paywall. NOTHING in Slow Burn is behind
+   it: no stage, deck, practice, theme or setting reads Monetize.hasSupported(),
+   and the app is identical before and after a tip. The real tip button renders
+   ONLY when Apple has returned a purchasable product (Monetize.tipsReady());
+   otherwise the card is an honest "share it / say hello" note, so there is
+   never a button that does nothing. */
+function supportCard(){
+  const thanks=Monetize.hasSupported()
+    ? `<div class="tiny mt10" style="color:var(--sage);font-weight:700">&#9829; Thank you — you&#8217;ve supported Slow Burn.</div>` : "";
+  if(Monetize.tipsReady()){
+    const btns=Monetize.keys().map(k=>
+      `<button class="chip" data-action="tip" data-tier="${k}">${esc(Monetize.labelOf(k))} &middot; ${esc(Monetize.priceOf(k))}</button>`
+    ).join("");
+    return `<div class="card mt14" style="border-color:var(--line-2)">
+      <div style="font-weight:700;font-size:14px;margin-bottom:6px">Support Slow Burn</div>
+      <p class="tiny" style="line-height:1.6">You already own the whole program — every stage, deck, practice and theme — and a tip adds nothing to it. It is simply a way to say thank you, if it has helped ${esc(T("{us}"))}.</p>
+      <div class="chips mt10">${btns}</div>${thanks}</div>`;
+  }
+  return `<div class="card mt14" style="border-color:var(--line-2)">
+    <div style="font-weight:700;font-size:14px;margin-bottom:6px">Support Slow Burn</div>
+    <p class="tiny" style="line-height:1.6">No ads, nothing gated, no upsells — the whole program is yours. If it&#8217;s helped ${esc(T("{us}"))}, the kindest support is telling someone else about it, or saying hello from either of our sites.</p>
+    <div class="row mt10" style="gap:8px">
+      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:13px">Jessica&#8217;s site</button>
+      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:13px">Jonathan&#8217;s site</button>
+    </div>${thanks}</div>`;
 }
 
 
@@ -2376,6 +2582,9 @@ document.addEventListener("click",(e)=>{
 
   // external links — always through the system browser, never in-webview
   if(a==="open-url"){ e.preventDefault(); openSite(el.dataset.url); return; }
+  // tip: asks Apple only. Never records anything — that happens in Monetize's
+  // verified() handler, on a transaction Apple has confirmed.
+  if(a==="tip"){ e.preventDefault(); Monetize.tip(el.dataset.tier); return; }
 
   if(a==="noop"){ return; }
   if(a==="go"){
@@ -2540,6 +2749,7 @@ document.addEventListener("click",(e)=>{
     else { S.mode=null; S.screen="pairing"; S.pairPhase="choose"; }
   }
   loadTheme(); loadJournal();
+  Monetize.init();
   render();
 })();
 </script>

@@ -6,6 +6,13 @@
 > included. There is no in-app unlock, no subscription and no gated content.
 > Jonathan sets the price tier in App Store Connect (~$2.99 target).
 >
+> **There is ONE in-app purchase: a tip jar** —
+> `com.jonathanbiles.slowburn.tip.small`, "Small Tip", a **consumable**. It
+> unlocks nothing; the app is identical before and after one. It MUST be
+> attached to the same review submission as the version (2 items, not 1) —
+> submitting the version alone is the 2.1(b) split that already cost this app
+> a cycle on 5 Aug 2026.
+>
 > ⚠️ lines below were corrected from an older listing that predated the
 > inclusivity redesign and the end-to-end encrypted pairing.
 >
@@ -104,7 +111,13 @@ No login is required at any point. Nothing is collected about the user. The opti
 
 PAIRING AND THE CAMERA (not required to review the app): pairing two phones is optional and the reviewer does not need it — steps 2 and 3 above exercise everything on one device. If you do try it, the pair code can be typed, or scanned: the QR contains ONLY the ten-character pair code, and the app's own in-app scanner reads it. No URL is opened and no web page is involved. The camera is used solely to decode that code on-device; no image is recorded, stored or transmitted, which is why the app declares no data collection. Declining the camera permission simply hides the scan button and leaves the typed-code path, which is identical.
 
-BUSINESS MODEL: Slow Burn is a one-time PAID app. The purchase price on the App Store is the only transaction. There are NO in-app purchases, NO subscriptions, NO tip jar, and NO unlockable, locked or premium content of any kind. The binary contains no StoreKit code and does not link the in-app purchase framework. Everything described above — all six stages, all five reflection decks, all eight practices, all four themes, the keepsake journal, and two-phone pairing — is available to every user immediately on first launch, with no account and no further payment.
+BUSINESS MODEL: Slow Burn is a one-time PAID app with ONE optional in-app purchase, submitted with this version: "Small Tip" (com.jonathanbiles.slowburn.tip.small), a consumable tip jar. It is a voluntary thank-you and it unlocks NOTHING. There are NO subscriptions and NO premium, locked or unlockable content of any kind. Everything described above — all six stages, all five reflection decks, all eight practices, all four themes, the keepsake journal, and two-phone pairing — is available to every user immediately on first launch, with no account and no further payment, whether or not they ever tip.
+
+WHERE TO FIND IT: the tip jar is the "Support Slow Burn" card at the bottom of the last tab ("Me" / partner settings). The tip button only appears once StoreKit has returned the product, so on a device signed into a sandbox account it will show "Leave a tip · $1.99"; if the product has not loaded the card falls back to an honest "tell someone about it / say hello" note rather than showing a button that would do nothing.
+
+THAT THE TIP UNLOCKS NOTHING IS VERIFIABLE, NOT JUST STATED: a completed tip sets exactly one on-device flag, and that flag is read in exactly one place in the app — the line that draws the thank-you. No stage, deck, practice, theme or setting consults it. The build fails if a second reader is ever added.
+
+CORRECTION TO OUR EARLIER REPLY (8 Aug 2026): in answering the 2.1(b) question we said the app had no in-app purchases and no tip jar. That was true of the binary we had just submitted — the tip jar had been removed. We have now put it back and done it properly, and this submission contains both the app version and the in-app purchase so the purchase is in front of you rather than only in the binary. We would rather flag the change ourselves than have it look like a discrepancy.
 
 Note on wording: the app says a stage "unlocks" when both partners privately confirm they are ready. That is the consent gate, which is the core feature of the program — it is a progress gate between two people, not a purchase or a paid tier.
 
@@ -116,8 +129,9 @@ RE: THE PREVIOUS 1.1 REJECTION. The app's name, subtitle, description, promotion
   No account; identity settings and written notes stay on-device; the paired-phone
   link is end-to-end encrypted between two users' own devices, is not readable by
   us or by the relay, is not retained, and is not linked to any identity; no
-  analytics; no ads; no tracking. Tips are handled by Apple; we receive no
-  customer data.
+  analytics; no ads; no tracking. The optional tip is handled by Apple through
+  StoreKit; we receive no customer data from it and the app transmits nothing
+  when one happens, so "Data Not Collected" is still the correct answer.
 - **Camera:** requested only to decode a pair code on-device. No image or
   derived data is collected, transmitted or stored, so there is nothing to
   declare — "Data Not Collected" is still the correct answer. The permission

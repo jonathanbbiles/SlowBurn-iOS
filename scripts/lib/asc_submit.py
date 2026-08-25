@@ -80,9 +80,10 @@ RESUMABLE_VERSION_STATES = {"READY_FOR_REVIEW"}
 OPEN_SUBMISSION_STATES = {
     "READY_FOR_REVIEW", "WAITING_FOR_REVIEW", "IN_REVIEW", "UNRESOLVED_ISSUES",
 }
-# An IAP in this state is waiting to be attached to a review submission. Anything already
-# approved, in review, or removed must NOT be attached again.
-IAP_NEEDS_REVIEW_STATES = {"READY_TO_SUBMIT"}
+# An IAP in one of these is complete and waiting to be attached to a review submission.
+# PREPARE_FOR_SUBMISSION is what App Store Connect's own UI calls "Prepare for Submission"
+# and it means ready — see iap_state() below for why both spellings are here.
+IAP_NEEDS_REVIEW_STATES = {"READY_TO_SUBMIT", "PREPARE_FOR_SUBMISSION"}
 IAP_IN_FLIGHT_STATES = {"WAITING_FOR_REVIEW", "IN_REVIEW", "PENDING_BINARY_APPROVAL"}
 
 
@@ -293,6 +294,37 @@ def version_state(v):
     return a.get("appVersionState") or a.get("appStoreState") or "UNKNOWN"
 
 
+def iap_state(api, iap):
+    """The state App Store Connect's own UI shows for an in-app purchase.
+
+    ⚠️ NOT `inAppPurchasesV2.state`. That attribute is a rollup and it goes STALE: after
+    completing "Small Tip" on Slow Burn (price, availability, review screenshot and note
+    all written and read back) it still said MISSING_METADATA, while the App Store Connect
+    UI listed the product as "Prepare for Submission" — which is exactly what
+    inAppPurchaseVersions[0].state said. Across the rest of the portfolio the two agree
+    (four approved/in-review products, all matching), so the rollup is right until you
+    write to a product and then it lags, possibly indefinitely.
+
+    Trusting the stale field is not a cosmetic bug here: it makes a completed IAP look
+    unsubmittable, and the guards in this file would then refuse to attach it — turning a
+    finished product into "you must fix this first" with nothing left to fix.
+
+    So: the VERSION is the truth, the rollup is the fallback for anything that predates
+    the versioned model.
+    """
+    try:
+        versions = api.get_all(f"/v2/inAppPurchases/{iap['id']}/versions?limit=5")
+    except AscError:
+        versions = []
+    if versions:
+        # Highest version number is the one being prepared.
+        latest = sorted(versions, key=lambda v: attrs(v).get("version") or 0)[-1]
+        state = attrs(latest).get("state")
+        if state:
+            return state
+    return attrs(iap).get("state") or "UNKNOWN"
+
+
 # ------------------------------------------------------------------------------ the flow
 def run(app_id, approved_build, do_submit, expect_iap, verbose):
     creds = Credentials()
@@ -369,12 +401,16 @@ def run(app_id, approved_build, do_submit, expect_iap, verbose):
 
     # --- 4. in-app purchases ---------------------------------------------------------------
     iaps = api.get_all(f"/v1/apps/{app_id}/inAppPurchasesV2?limit=200")
-    needs_review = [i for i in iaps if attrs(i).get("state") in IAP_NEEDS_REVIEW_STATES]
-    in_flight = [i for i in iaps if attrs(i).get("state") in IAP_IN_FLIGHT_STATES]
+    states = {i["id"]: iap_state(api, i) for i in iaps}
+    needs_review = [i for i in iaps if states[i["id"]] in IAP_NEEDS_REVIEW_STATES]
+    in_flight = [i for i in iaps if states[i["id"]] in IAP_IN_FLIGHT_STATES]
     log(f"4. in-app purchases  {len(iaps)} total, "
         f"{len(needs_review)} ready to submit, {len(in_flight)} already in flight")
     for i in iaps:
-        log(f"     {attrs(i).get('productId', '?'):<40} {attrs(i).get('state', '?')}")
+        rollup = attrs(i).get("state", "?")
+        real = states[i["id"]]
+        note = "" if rollup == real else f"   (the rollup field still says {rollup} — stale)"
+        log(f"     {attrs(i).get('productId', '?'):<40} {real}{note}")
 
     if expect_iap and not needs_review and not in_flight:
         raise AscError(
@@ -451,7 +487,7 @@ def run(app_id, approved_build, do_submit, expect_iap, verbose):
         proven.add("inAppPurchaseV2")
     for iap in in_flight:
         log(f"   = inAppPurchaseV2 {attrs(iap).get('productId')} "
-            f"({attrs(iap).get('state')} — already with Apple, not re-attached)")
+            f"({states[iap['id']]} — already with Apple, not re-attached)")
 
     # --- 8. PROVE it before confirming --------------------------------------------------------
     log("\n8. verifying the submission contents before confirming")

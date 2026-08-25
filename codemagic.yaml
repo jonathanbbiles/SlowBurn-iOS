@@ -362,6 +362,13 @@ workflows:
           else
             echo "SUBMIT_FOR_REVIEW is not \"true\" — planning only, nothing will be written."
           fi
+          # PREPARE_ONLY=true stops after the withdrawal, the build attach and the
+          # review notes — for when the submission itself has to be finished in the
+          # App Store Connect UI, which is the reliable route for a FIRST in-app
+          # purchase.
+          if [ "${PREPARE_ONLY:-false}" = "true" ]; then
+            ARGS="$ARGS --prepare-only"
+          fi
           python3 scripts/asc-resubmit.py \
             --app-id     "$ASC_APP_ID" \
             --version    "$RELEASE_VERSION" \

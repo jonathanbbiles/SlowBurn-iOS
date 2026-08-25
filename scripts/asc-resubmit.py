@@ -35,7 +35,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 import asc_submit  # noqa: E402
-from asc_submit import (Asc, AscError, Credentials, attrs, log,  # noqa: E402
+from asc_submit import (Asc, AscError, Credentials, attrs, iap_state, log,  # noqa: E402
                         submission_kinds, version_state, _wait_cancelled)
 
 NOTES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -58,6 +58,12 @@ def main(argv=None):
     ap.add_argument("--build", required=True, help="CFBundleVersion of the approved build")
     ap.add_argument("--product-id", required=True, help="the IAP that must ride with it")
     ap.add_argument("--submit", action="store_true")
+    # Stop after the reversible-ish preparation. Useful when the submission itself has to
+    # be finished in the App Store Connect UI — attaching a FIRST in-app purchase to a
+    # version has no reliable API surface, and a half-created submission strands the
+    # version in READY_FOR_REVIEW where it is neither editable nor submittable.
+    ap.add_argument("--prepare-only", action="store_true",
+                    help="withdraw, attach the build and write the notes, then stop")
     args = ap.parse_args(argv)
 
     creds = Credentials()
@@ -72,8 +78,13 @@ def main(argv=None):
 
     # --- 1. the in-app purchase must be ready BEFORE anything is withdrawn -------------
     iap = find_iap(api, args.app_id, args.product_id)
-    state = attrs(iap).get("state")
-    log(f"\n1. in-app purchase  {args.product_id}  {state}")
+    # The VERSION's state, not the rollup attribute — see iap_state() for why the rollup
+    # cannot be trusted after a write. Getting this wrong makes a finished product look
+    # unsubmittable and stops the run for a problem that does not exist.
+    state = iap_state(api, iap)
+    rollup = attrs(iap).get("state")
+    log(f"\n1. in-app purchase  {args.product_id}  {state}"
+        + (f"   (rollup field says {rollup} — stale, ignored)" if rollup != state else ""))
     if state in asc_submit.IAP_IN_FLIGHT_STATES:
         log("   already with Apple — it will not be re-attached")
     elif state not in asc_submit.IAP_NEEDS_REVIEW_STATES:
@@ -169,6 +180,12 @@ def main(argv=None):
     # asc_submit re-reads everything from scratch and applies its own guards — the version
     # /build match, the approval gate, and the refusal to confirm a submission whose two
     # items it has not read back. Nothing here is taken on trust twice.
+    if args.prepare_only:
+        log("\n7. --prepare-only: stopping here.")
+        log("   The version now carries the approved build and the corrected review notes,")
+        log("   and it is editable. Create the submission with BOTH items — the version AND")
+        log("   the in-app purchase — and submit it. Never submit the version alone.")
+        return 0
     log("\n7. handing over to asc_submit for the submission itself")
     log("=" * 72)
     return asc_submit.run(args.app_id, str(args.build), args.submit, True, False)

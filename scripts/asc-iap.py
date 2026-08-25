@@ -34,7 +34,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
-from asc_submit import Asc, AscError, Credentials, attrs, log  # noqa: E402
+from asc_submit import Asc, AscError, Credentials, attrs, iap_state, log  # noqa: E402
 
 PRODUCT_ID = "com.jonathanbiles.slowburn.tip.small"
 PRICE_USD = "1.99"            # what the app has always shown for this tip
@@ -200,8 +200,13 @@ def run(apply_changes):
         log("   [plan] nothing was written. Re-run with APPLY_IAP=true.")
         return 0
     after = api.request("GET", "/v2/inAppPurchases/%s" % iid).get("data")
-    state = attrs(after).get("state")
+    rollup = attrs(after).get("state")
+    state = iap_state(api, after)
     show("  state (after)", state)
+    if rollup != state:
+        # Read iap_state()'s docstring. The rollup attribute goes stale the moment you
+        # write to a product; the version is what App Store Connect's own UI shows.
+        show("  rollup field says", "%s — STALE, ignore it" % rollup)
     if state == "MISSING_METADATA":
         raise AscError(
             "still MISSING_METADATA. Something above did not take — read the section that\n"

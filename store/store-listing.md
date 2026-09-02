@@ -1,6 +1,10 @@
 # Slow Burn — App Store listing (copy/paste ready)
 
-> Paste each field into **App Store Connect → Slow Burn → (version)**.
+> **This listing is now machine-readable at `fastlane/metadata/en-US/`, and CI pushes it.**
+> Nothing here needs to be pasted by hand any more:
+> `scripts/cm-build.sh --env ASC_LISTING_MODE=push --watch`.
+> This file stays the prose source of truth — edit it first, then mirror the change into
+> `fastlane/metadata/`. If the two disagree, this file is right and `fastlane/` is stale.
 >
 > **Slow Burn is a PAID app.** One price up front; everything in it is
 > included. There is no in-app unlock, no subscription and no gated content.

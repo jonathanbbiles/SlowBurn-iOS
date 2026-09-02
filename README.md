@@ -3,6 +3,27 @@
 Slow Burn — a guided intimacy program, solo or with a partner. Single-file web
 app (`www/index.html`) wrapped natively with Capacitor.
 
+## The App Store listing
+
+The listing is in the repo, not just in App Store Connect. `store/store-listing.md` is the
+prose source of truth; `fastlane/metadata/` is the same content in the form `fastlane deliver`
+uploads, and `fastlane/screenshots/en-US/` holds the twelve iPhone screenshots
+(6.9" 1290x2796 and 6.5" 1284x2778 — this is an iPhone-only app, so there are no iPad shots).
+
+```
+scripts/cm-build.sh --watch                              # read-only check, writes nothing
+scripts/cm-build.sh --env ASC_LISTING_MODE=push --watch  # upload the listing, do not submit
+```
+
+Every push to `main` runs the read-only mode, which proves the App Store Connect key still
+works without touching the live listing. Writing requires the explicit override above, and the
+lane refuses to write at all unless Apple reports a version in an editable state — so it cannot
+disturb a review in flight.
+
+Submitting is a separate step (`scripts/asc-submit.sh`, via `--submit`), because Slow Burn's
+review submission must include the Small Tip in-app purchase alongside the version, and
+`fastlane deliver` cannot attach one. See `store/1.1-remediation-notes.md`.
+
 ## Privacy
 
 Everything a person enters stays on their device. The only network feature is

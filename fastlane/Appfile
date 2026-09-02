@@ -1,0 +1,6 @@
+# Slow Burn — fastlane app identity.
+#
+# No apple_id / itc_team_id here on purpose: authentication is done with the App Store
+# Connect API key that Codemagic injects at build time (see Fastfile), and that key is
+# already scoped to the right team. Nothing secret belongs in this file.
+app_identifier("com.jonathanbiles.slowburn")

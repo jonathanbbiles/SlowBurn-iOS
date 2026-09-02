@@ -1,0 +1,22 @@
+Slow Burn is a clinical wellness / education app based on Sensate Focus (Masters & Johnson), a standard sex-therapy exercise protocol. Content is instructional text only — there is NO explicit or sexual imagery. A not-medical-advice disclaimer is shown on first launch and must be acknowledged before the app can be used. The app links users to licensed-clinician directories (AASECT, APTA Pelvic Health).
+
+TO REVIEW THE WHOLE APP ON ONE DEVICE, NO SECOND PHONE AND NO ACCOUNT:
+1. Tap Begin, tick the acknowledgement, tap Continue.
+2. On the "Who's practising?" screen, either:
+   - tap "See a sample walkthrough" for a clearly-labelled example couple (Rowan & Ari, both they/them) with the whole flow already populated, or
+   - tap "Me and a partner", then on the next screen choose "Share this one device". A toggle appears at the top of the screen to switch between the two people, which exercises the dual-consent unlock and the mutual-match check-ins on a single device.
+3. "Just me" gives the full solo program — every stage has a solo form and nothing is locked off.
+
+No login is required at any point. Nothing is collected about the user. The optional two-phone pairing feature uses an anonymous randomly generated pair code; the two phones perform an ephemeral ECDH key exchange and encrypt everything they exchange with AES-GCM, so the relay carries only ciphertext and retains nothing. The pair code itself is never transmitted.
+
+PAIRING AND THE CAMERA (not required to review the app): steps 2 and 3 above exercise everything on one device. If you do try pairing, the pair code can be typed or scanned. The QR contains ONLY the ten-character pair code — no URL is opened and no web page is involved — and the camera is used solely to decode it on-device; no image is recorded, stored or transmitted. Declining the camera permission hides the scan button and leaves the identical typed-code path.
+
+BUSINESS MODEL: a one-time PAID app plus ONE optional in-app purchase, submitted with this version: "Small Tip" (com.jonathanbiles.slowburn.tip.small), a consumable tip jar. It UNLOCKS NOTHING. There are no subscriptions and no premium or locked content — every stage, deck, practice, theme, the journal and pairing are there for everyone on first launch, tip or no tip.
+
+WHERE TO FIND IT: last tab ("Us"/"You") -> scroll to the bottom -> "Support Slow Burn" -> "Leave a tip - $1.99". The button appears only once StoreKit returns the product; otherwise the card shows a plain "tell someone about it" note rather than a button that would do nothing. A completed tip only adds a thank-you line to that same card: it sets one on-device flag, that flag is read in exactly one place in the app, and no stage, deck, practice, theme or setting consults it.
+
+CORRECTION TO OUR 8 AUG REPLY: we said then that the app had no in-app purchases and no tip jar. That was true of the binary submitted that day - the tip jar had been removed. We have since put it back and done it properly, and this submission contains BOTH the app version and the in-app purchase. Flagging the change ourselves rather than leaving it to look like a discrepancy.
+
+Note on wording: the app says a stage "unlocks" when both partners privately confirm they are ready. That is the consent gate, which is the core feature of the program — it is a progress gate between two people, not a purchase or a paid tier.
+
+RE: THE PREVIOUS 1.1 REJECTION. The name, subtitle, description, promotional text, keywords and all six screenshots were rewritten, and every reference to sexual acts, sexual anatomy and sex-therapy services was removed from the listing and from every screenshot image. Those are unchanged since that submission. The listing describes the app as what it is: a staged program for rebuilding closeness and communication between partners, based on Sensate Focus. The app contains no imagery of any kind; all content is instructional text behind the first-launch acknowledgement, and it is rated 17+.

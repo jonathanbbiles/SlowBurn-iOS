@@ -1,0 +1,443 @@
+# App Store Connect listing delivery — metadata, screenshots, and submit, without a browser.
+#
+# WHY THIS EXISTS
+# App Store Connect's web UI logs you out mid-submission, and the submission itself is a
+# dozen clicks across four screens. This file replaces all of it with a CI lane that reads
+# the listing out of `fastlane/` and talks to Apple over the App Store Connect API. Nobody
+# has to be logged into anything, and nobody has to be at the computer.
+#
+# THREE MODES, ONE CODE PATH — chosen by ASC_LISTING_MODE (see scripts/asc-listing.sh)
+#
+#   validate  (DEFAULT — zero writes)
+#             Authenticates, reads the app's version states, and reports what a submit
+#             would target. Nothing is uploaded. Safe against an app that is IN REVIEW.
+#
+#   push      Uploads metadata + screenshots to the editable version. Does NOT submit.
+#
+#   submit    Uploads metadata + screenshots, attaches the build, submits for review.
+#             Reached only when SUBMIT_FOR_REVIEW=true is supplied per build.
+#
+# THE GUARD (the reason push/submit are safe to leave wired up)
+# Before ANY write, the lane reads the app's App Store version states from Apple and
+# refuses unless a version is in an editable state. A version that is Waiting for Review,
+# In Review, or Pending Apple Release is never touched — that is what protects an app
+# mid-review from a stray push. If the state cannot be read at all, the lane refuses:
+# unknown means no, not "probably fine". ASC_ALLOW_UNVERIFIED_STATE=true is the documented
+# escape hatch for when Apple's API is the thing that is broken.
+#
+# WHAT IS DELIBERATELY *NOT* HERE
+# The listing lint lives in scripts/lint_listing.rb, as plain Ruby with no fastlane in it.
+# Two reasons: it can be run and tested on a laptop that has no fastlane, and it is immune
+# to fastlane's working directory. Keep new logic out of this file for the same reasons —
+# anything that does not strictly need the fastlane DSL is easier to trust outside it.
+#
+# PATHS
+# Every path here is absolute, resolved from this file's own location. Relative paths in a
+# Fastfile are a trap: the working directory during a lane is not reliably the repo root,
+# so "./fastlane/metadata" can quietly resolve to nothing at all.
+#
+# SECRETS
+# Authentication uses the App Store Connect API key that already lives in Codemagic. It
+# reaches this file ONLY as three environment variables that Codemagic injects:
+#   APP_STORE_CONNECT_KEY_IDENTIFIER   APP_STORE_CONNECT_ISSUER_ID   APP_STORE_CONNECT_PRIVATE_KEY
+# No key, .p8, or issuer id is written to this repo. Do not add one. Failures name the
+# missing variable and never print a value — build logs are not private.
+#
+# PORTABILITY
+# Everything app-specific arrives through the environment (see ASC-SUBMIT.md), so this
+# file is byte-identical across every app in the portfolio. Copy it, don't fork it.
+
+default_platform(:ios)
+
+# Spaceship is fastlane's App Store Connect client and is what deliver uses underneath, but
+# a Fastfile does not get its constants for free. Required explicitly so the version-state
+# guard cannot die on a NameError the first time it is asked to protect something.
+begin
+  require "spaceship"
+rescue LoadError => e
+  UI.important("Could not require spaceship (#{e.message}). The version-state guard will refuse to write.")
+end
+
+# ── App Store version states ───────────────────────────────────────────────────────────
+# Writes are allowed only against this whitelist. A whitelist rather than a blacklist on
+# purpose: a state Apple adds later is unknown, and unknown must mean "don't touch it".
+EDITABLE_STATES = %w[
+  PREPARE_FOR_SUBMISSION
+  DEVELOPER_REJECTED
+  REJECTED
+  METADATA_REJECTED
+  INVALID_BINARY
+].freeze
+
+# Named separately only so the log can say *why* it is refusing, instead of "not editable".
+IN_REVIEW_STATES = %w[
+  WAITING_FOR_REVIEW
+  IN_REVIEW
+  PENDING_APPLE_RELEASE
+  PENDING_DEVELOPER_RELEASE
+  PROCESSING_FOR_APP_STORE
+  WAITING_FOR_EXPORT_COMPLIANCE
+].freeze
+
+# ── Paths ──────────────────────────────────────────────────────────────────────────────
+
+# The repo root, found by looking for fastlane/Fastfile rather than by trusting the working
+# directory. Anchors on this file's own path first, which is correct wherever it is run.
+def repo_root
+  # scripts/asc-listing.sh knows exactly where the repo is — bash resolves it from
+  # BASH_SOURCE — and passes it in. Trusted first, because everything after it is a guess:
+  # __FILE__ depends on how fastlane evaluated this file, and Dir.pwd depends on fastlane's
+  # working directory during a lane, which is not reliably the repo root.
+  from_env = ENV["ASC_REPO_ROOT"].to_s.strip
+  return from_env if !from_env.empty? && File.exist?(File.join(from_env, "fastlane", "Fastfile"))
+
+  candidates = [
+    File.expand_path("..", File.dirname(__FILE__)),
+    File.expand_path("..", Dir.pwd),
+    Dir.pwd
+  ]
+  found = candidates.find { |path| File.exist?(File.join(path, "fastlane", "Fastfile")) }
+  found || Dir.pwd
+end
+
+def listing_dir(env_name, *relative_candidates)
+  from_env = ENV[env_name].to_s.strip
+  return File.expand_path(from_env) unless from_env.empty?
+
+  root = repo_root
+  relative_candidates.each do |candidate|
+    path = File.expand_path(candidate, root)
+    return path if Dir.exist?(path)
+  end
+  File.expand_path(relative_candidates.first, root)
+end
+
+def metadata_dir
+  listing_dir("ASC_METADATA_PATH", "fastlane/metadata", "metadata")
+end
+
+def screenshots_dir
+  listing_dir("ASC_SCREENSHOTS_PATH", "fastlane/screenshots", "screenshots")
+end
+
+# ── Small helpers ──────────────────────────────────────────────────────────────────────
+
+def env_or_die(name)
+  value = ENV[name]
+  return value unless value.nil? || value.strip.empty?
+
+  UI.user_error!(
+    "#{name} is not set in this build. That variable comes from the Codemagic App Store " \
+    "Connect integration — check that codemagic.yaml still declares " \
+    "`integrations: app_store_connect: <key name>`, and if the integration does not export " \
+    "it, add the SAME key as three Secure environment variables on the app in the Codemagic " \
+    "UI. Do NOT hardcode the key here."
+  )
+end
+
+def env_true?(name, default: false)
+  raw = ENV[name].to_s.strip.downcase
+  return default if raw.empty?
+
+  %w[true 1 yes on].include?(raw)
+end
+
+def target_app_identifier
+  from_env = ENV["APP_IDENTIFIER"].to_s.strip
+  return from_env unless from_env.empty?
+
+  from_appfile = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier).to_s.strip
+  return from_appfile unless from_appfile.empty?
+
+  UI.user_error!("No app identifier. Set APP_IDENTIFIER in the workflow env, or app_identifier in fastlane/Appfile.")
+end
+
+# The private key does not always arrive in the same shape — Codemagic's own CLI accepts
+# PEM, escaped PEM and base64 PEM interchangeably, so the CLI authenticates while fastlane
+# does not, which looks exactly like a bad key and is not one. scripts/asc_key_pem.rb
+# normalises all three to PEM text; see its header. Loaded rather than duplicated so there
+# is one rule, and it is one that can be tested on a laptop.
+def asc_private_key_pem!
+  helper = File.join(repo_root, "scripts", "asc_key_pem.rb")
+  unless File.exist?(helper)
+    UI.user_error!("Missing #{helper}. It ships alongside this Fastfile — copy it from the App Builder Template.")
+  end
+  require helper
+
+  # Deliberately no env_or_die here: the key is not always IN the variable. Codemagic can
+  # leave it as a .p8 under ~/.appstoreconnect/private_keys/, where its own CLI finds it
+  # without being told — which is why the CLI authenticates in builds where fastlane, handed
+  # only the variable, cannot. asc_key_pem.rb looks in both places.
+  pem, shape = asc_private_key_pem
+  if pem.nil?
+    UI.user_error!(
+      "No usable App Store Connect private key: APP_STORE_CONNECT_PRIVATE_KEY holds nothing " \
+      "parseable and there is no readable .p8 in the standard key directories. Run " \
+      "`ruby scripts/asc_key_pem.rb` in the build for the full list of what was tried."
+    )
+  end
+
+  UI.message("App Store Connect private key shape: #{shape}")
+  pem
+end
+
+# Builds the API key AND (via set_spaceship_token, on by default) authenticates the
+# Spaceship client that deliver itself uses. This call is where a malformed .p8 blows up
+# with OpenSSL "invalid curve name", so it doubles as the key-parses-in-Ruby probe.
+def asc_api_key
+  app_store_connect_api_key(
+    key_id: env_or_die("APP_STORE_CONNECT_KEY_IDENTIFIER"),
+    issuer_id: env_or_die("APP_STORE_CONNECT_ISSUER_ID"),
+    # Always PEM text by the time it gets here, whatever shape it arrived in.
+    key_content: asc_private_key_pem!,
+    is_key_content_base64: false,
+    in_house: false
+  )
+end
+
+# Runs the standalone linter as its own process. Kept as a hard gate in front of every
+# write: CI lints in a separate step too, but a lane started any other way must not be able
+# to upload a listing that Apple would reject.
+def lint_listing!
+  linter = File.join(repo_root, "scripts", "lint_listing.rb")
+  unless File.exist?(linter)
+    UI.important("No scripts/lint_listing.rb next to this Fastfile — skipping the local listing check.")
+    return
+  end
+
+  UI.message("Linting the listing: ruby #{linter}")
+  return if system("ruby", linter, repo_root)
+
+  UI.user_error!("The listing in fastlane/ is not submittable — see the FAIL lines above. Nothing was sent to Apple.")
+end
+
+# ── Version state, read from Apple ─────────────────────────────────────────────────────
+# Returns [{version:, state:}, ...], or nil when the state genuinely could not be read.
+# nil is meaningful: callers treat it as "refuse to write", not as "no versions".
+def read_version_states(app_identifier)
+  app = Spaceship::ConnectAPI::App.find(app_identifier)
+  if app.nil?
+    UI.error("App Store Connect has no app with bundle id #{app_identifier} visible to this key.")
+    return nil
+  end
+  UI.success("Authenticated to App Store Connect — found \"#{app.name}\" (Apple ID #{app.id})")
+
+  begin
+    versions = app.get_app_store_versions(filter: { platform: "IOS" })
+    return versions.map { |v| { version: v.version_string, state: v.app_store_state } }
+  rescue StandardError => e
+    UI.important("Could not list all versions (#{e.class}: #{e.message}) — falling back to the editable-version lookup.")
+  end
+
+  begin
+    edit = app.get_edit_app_store_version(platform: "IOS")
+    return [] if edit.nil?
+
+    [{ version: edit.version_string, state: edit.app_store_state }]
+  rescue StandardError => e
+    UI.error("Could not read any App Store version state (#{e.class}: #{e.message}).")
+    nil
+  end
+end
+
+def report_version_states(states)
+  states.each { |s| UI.message("  version #{s[:version]}  state=#{s[:state]}") }
+end
+
+# Decides whether a write is allowed, and against which version.
+# Returns the editable version string, or raises with the reason it refused.
+def editable_version_or_refuse!(app_identifier)
+  states = read_version_states(app_identifier)
+
+  if states.nil?
+    if env_true?("ASC_ALLOW_UNVERIFIED_STATE")
+      UI.important("ASC_ALLOW_UNVERIFIED_STATE=true — proceeding without confirming the version state. You own this.")
+      from_env = ENV["ASC_APP_VERSION"].to_s.strip
+      return from_env.empty? ? nil : from_env
+    end
+    UI.user_error!(
+      "Refusing to write: the App Store version state could not be read, so there is no way " \
+      "to prove this app is not mid-review. Fix the API access, or override deliberately with " \
+      "ASC_ALLOW_UNVERIFIED_STATE=true."
+    )
+  end
+
+  report_version_states(states)
+
+  editable = states.find { |s| EDITABLE_STATES.include?(s[:state].to_s) }
+  return editable[:version] if editable
+
+  locked = states.find { |s| IN_REVIEW_STATES.include?(s[:state].to_s) }
+  if locked
+    UI.user_error!(
+      "REFUSING TO WRITE: version #{locked[:version]} is #{locked[:state]}. That is a live " \
+      "submission with Apple. Editing its metadata or screenshots now would disturb a review " \
+      "in flight. Wait for the review to finish, or create a new version record first."
+    )
+  end
+
+  UI.user_error!(
+    "REFUSING TO WRITE: no version is in an editable state " \
+    "(#{EDITABLE_STATES.join(', ')}). A released app needs a NEW version record in App Store " \
+    "Connect before its listing can be changed."
+  )
+end
+
+# ── deliver invocation shared by push and submit ───────────────────────────────────────
+def deliver_listing(api_key:, app_identifier:, app_version:, submit:)
+  options = {
+    api_key: api_key,
+    app_identifier: app_identifier,
+    platform: "ios",
+
+    # Codemagic's own publishing step already uploaded the signed IPA to TestFlight, so
+    # there is no binary for deliver to push. deliver still finds that build and attaches
+    # it to the version at submission time, waiting out Apple's processing.
+    skip_binary_upload: true,
+    skip_metadata: false,
+    skip_screenshots: false,
+
+    metadata_path: metadata_dir,
+    screenshots_path: screenshots_dir,
+    # Replace the slot contents outright: leftover screenshots from a previous version are
+    # a 2.3.3 rejection waiting to happen.
+    overwrite_screenshots: true,
+    screenshot_processing_timeout: 1200,
+
+    submit_for_review: submit,
+    # Release on Jonathan's say-so, not the instant Apple approves.
+    automatic_release: false,
+
+    # Non-interactive: no HTML preview, no "does this look right? (y/n)" on a build machine
+    # with nothing attached to stdin.
+    force: true,
+
+    # precheck is a linter, not a gate, and its in-app-purchase probe is a known source of
+    # false failures under API-key auth. The lane runs precheck explicitly in validate mode,
+    # where a false failure costs nothing; it does not get to abort a real submission.
+    run_precheck_before_submit: false,
+    precheck_include_in_app_purchases: env_true?("ASC_PRECHECK_INCLUDE_IAP"),
+
+    # The compliance answers Apple asks at submission time. Declared per app in
+    # codemagic.yaml because a wrong answer here is a misrepresentation, not a default.
+    submission_information: {
+      export_compliance_uses_encryption: env_true?("ASC_USES_ENCRYPTION"),
+      content_rights_contains_third_party_content: env_true?("ASC_CONTENT_RIGHTS"),
+      add_id_info_uses_idfa: env_true?("ASC_USES_IDFA")
+    }
+  }
+
+  # Target the version Apple says is editable, rather than naming one here and risking the
+  # creation of a second version record. Omitted entirely when it could not be determined.
+  options[:app_version] = app_version if app_version
+
+  UI.message("deliver -> #{app_identifier} version #{app_version || '(whichever is editable)'}, submit_for_review=#{submit}")
+  UI.message("metadata:    #{options[:metadata_path]}")
+  UI.message("screenshots: #{options[:screenshots_path]}")
+  UI.message("submission answers: encryption=#{env_true?('ASC_USES_ENCRYPTION')} " \
+             "third-party content=#{env_true?('ASC_CONTENT_RIGHTS')} idfa=#{env_true?('ASC_USES_IDFA')}")
+
+  deliver(options)
+end
+
+platform :ios do
+  # ── auth only ────────────────────────────────────────────────────────────────────────
+  # Builds the API key object and stops. No network call, no App Store Connect read. Exists
+  # so CI can tell "fastlane cannot even assemble the credential" apart from "the call to
+  # Apple failed" — two failures that look identical in a check run that shows no log text.
+  desc "Build the App Store Connect API key object and stop. No network, no writes."
+  lane :asc_auth_only do
+    asc_api_key
+    UI.success("fastlane assembled the App Store Connect API key. No call was made.")
+  end
+
+  # ── validate (default) ───────────────────────────────────────────────────────────────
+  desc "Read-only: prove ASC auth works and report the version states. Writes nothing."
+  lane :asc_validate do
+    app_identifier = target_app_identifier
+    UI.important("ASC listing VALIDATE — nothing will be uploaded or submitted")
+
+    problems = 0
+
+    api_key = asc_api_key
+    UI.success("App Store Connect API key parsed and accepted by Ruby/OpenSSL (key id #{ENV['APP_STORE_CONNECT_KEY_IDENTIFIER']})")
+
+    states = read_version_states(app_identifier)
+    if states.nil?
+      UI.error("Could not read App Store version states — auth may be fine but the key's role may not allow it.")
+      problems += 1
+    elsif states.empty?
+      UI.important("No App Store version records returned. Nothing to submit until a version exists.")
+    else
+      report_version_states(states)
+      editable = states.find { |s| EDITABLE_STATES.include?(s[:state].to_s) }
+      locked = states.find { |s| IN_REVIEW_STATES.include?(s[:state].to_s) }
+      if editable
+        UI.success("Version #{editable[:version]} is #{editable[:state]} — a push or submit would target it.")
+      elsif locked
+        UI.important("Version #{locked[:version]} is #{locked[:state]} — the guard would REFUSE to write. " \
+                     "That is correct: it is a live review.")
+      else
+        UI.important("No editable version. A new version record is needed before anything can be pushed.")
+      end
+    end
+
+    # precheck reads the listing that is already on App Store Connect and applies Apple's
+    # rules to it. Informational here: it needs an editable version, and its findings are
+    # advice, so a failure is reported and does not fail the lane.
+    if env_true?("ASC_RUN_PRECHECK", default: true)
+      begin
+        precheck(
+          api_key: api_key,
+          app_identifier: app_identifier,
+          platform: "ios",
+          include_in_app_purchases: env_true?("ASC_PRECHECK_INCLUDE_IAP")
+        )
+        UI.success("precheck passed against the App Store Connect listing")
+      rescue StandardError => e
+        UI.important("precheck did not pass: #{e.class}: #{e.message}")
+        UI.important("Informational only — precheck needs an editable version, and its IAP probe is a known false-failure source.")
+      end
+    end
+
+    if problems.zero?
+      UI.success("VALIDATE OK — the key authenticates against App Store Connect. Nothing was written.")
+    else
+      UI.user_error!("VALIDATE FAILED with #{problems} problem(s) above. Nothing was written.")
+    end
+  end
+
+  # ── push ─────────────────────────────────────────────────────────────────────────────
+  desc "Upload metadata + screenshots to the editable version. Does NOT submit for review."
+  lane :asc_push do
+    app_identifier = target_app_identifier
+    UI.important("ASC listing PUSH — uploading metadata + screenshots, NOT submitting")
+
+    lint_listing!
+    api_key = asc_api_key
+    version = editable_version_or_refuse!(app_identifier)
+    deliver_listing(api_key: api_key, app_identifier: app_identifier, app_version: version, submit: false)
+
+    UI.success("Listing uploaded. NOT submitted — that needs SUBMIT_FOR_REVIEW=true.")
+  end
+
+  # ── submit ───────────────────────────────────────────────────────────────────────────
+  desc "Upload metadata + screenshots, attach the build, and submit for App Store review."
+  lane :asc_submit do
+    app_identifier = target_app_identifier
+    UI.important("ASC listing SUBMIT — this WILL submit the app for App Store review")
+
+    lint_listing!
+    api_key = asc_api_key
+    version = editable_version_or_refuse!(app_identifier)
+    deliver_listing(api_key: api_key, app_identifier: app_identifier, app_version: version, submit: true)
+
+    UI.success("Submitted for App Store review. Release is manual (automatic_release: false).")
+  end
+
+  # Kept because codemagic.yaml, cm-build.sh and the older docs all say `submit_review`.
+  desc "Deprecated alias for asc_submit."
+  lane :submit_review do
+    asc_submit
+  end
+end

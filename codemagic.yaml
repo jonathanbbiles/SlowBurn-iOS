@@ -38,6 +38,25 @@ workflows:
         ASC_APP_ID: "6787719986"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
+        # What fastlane/deliver targets. Same value as BUNDLE_ID; named separately
+        # because the shared Fastfile reads APP_IDENTIFIER, and that name is what
+        # lets the Fastfile stay byte-identical across every app in the portfolio.
+        APP_IDENTIFIER: "com.jonathanbiles.slowburn"
+        # The compliance answers Apple asks at submission time. Declared here
+        # because a wrong answer is a misrepresentation, not a default.
+        #   encryption: the app implements no cryptography of its own — it calls
+        #     WebCrypto (part of iOS/WebKit) to secure its own pairing link. The
+        #     determination on record is that this is standard/exempt encryption,
+        #     which is exactly what the build step above writes into the plist as
+        #     ITSAppUsesNonExemptEncryption=false. These two must always agree.
+        #   content rights: Slow Burn contains no third-party content of any kind.
+        ASC_USES_ENCRYPTION: "false"
+        ASC_CONTENT_RIGHTS: "false"
+        ASC_USES_IDFA: "false"
+        # ASC_LISTING_MODE is undeclared on purpose. Undeclared = "validate" =
+        # read-only, so a push to main proves the ASC key still works and writes
+        # nothing. To push the listing, override it for one build:
+        #     scripts/cm-build.sh --env ASC_LISTING_MODE=push --watch
       node: 22
       xcode: latest
       cocoapods: default
@@ -225,6 +244,27 @@ workflows:
       # So an ordinary build — and any push — stops at TestFlight by construction,
       # rather than by remembering to keep a toggle switched off.
       scripts:
+        # --- The listing itself: metadata + screenshots from fastlane/ ----------
+        # Runs BEFORE the submit step below, so that when a submission is created
+        # the listing Apple reviews is the one in this repo.
+        #
+        # WHY THIS EXISTS: asc-submit.sh performs a "straight version submit" and
+        # uploads no metadata, so until now the listing could only be typed into
+        # App Store Connect by hand. That is how ASC drifted to the app name
+        # "Slow Burn: Couples Intimacy", which is not in this repo and which the
+        # Guideline 1.1 rejection of 12 Aug 2026 cited. fastlane/ is now the
+        # source of truth; store/store-listing.md is the prose it was written from.
+        #
+        # SUBMIT_FOR_REVIEW is pinned to "false" for THIS step only, and that is
+        # deliberate — it is not a copy/paste slip from the other apps. Slow Burn's
+        # review submission must carry BOTH the version and the Small Tip in-app
+        # purchase (2 items, not 1 — submitting the version alone is the 2.1(b)
+        # split that cost this app a cycle on 5 Aug 2026). fastlane deliver cannot
+        # attach the in-app purchase, so submitting is owned by asc-submit.sh /
+        # asc-resubmit.py. This step pushes the listing; it never submits.
+        # Without the pin, one --submit build would fire two submissions.
+        - name: App Store listing (validate by default; uploads when ASC_LISTING_MODE=push)
+          script: SUBMIT_FOR_REVIEW=false ASC_LISTING_ADVISORY=true bash scripts/asc-listing.sh
         - name: Submit for App Store review (only when explicitly requested)
           script: bash scripts/asc-submit.sh
 

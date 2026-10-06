@@ -53,6 +53,12 @@ sensate focus,couples,relationship,intimacy,reconnect,connection,closeness,marri
 `intimacy` kept — Jonathan's call; it is the first thing to drop if Apple bounces again.*
 
 ## Description
+
+> **1.1 (Oct 2026):** the TOGETHER block below is new. It folds in the conversation decks
+> from the retired Closerly app and the hobby ideas from the retired Hobbloom app — one app
+> instead of three. After Dark is deliberately NOT named anywhere in the listing (Guideline
+> 1.1 history above); it lives in the app, behind the first-launch acknowledgement and its
+> own both-of-you agreement. Screenshots 5 and 6 are the Together tab.
 ```
 Slow Burn is a guided closeness program — a calm, structured way to rebuild connection at your own pace, on your own or with a partner.
 
@@ -63,6 +69,10 @@ HOW IT WORKS
 • A readiness gate that removes the awkward part. With a partner, the next stage opens only when you have BOTH privately tapped "I feel ready." No negotiating, no pressure.
 • Private reflections after each session. You each answer a few questions on your own — and Slow Burn only ever surfaces what you BOTH named. Never the rest.
 • Gentle, never-nagging reminders to keep the practice going.
+
+TOGETHER
+• Talk — seven decks of conversation cards for two, from easy warm-ups to deeper questions. Every card is optional, and you can save the ones you love.
+• Try something new — each of you privately marks what you'd like to try, from stargazing to sourdough. Slow Burn shows only what you BOTH said yes to, with three small steps to get started.
 
 FOR EVERY KIND OF PERSON
 Slow Burn adapts its language to you — your pronouns, your words for your partner, your relationship structure. It assumes no gender, no orientation, and no particular shape of relationship.

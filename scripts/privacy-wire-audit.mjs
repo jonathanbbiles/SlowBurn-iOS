@@ -82,6 +82,16 @@ reflect(host, 1, HOST_GOOD, HOST_MORE, HOST_NOTE);
 reflect(guest, 1, GUEST_GOOD, GUEST_MORE, GUEST_NOTE);
 await settle();
 
+/* ---- Both privately mark what they'd try (Together tab). Only YES picks
+   may cross, encrypted, and only the overlap may be shown. ---- */
+const HOST_TRY = ["hiking", "chess", "candles"], HOST_PASS = "running";
+const GUEST_TRY = ["chess", "candles", "kayaking"], GUEST_PASS = "stargazing";
+for (const id of HOST_TRY) host.api.trySet(id, "yes");
+host.api.trySet(HOST_PASS, "no");
+for (const id of GUEST_TRY) guest.api.trySet(id, "yes");
+guest.api.trySet(GUEST_PASS, "no");
+await settle();
+
 /* ---- Both privately confirm readiness, one un-confirms and re-confirms ---- */
 host.S.stageOpen = 1; host.S.screen = "stage"; host.api.render();
 host.click('[data-action="ready"][data-id="1"]');
@@ -113,6 +123,16 @@ for (const [who, p] of [["host", host], ["guest", guest]]) {
   ok(fails, html.includes(SAFETY), `${who}: the safety word is not shown on the Check-ins tab`);
 }
 
+/* ---- And on the Together tab: the things they would BOTH try, nothing
+   only one of them picked, and nothing either of them passed on. ---- */
+for (const [who, p] of [["host", host], ["guest", guest]]) {
+  p.S.screen = "app"; p.S.tab = "together"; p.S.together = "try"; p.api.render();
+  const html = p.w.document.getElementById("root").innerHTML;
+  ok(fails, html.includes("Chess") && html.includes("Candle making"), `${who}: the Together tab does not show what they both would try`);
+  ok(fails, !html.includes("Hiking"), `${who}: the Together tab shows a pick only the host made`);
+  ok(fails, !html.includes("Kayaking"), `${who}: the Together tab shows a pick only the guest made`);
+}
+
 /* ---- Snapshot everything the assertions need, THEN tear the link down.
    leaveLive() deliberately wipes the partner's data and the derived safety
    word from memory, which is itself worth recording. ---- */
@@ -126,6 +146,8 @@ const snap = {
   hostStage: host.S.partnerStage, guestStage: guest.S.partnerStage,
   hostUnlocked: host.api.maxUnlocked(), guestUnlocked: guest.api.maxUnlocked(),
   pubKeys: new Set([host.api.E2E.myPub(), guest.api.E2E.myPub()]),
+  hostTry: host.api.tryMatches().map((h) => h.id), guestTry: guest.api.tryMatches().map((h) => h.id),
+  hostHasOfTheirs: [...host.S.partnerTry], guestHasOfTheirs: [...guest.S.partnerTry],
 };
 
 /* ---- Both leave, firing the goodbye/last-will path ---- */
@@ -150,6 +172,8 @@ const secrets = {
   "reflection chip 3": "Softer touch", "reflection chip 4": "Warmth & closeness",
   "private note (host)": "anxious", "private note (guest)": "worrying",
   "raw pair code": code,
+  "try pick (id)": "hiking", "try pick (name)": "Candle making", "try pick 2": "chess",
+  "try pick 3": "kayaking", "passed-on pick": "running", "passed-on pick (b)": "stargazing",
 };
 function decodeAttempt(payload) {
   // Anything a payload could be hiding behind: base64url, base64, hex.
@@ -282,6 +306,15 @@ for (const [who, mt] of [["host", snap.hostMatch], ["guest", snap.guestMatch]]) 
   if (mt.good.includes("Laughing")) fails.push(`${who}: surfaced a chip only the host chose`);
   if (mt.good.includes("Warmth & closeness")) fails.push(`${who}: surfaced a chip only the guest chose`);
 }
+/* Try picks: the overlap on both phones, and a NO never reaches the other phone. */
+for (const [who, got] of [["host", snap.hostTry], ["guest", snap.guestTry]]) {
+  if ([...got].sort().join("|") !== "candles|chess") fails.push(`${who}: wrong "you both said yes" — got [${got}]`);
+}
+if ([...snap.guestHasOfTheirs].sort().join("|") !== [...HOST_TRY].sort().join("|"))
+  fails.push(`guest did not receive exactly the host's YES picks — got [${snap.guestHasOfTheirs}]`);
+if (snap.guestHasOfTheirs.includes(HOST_PASS)) fails.push("a pick the host passed on reached the guest's device");
+if (snap.hostHasOfTheirs.includes(GUEST_PASS)) fails.push("a pick the guest passed on reached the host's device");
+
 /* The written note must not even reach the other phone's memory. */
 if (/anxious/i.test(JSON.stringify(snap.guestSeesPartner))) fails.push("the host's private note reached the guest's device");
 if (/worrying/i.test(JSON.stringify(snap.hostSeesPartner))) fails.push("the guest's private note reached the host's device");

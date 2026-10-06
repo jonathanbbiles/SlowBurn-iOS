@@ -197,6 +197,20 @@
   .livebar{display:flex;align-items:center;gap:8px;justify-content:center;background:#EAF0E8;border:1px solid #D5E2D0;color:#3f5c3a;font-size:12px;font-weight:600;padding:8px;border-radius:12px}
   .livebar.off{background:#F6ECE6;border-color:#EAD6CB;color:#8a6552}
 
+  /* Together tab */
+  .tg-emoji{flex:none;width:44px;height:44px;border-radius:13px;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:24px}
+  .tg-emoji.big{width:60px;height:60px;border-radius:17px;font-size:32px}
+  .tg-card{padding:26px 22px;min-height:180px;display:flex;flex-direction:column;justify-content:center}
+  .tg-text{font-family:var(--serif);font-size:22px;line-height:1.4;color:var(--ink);margin-top:12px}
+  .tg-step{display:flex;gap:13px;align-items:center;width:100%;min-height:48px;padding:10px 0;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;text-align:left;font-family:var(--sans)}
+  .tg-step:last-child{border-bottom:0}
+  .tg-step .dot{flex:none;width:26px;height:26px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--plum)}
+  .tg-step .dot svg{width:15px;height:15px}
+  .tg-step.on .dot{background:var(--sage);border-color:var(--sage)}
+  .tg-step .stx{font-size:13.5px;line-height:1.5;color:var(--ink)}
+  .tg-step.on .stx{color:var(--muted);text-decoration:line-through}
+  .seg[role="tablist"] button{min-height:40px}
+
   /* Large screens (iPad, landscape iPhone, desktop). The app still fills the window; content is
      constrained to a comfortable reading column centred on the app's OWN background, while the
      chrome (top bar, tab bar) stays full-bleed. Because the column sits on the same background,
@@ -584,6 +598,430 @@ const THEMES=[
 ];
 
 
+/* ============================================================
+   TALK — conversation cards for two, every deck included.
+   ------------------------------------------------------------
+   Written for two consenting adults: gender-neutral, optional by
+   design, never a dare, a test or a score. After Dark is about
+   desire, appreciation and boundaries — never acts or anatomy — and
+   asks both of you once before it opens (see talkAdultOk).
+   Cards are stored by position and read back as "deck:index" in the
+   saved list, so cards are APPENDED to a deck, never inserted.
+   Nothing here crosses the pairing link.
+   ============================================================ */
+const TALK=[
+ {id:"warmup",title:"Warm Up",blurb:"Low-stakes questions for the end of an ordinary day. Nothing heavy, nothing to prepare for.",adult:false,
+  cards:[
+   ["Connection","Tell your partner one small thing they did this week that made you feel cared for."],
+   ["Reflect","Describe your favourite ordinary moment the two of you have shared."],
+   ["Appreciate","Take turns naming three things you appreciate about the other person’s personality."],
+   ["Do Together","Plan a $30 date you could actually do this week."],
+   ["Connection","What is one thing you want more of in your relationship this month?"],
+   ["Reflect","What were you doing the week before you met? Describe that version of yourself."],
+   ["Appreciate","Name something your partner is good at that they probably do not give themselves credit for."],
+   ["Connection","How did today actually go — the real answer, not the short one?"],
+   ["Playful","Describe the other person using only three words. Then explain your third word."],
+   ["Reflect","What is a small thing that made you laugh recently?"],
+   ["Do Together","Pick one thing in the house you have both been ignoring. Decide who deals with it and when."],
+   ["Connection","What is something you have been looking forward to?"],
+   ["Appreciate","Tell your partner about a time they handled something better than you would have."],
+   ["Reflect","What does a genuinely good evening look like to you right now?"],
+   ["Playful","If the two of you had a house band, what would it be called?"],
+   ["Connection","What is one thing on your mind that you have not mentioned yet?"],
+   ["Do Together","Choose a song each. Play both. No explaining until they are done."],
+   ["Reflect","What is a habit of yours that you actually like?"],
+   ["Appreciate","Name a way your partner has changed for the better since you met."],
+   ["Connection","What would make tomorrow easier for you?"],
+   ["Playful","Describe the other person’s driving in the kindest way you honestly can."],
+   ["Reflect","What is something you used to worry about that no longer worries you?"],
+   ["Do Together","Plan one meal together for this week. Decide who cooks."],
+   ["Connection","When did you last feel properly relaxed? What was happening?"],
+   ["Appreciate","Tell your partner one thing they say that you find reassuring."],
+   ["Reflect","What is a compliment you received once that you still think about?"],
+   ["Playful","What is the most ridiculous thing the two of you have argued about?"],
+   ["Connection","Is there anything you need from me this week?"],
+   ["Do Together","Put one thing in the calendar right now that you are both looking forward to."],
+   ["Reflect","What is something that felt hard a year ago and feels normal now?"],
+   ["Appreciate","Name something your partner does for you that you have stopped noticing."],
+   ["Connection","What is one thing you would like us to do more slowly?"],
+   ["Playful","Take turns describing your day as if you were narrating a nature documentary."],
+   ["Reflect","What is something you are quietly proud of at the moment?"],
+   ["Connection","Tell your partner one thing you are glad you have not had to explain to them."]]},
+
+ {id:"datenight",title:"Date Night",blurb:"Prompts for an evening that is already set aside — and for nights when you are both in and it still counts.",adult:false,
+  cards:[
+   ["Do Together","Plan the next three dates now. One cheap, one free, one worth saving for."],
+   ["Playful","Each describe your ideal night out. Find the one part you both actually want."],
+   ["Do Together","Cook one thing together that neither of you has made before."],
+   ["Reflect","What was the best date the two of you have ever had? What made it work?"],
+   ["Do Together","Pick somewhere within an hour of here that neither of you has been. Go this month."],
+   ["Playful","Order for each other next time you eat out. No vetoes."],
+   ["Connection","What would a perfect Saturday look like if nothing else were on?"],
+   ["Do Together","Spend fifteen minutes planning a holiday you are not going to take yet."],
+   ["Reflect","What is something you did together early on that you have stopped doing?"],
+   ["Playful","Take a photo together right now. Do not fix your hair first."],
+   ["Do Together","Walk somewhere with no destination for twenty minutes."],
+   ["Connection","What kind of evening do you most want after a hard week?"],
+   ["Playful","Each pick a film the other has never seen. Agree which one wins tonight."],
+   ["Do Together","Make a playlist together. Six songs each, alternating."],
+   ["Reflect","What was the first thing you noticed about the other person?"],
+   ["Do Together","Put both phones in another room for the next half hour."],
+   ["Playful","Invent a cocktail or a mocktail together and name it after the relationship."],
+   ["Connection","What would make an ordinary Tuesday feel like a date?"],
+   ["Do Together","Choose one small thing to make the house feel better and do it this week."],
+   ["Reflect","Which trip together do you both still talk about? Why that one?"],
+   ["Playful","Give each other a five-minute tour of your camera roll."],
+   ["Do Together","Eat somewhere with no menu you recognise."],
+   ["Connection","Is there something you would like to do together that you have never suggested?"],
+   ["Playful","Rank your five best shared meals. Argue about the order."],
+   ["Do Together","Learn one new thing together in ten minutes. Anything at all."],
+   ["Reflect","What is a night in that turned out better than a night out?"],
+   ["Do Together","Write down three date ideas each, fold them, and pick one at random."],
+   ["Connection","What is something you used to love doing that you would like to share?"],
+   ["Playful","Describe your relationship as a restaurant. What is on the menu?"],
+   ["Do Together","Pick a recipe neither of you can pronounce. Try it anyway."],
+   ["Reflect","What is the nicest thing anyone has ever said about the two of you?"],
+   ["Do Together","Go somewhere at a time you would not normally go — early, late, mid-week."],
+   ["Connection","What do you want the next six months of us to feel like?"],
+   ["Playful","Each plan a surprise evening for the other. No details in advance."],
+   ["Do Together","Say one thing you would like to do together before the year is out, and put a date on it."]]},
+
+ {id:"flirty",title:"Flirty",blurb:"Light, warm, a little bit of a charge. Nothing here needs a closed door.",adult:false,
+  cards:[
+   ["Appreciate","Give your partner a compliment that has nothing to do with how they look."],
+   ["Playful","Tell a story about a time you found them especially attractive."],
+   ["Playful","Choose a song that feels like your relationship right now. Play it."],
+   ["Playful","Take turns making a playful prediction about your next date."],
+   ["Do Together","Write a one-sentence invitation to a date with no phones allowed."],
+   ["Appreciate","Name the first moment you thought \"oh, this one\"."],
+   ["Playful","Describe the other person’s best feature without naming it. Let them guess."],
+   ["Connection","What is something I do that you find genuinely charming?"],
+   ["Playful","Recreate how you first introduced yourself. Commit to the bit."],
+   ["Appreciate","Tell your partner how you would describe them to a brand new colleague."],
+   ["Playful","Take turns finishing this: \"You are dangerously good at…\""],
+   ["Connection","What is a small gesture from me that always lands?"],
+   ["Playful","Describe the two of you meeting for the first time, but set it in a spy film."],
+   ["Appreciate","Name something about your partner that other people do not get to see."],
+   ["Do Together","Send each other a text right now that you would not want read out at a wedding — keep it kind."],
+   ["Playful","What is the best outfit you have ever seen the other person in?"],
+   ["Connection","What makes you feel wanted, in the ordinary day-to-day sense?"],
+   ["Playful","Take turns giving each other an absurdly grand nickname. Use it for the rest of the night."],
+   ["Appreciate","Tell them one thing they do that you would miss immediately."],
+   ["Playful","Describe your partner as a weather forecast for this week."],
+   ["Connection","When do you feel most confident around me?"],
+   ["Playful","Whisper the least scandalous thing you can think of. See if it still works."],
+   ["Appreciate","Name a moment recently when you were quietly proud to be with them."],
+   ["Playful","Take turns describing the other’s laugh."],
+   ["Do Together","Slow dance to one song. No audience, no skill required."],
+   ["Connection","What is a compliment from me that you would like to hear more often?"],
+   ["Playful","Invent the two of you as a cocktail. Name the ingredients."],
+   ["Appreciate","Tell them about a time they walked into a room and you noticed."],
+   ["Playful","Each choose a song the other should dance to badly. Then do it."],
+   ["Connection","What kind of attention do you actually enjoy — loud or quiet?"],
+   ["Appreciate","Say one thing you find attractive about how your partner treats other people."],
+   ["Playful","Take turns telling the story of your first kiss. Compare the versions."],
+   ["Do Together","Make each other laugh within thirty seconds. Any means necessary."],
+   ["Connection","What is something I could do this week that you would find flirtatious?"],
+   ["Appreciate","Finish this out loud: \"The thing I still fancy about you is…\""]]},
+
+ {id:"deeptalk",title:"Deep Talk",blurb:"Bigger questions, asked kindly. Best when neither of you is tired and nobody has to be anywhere.",adult:false,
+  cards:[
+   ["Connection","When do you feel most connected to me?"],
+   ["Connection","What helps you feel emotionally safe during a disagreement?"],
+   ["Reflect","What is something you want us to protect more carefully?"],
+   ["Connection","What does quality time look like to you when life gets busy?"],
+   ["Reflect","What would make the next six months feel more intentional?"],
+   ["Connection","What do you need from me when you are overwhelmed — space, or company?"],
+   ["Reflect","What is something you believe now that you did not believe five years ago?"],
+   ["Connection","Is there anything you have been carrying on your own lately?"],
+   ["Reflect","What does being taken care of look like to you?"],
+   ["Connection","What is a way I could support you that I have not thought of?"],
+   ["Reflect","What is a fear you have that you rarely say out loud?"],
+   ["Connection","How do you want to be treated on a day when you have failed at something?"],
+   ["Reflect","What part of your life feels most like yours right now?"],
+   ["Connection","What is something we handle well together that we never talk about?"],
+   ["Reflect","What did you learn about love from the people who raised you — good and bad?"],
+   ["Connection","When do you feel most like yourself with me?"],
+   ["Reflect","What is a decision you are glad you made, even though it was hard?"],
+   ["Connection","Is there anything you would like to be asked about more often?"],
+   ["Reflect","What does rest mean to you? When did you last have some?"],
+   ["Connection","What is a small resentment worth clearing up now, before it grows?"],
+   ["Reflect","What are you hoping for that you have not said in plain words?"],
+   ["Connection","What do you think I worry about? Check whether you are right."],
+   ["Reflect","What is something you have changed your mind about because of me?"],
+   ["Connection","How do you want us to handle it when one of us is struggling for a long stretch?"],
+   ["Reflect","What does a good life look like to you at sixty?"],
+   ["Connection","What is something you would like us to be braver about?"],
+   ["Reflect","When did you last feel genuinely proud of yourself?"],
+   ["Connection","What is a way we could be kinder to each other on hard days?"],
+   ["Reflect","What do you wish you had more patience for?"],
+   ["Connection","What is one thing I do that makes it easier to be honest with me?"],
+   ["Reflect","What would you like to have made peace with a year from now?"],
+   ["Connection","How do you know when I am not okay? What gives it away?"],
+   ["Reflect","What is a part of your past you would like me to understand better?"],
+   ["Connection","What do you want us to say yes to more often?"],
+   ["Reflect","What is something you want to stop apologising for?"],
+   ["Connection","What is a promise we have kept to each other without ever making it out loud?"],
+   ["Reflect","What does home mean to you — the feeling, not the address?"],
+   ["Connection","What is a conversation we keep almost having?"],
+   ["Reflect","What has been the hardest year of your life? What got you through it?"],
+   ["Connection","What is something about our relationship you would not change for anything?"],
+   ["Reflect","What do you want to be known for by the people close to you?"],
+   ["Connection","What is a way I could make you feel more chosen?"],
+   ["Reflect","What is a risk you are glad you took?"],
+   ["Connection","What would you like us to do differently when we are both stressed?"],
+   ["Reflect","What is something you have been putting off that you actually want?"],
+   ["Connection","What do you think we are building together?"],
+   ["Reflect","What is a piece of advice you were given that turned out to be wrong?"],
+   ["Connection","Is there anything you need to say that you have been softening?"],
+   ["Reflect","What makes you feel hopeful at the moment?"],
+   ["Connection","What is one thing you would like us to agree on before the year ends?"]]},
+
+ {id:"longterm",title:"Long-Term Love",blurb:"For the part of a relationship that comes after the beginning — years in, and still worth tending.",adult:false,
+  cards:[
+   ["Reflect","What is something about us that has quietly got better with time?"],
+   ["Connection","What do you miss from an earlier version of us? Could we have some of it back?"],
+   ["Reflect","What is a season we got through that you would not want to repeat?"],
+   ["Connection","What have you learned about me that surprised you?"],
+   ["Reflect","When did you last feel like we were properly a team?"],
+   ["Connection","What is a routine of ours that you actually love?"],
+   ["Reflect","What is one thing you would tell us five years ago?"],
+   ["Connection","What do you want the next chapter to be about?"],
+   ["Appreciate","Name something your partner sacrificed that you never properly acknowledged."],
+   ["Reflect","What is the best decision the two of you ever made together?"],
+   ["Connection","What is something you have stopped asking for that you still want?"],
+   ["Reflect","Which of our traditions matters most to you?"],
+   ["Connection","What is a way we have grown apart that we could close a little?"],
+   ["Appreciate","Tell your partner what you would say in a toast to them."],
+   ["Reflect","What do our friends get right about us? What do they get wrong?"],
+   ["Connection","What is something you would like us to start doing again?"],
+   ["Reflect","What is a difficult thing you are glad we went through together?"],
+   ["Connection","How has what you need from me changed over the years?"],
+   ["Appreciate","Name a moment when your partner showed up for you exactly right."],
+   ["Reflect","What is something we used to argue about that we simply do not anymore?"],
+   ["Connection","What is a way we could be less on autopilot?"],
+   ["Reflect","What is the strangest thing that now feels completely normal about us?"],
+   ["Connection","What is something about the future you would like us to decide together soon?"],
+   ["Appreciate","Tell your partner about a time you were glad they were stubborn."],
+   ["Reflect","What is a version of our life we did not take? Any regrets?"],
+   ["Connection","What would make you feel more like a priority?"],
+   ["Reflect","What has been the happiest stretch so far?"],
+   ["Connection","What is something you would like us to be more honest about?"],
+   ["Appreciate","Name a way your partner has made you a better person without trying."],
+   ["Reflect","What do you hope people say about our relationship?"],
+   ["Connection","What would you like us to do more of while we still can?"],
+   ["Reflect","What is a story about us that you never get tired of telling?"],
+   ["Connection","Is there a conversation from years ago worth having again, differently?"],
+   ["Appreciate","Tell your partner what you are most grateful they stayed for."],
+   ["Reflect","What is one thing we have built that you are proud of?"],
+   ["Connection","What do you want to still be doing together in ten years?"],
+   ["Reflect","What is a small tradition worth starting now?"],
+   ["Connection","What is something you would like to forgive and be done with?"],
+   ["Appreciate","Say one thing you have never quite managed to tell them."],
+   ["Connection","If we could keep only one thing about how we are together, what should it be?"]]},
+
+ {id:"weekend",title:"Weekend Away",blurb:"For a night away, a long weekend, or a Saturday with nothing booked.",adult:false,
+  cards:[
+   ["Do Together","Decide one thing neither of you will check for the rest of the day."],
+   ["Playful","Each pick the one thing you most want from this trip. Trade to make sure both happen."],
+   ["Do Together","Take the longer route on purpose."],
+   ["Connection","What kind of trip do you actually find restful — full or empty?"],
+   ["Do Together","Eat at the place with the worst signage and the best smell."],
+   ["Reflect","What is the best trip you have ever taken? What made it that?"],
+   ["Playful","Give each other one hour to plan a surprise part of the day."],
+   ["Do Together","Buy one small pointless thing each as a souvenir of the weekend."],
+   ["Connection","What do you need on a holiday that you never ask for?"],
+   ["Do Together","Ask a local for one recommendation and do exactly what they say."],
+   ["Reflect","What is a trip you would both like to take before you are seventy?"],
+   ["Playful","Rate today’s breakfast out of ten. Defend your score."],
+   ["Do Together","Sit somewhere for twenty minutes with no plan and no phones."],
+   ["Connection","What is your favourite part of travelling with me?"],
+   ["Do Together","Take one photo each of something the other would have walked past."],
+   ["Reflect","What is a place you have been that you would love to show me?"],
+   ["Playful","Invent a backstory for the couple at the next table. Compare versions afterwards."],
+   ["Do Together","Get properly lost for half an hour without looking anything up."],
+   ["Connection","Is there anything about being away that makes you uneasy?"],
+   ["Do Together","Pick tomorrow’s one non-negotiable thing each. Everything else is optional."],
+   ["Reflect","What is the most beautiful thing you have ever seen in person?"],
+   ["Playful","Take turns naming what you would do here if you had a month."],
+   ["Do Together","Find somewhere to watch the light change and stay until it does."],
+   ["Connection","What would make the trip home feel good rather than flat?"],
+   ["Do Together","Write one sentence each about today. Keep them."],
+   ["Reflect","What do you always pack that you never use?"],
+   ["Playful","Each choose a completely unnecessary indulgence. Both are approved."],
+   ["Do Together","Go out with no plan and see how long you last before making one."],
+   ["Connection","What is a holiday habit of mine that you like?"],
+   ["Do Together","Decide one thing from this weekend to bring home and keep doing."],
+   ["Reflect","Where were you both happiest away from home?"],
+   ["Playful","Plan the most over-the-top version of this trip you could never afford."],
+   ["Do Together","Stay out later than you meant to, on purpose, just once."],
+   ["Connection","What did you enjoy today that surprised you?"],
+   ["Do Together","Book the next one before this one is over."]]},
+
+ {id:"afterdark",title:"After Dark",blurb:"For two people who have chosen this deck together. Every card is optional and either of you can skip without a reason.",adult:true,
+  cards:[
+   ["After Dark","Share one thing that helps you feel wanted."],
+   ["After Dark","Take turns naming a boundary that makes closeness feel more comfortable."],
+   ["After Dark","Describe a setting that would make you feel relaxed and present."],
+   ["After Dark","Ask your partner what kind of affection they have been missing lately."],
+   ["After Dark","Choose one non-physical way to build anticipation for a night together."],
+   ["After Dark","Each choose one word for the energy you would like tonight."],
+   ["After Dark","Plan a no-pressure, phones-away hour focused only on each other."],
+   ["After Dark","Ask: what would help you feel more confident, appreciated, or pursued by me?"],
+   ["After Dark","Tell your partner what you find most attractive about the way they carry themselves."],
+   ["After Dark","Describe the difference, for you, between being wanted and being admired."],
+   ["After Dark","What is a small gesture that makes you feel close afterwards?"],
+   ["After Dark","Take turns naming something you would like more of, without explaining why."],
+   ["After Dark","What helps you switch off at the end of a day and actually arrive?"],
+   ["After Dark","Describe a time you felt completely at ease with someone."],
+   ["After Dark","Ask your partner how they prefer to be asked."],
+   ["After Dark","What is something you appreciate about how your partner treats your comfort?"],
+   ["After Dark","Name one thing that reliably makes you feel unhurried."],
+   ["After Dark","Take turns describing the mood of an evening you would both like to repeat."],
+   ["After Dark","What does feeling desired look like on an ordinary weekday?"],
+   ["After Dark","Tell your partner one compliment you have thought but not said."],
+   ["After Dark","What would you like to hear more often when the lights are low?"],
+   ["After Dark","Describe your ideal pace for an evening together. Compare notes."],
+   ["After Dark","Ask what your partner would like you to check in about more often."],
+   ["After Dark","Name a way you like to be welcomed home."],
+   ["After Dark","What is a kind of touch you find calming rather than exciting?"],
+   ["After Dark","Take turns saying one thing you find beautiful about the other, out loud."],
+   ["After Dark","What makes you feel safe enough to be playful?"],
+   ["After Dark","Describe how you would like a long evening together to begin."],
+   ["After Dark","Ask your partner what they would like to say no to without it being a big deal."],
+   ["After Dark","What is something you would like to be told before rather than after?"],
+   ["After Dark","Name one thing about the other person that you find quietly magnetic."],
+   ["After Dark","What makes an ordinary night feel intimate to you?"],
+   ["After Dark","Take turns describing what closeness feels like, not what it looks like."],
+   ["After Dark","Ask: is there anything you would like more of that you have not brought up?"],
+   ["After Dark","What do you find attractive about your partner’s confidence?"],
+   ["After Dark","Describe a way you would like to be surprised."],
+   ["After Dark","What helps you feel unselfconscious?"],
+   ["After Dark","Take turns naming one thing you would like to slow down."],
+   ["After Dark","Ask your partner what makes them feel most appreciated afterwards."],
+   ["After Dark","What is a mood you would like to create together this week?"],
+   ["After Dark","Name something that makes you feel close without a single word."],
+   ["After Dark","What would make tonight feel unhurried rather than scheduled?"],
+   ["After Dark","Tell your partner one thing you have been looking forward to about being alone together."],
+   ["After Dark","Ask what your partner needs in order to be fully present."],
+   ["After Dark","Describe the version of yourself you feel like when you are completely comfortable."],
+   ["After Dark","What is one thing you would like to be asked rather than assumed?"],
+   ["After Dark","Take turns naming something the other does that you find genuinely alluring."],
+   ["After Dark","What would you like an evening together to leave you feeling?"],
+   ["After Dark","Ask: what is one way I could make you feel more looked after tonight?"],
+   ["After Dark","Name one thing you are grateful for about this part of your relationship."]]}
+];
+
+/* ============================================================
+   TRY SOMETHING NEW — thirty things two people can start together.
+   ------------------------------------------------------------
+   Each person privately marks what they would try; Slow Burn shows
+   only the ones you BOTH said yes to (see tryMatches), the same rule
+   as the reflection chips.
+
+   TWO RULES THAT MUST NOT BE BROKEN — the same ones as the chips:
+   1. This list crosses the pairing link as INDEXES. Never reorder,
+      edit an id, or insert in the middle. APPEND only.
+   2. TRY_FP covers the first TRY_FROZEN entries (the 1.1 list) and
+      nothing after them, so a later version can append and still
+      match with a 1.1 phone; unknown indexes are dropped on arrival.
+   No links, no shop, no prices: nothing here leaves the phone.
+   ============================================================ */
+const TRY=[
+ {id:"watercolor",name:"Watercolor painting",emoji:"🎨",where:"in",line:"Water does half the work. You take the credit.",
+  together:"Paint the same view side by side for twenty minutes, then swap papers and add one thing to each other’s.",
+  steps:["Each paint a strip from dark to light with one brushload","Drop a second colour into wet paint and watch it bloom","Paint the same sky — then compare without judging"]},
+ {id:"acrylic-pour",name:"Acrylic pouring",emoji:"🌀",where:"in",line:"Tip a cup. Gasp. Repeat.",
+  together:"One of you picks the colours, the other does the pour. Nobody knows how it will turn out, which is the fun.",
+  steps:["Do a simple flip cup with three colours","Try a swipe: drag a paper towel across wet paint","Each make one and hang them next to each other"]},
+ {id:"sketching",name:"Sketching",emoji:"✏️",where:"both",line:"A pencil, a notebook, and a new way of looking.",
+  together:"Sit across a table and draw each other’s hands. Slow, unflattering and surprisingly tender.",
+  steps:["Draw your own non-drawing hand, slowly","Draw each other’s hand while the other keeps still","Sketch the same mug and swap notebooks"]},
+ {id:"air-dry-clay",name:"Clay sculpting",emoji:"🏺",where:"in",line:"Pottery without the wheel, the kiln or the class fees.",
+  together:"Make something for the other person to keep — a tiny dish for their rings or keys.",
+  steps:["Each pinch a small bowl from a golf ball of clay","Roll a slab and cut a trinket dish for the other","Paint them once they’re dry"]},
+ {id:"candles",name:"Candle making",emoji:"🕯️",where:"in",line:"Your home, but it smells like you meant it.",
+  together:"Blend a scent that is half each of you, and light it on the next evening you set aside.",
+  steps:["Melt wax and pour one small candle together","Let it cure 48 hours","Each choose a scent and mix them in the next pour"]},
+ {id:"terrarium",name:"Terrarium building",emoji:"🪴",where:"in",line:"A whole small world that fits on a shelf.",
+  together:"One jar, two builders: take turns placing each layer and one tiny thing that means something to you.",
+  steps:["Layer stones, charcoal and soil","Plant moss and one small plant","Each add one small object of your choosing"]},
+ {id:"houseplants",name:"Houseplants",emoji:"🌱",where:"in",line:"Collect green friends. Name them, obviously.",
+  together:"Adopt one plant you share responsibility for, and agree on its name before it comes home.",
+  steps:["Choose and pot up one easy plant together","Learn the finger test for watering","Take a cutting and root it in water for a friend"]},
+ {id:"sourdough",name:"Sourdough baking",emoji:"🍞",where:"in",line:"You are now jointly responsible for a jar of yeast.",
+  together:"A starter needs feeding every day, which turns into a tiny daily ritual the two of you share.",
+  steps:["Mix flour and water to start a starter","Take turns feeding it daily and watch for bubbles","Bake your first loaf on a slow weekend morning"]},
+ {id:"cake-decorating",name:"Cake decorating",emoji:"🎂",where:"in",line:"Everyone’s favourite person at every birthday.",
+  together:"Decorate six cupcakes each, then present them to each other like a judging panel that only gives compliments.",
+  steps:["Make a batch of buttercream together","Practise piping stars and shells on a plate","Decorate three cupcakes for each other"]},
+ {id:"coffee",name:"Home barista",emoji:"☕",where:"in",line:"Your kitchen, but it is a coffee lab.",
+  together:"Brew two versions and taste them blind. It is a lovely, low-stakes way to learn what each of you actually likes.",
+  steps:["Brew a pour-over at 1:16 coffee to water","Change only the grind and taste the difference","Do a blind tasting of two beans"]},
+ {id:"jigsaw",name:"Jigsaw puzzles",emoji:"🧩",where:"in",line:"The most relaxing way to disagree about the sky.",
+  together:"A puzzle left out on a table becomes a place you both drift back to and talk, without having to look at each other.",
+  steps:["Choose a 500-piece puzzle together","One sorts the edges, the other sorts by colour","Finish the frame in one evening"]},
+ {id:"chess",name:"Chess",emoji:"♟️",where:"in",line:"Sixty-four squares. A lifetime of plot twists.",
+  together:"Learn it at the same time so neither of you is the teacher. Talk through every move out loud.",
+  steps:["Learn how every piece moves","Play a game where you both say your plan aloud","Learn one opening together"]},
+ {id:"dance",name:"Dance at home",emoji:"💃",where:"in",line:"Kitchen dancing, but with actual moves.",
+  together:"Learn a simple partner step in the living room. Nobody is watching and stepping on toes is part of it.",
+  steps:["Learn a basic two-step to one song","Take turns leading","Learn the first eight counts of a routine"]},
+ {id:"yoga",name:"Yoga",emoji:"🧘",where:"both",line:"Stretch, breathe, feel suspiciously good.",
+  together:"Fifteen minutes side by side on the floor at the end of the day. Breathe at the same pace.",
+  steps:["Learn sun salutation A together","Hold downward dog for five breaths","Do a fifteen-minute evening stretch side by side"]},
+ {id:"ukulele",name:"Ukulele",emoji:"🎸",where:"both",line:"The instrument that makes everyone smile.",
+  together:"Four chords play hundreds of songs. Learn one of yours and one of theirs.",
+  steps:["Tune it (G-C-E-A)","Learn C, Am, F and G","Play one song each of you chose"]},
+ {id:"origami",name:"Origami",emoji:"🦢",where:"in",line:"One square of paper. No glue. Actual magic.",
+  together:"Fold a crane each and write a small note inside the paper before you start.",
+  steps:["Fold a paper cup","Fold two jumping frogs and race them","Fold a crane with a note hidden inside"]},
+ {id:"birdwatching",name:"Birdwatching",emoji:"🐦",where:"out",line:"A treasure hunt that never runs out.",
+  together:"One of you spots, the other looks it up. Walking slowly and quietly together is half the point.",
+  steps:["Find a local park or hang a feeder","Identify five common birds between you","Learn one bird song"]},
+ {id:"stargazing",name:"Stargazing",emoji:"🔭",where:"out",line:"The biggest show on Earth is overhead, every night.",
+  together:"A blanket, a dark spot and a flask. Most of the evening is lying still and talking, which is the point.",
+  steps:["Find the Big Dipper or Orion","Look at the Moon along its shadow line","Find a planet"]},
+ {id:"gardening",name:"Veggie gardening",emoji:"🥕",where:"out",line:"Grow it. Eat it. Tell everyone.",
+  together:"Plant one bed or one big pot together and cook the first thing it gives you.",
+  steps:["Sow salad leaves and radishes","Plant herbs in a pot","Cook something with the first harvest"]},
+ {id:"hiking",name:"Hiking",emoji:"🥾",where:"out",line:"Walking, with a view at the end.",
+  together:"Side by side, without a screen, for a couple of hours. Conversations go places they don’t at home.",
+  steps:["Pick a 5 km trail near you","Pack water, snacks and a layer each","Tell someone where you are going"]},
+ {id:"geocaching",name:"Geocaching",emoji:"📍",where:"out",line:"A real-world treasure hunt hiding nearby.",
+  together:"One navigates, one searches, then swap. It turns an ordinary walk into a shared mission.",
+  steps:["Find a beginner-friendly cache near you","Sign the logbook together","Leave a small trinket behind"]},
+ {id:"photography",name:"Photography",emoji:"📷",where:"both",line:"Same world. Better frames.",
+  together:"Walk the same street for an hour, then each show the other your three best shots.",
+  steps:["Shoot using the rule of thirds","Shoot the same scene at golden hour and at noon","Swap phones and photograph each other"]},
+ {id:"kayaking",name:"Kayaking",emoji:"🛶",where:"out",line:"See your corner of the world from the water.",
+  together:"A double kayak only goes straight if you paddle together, which is an excellent lesson in patience.",
+  steps:["Rent a double kayak on calm water","Practise forward and sweep strokes together","Learn to turn on the spot"]},
+ {id:"bouldering",name:"Bouldering",emoji:"🧗",where:"both",line:"Climbing puzzles, no ropes, lots of chalk.",
+  together:"Take turns: one climbs, the other reads the route from the ground and cheers.",
+  steps:["Visit a gym and do the intro together","Each climb the five easiest routes","Learn to fall and land safely"]},
+ {id:"disc-golf",name:"Disc golf",emoji:"🥏",where:"out",line:"Golf, but free, and with frisbees.",
+  together:"Nine holes is about an hour of walking in a park with a running joke you both keep score of.",
+  steps:["Find a free course near you","Practise backhand throws in a field","Play nine holes together"]},
+ {id:"pickleball",name:"Pickleball",emoji:"🏓",where:"both",line:"The easiest racket sport to love.",
+  together:"Rally to keep the ball going rather than to win. Count your longest rally and try to beat it.",
+  steps:["Learn the underhand serve","Rally gently near the net","Beat your longest rally"]},
+ {id:"cycling",name:"Cycling",emoji:"🚲",where:"out",line:"Wind in your face, snacks at the end.",
+  together:"Pick a café about half an hour away by bike. The ride there is the date; the ride back is the debrief.",
+  steps:["Check tyres, brakes and chain","Ride a quiet 5 km loop together","Ride to somewhere you’ll stop and eat"]},
+ {id:"camping",name:"Camping",emoji:"⛺",where:"out",line:"Sleep outside. Eat everything off a fire.",
+  together:"Practise pitching the tent in the living room first. It’s a surprisingly good test of how you work as a team.",
+  steps:["Pitch the tent at home","Book a campground with facilities","Cook one meal outside together"]},
+ {id:"kite-flying",name:"Kite flying",emoji:"🪁",where:"out",line:"A windy day is now a good day.",
+  together:"One launches, one holds the line, then swap. Unhurried, silly and very hard to do while staying grumpy.",
+  steps:["Wait for a steady breeze","Launch with the wind at your back","Let out line slowly and swap who holds it"]},
+ {id:"running",name:"Running",emoji:"🏃",where:"out",line:"From the sofa to a 5K, gently.",
+  together:"Run at the slower person’s pace, always. Being able to talk the whole way is the right speed.",
+  steps:["Walk 5, jog 1, repeat","Jog 2 minutes at a time, side by side","Run 5 minutes without stopping"]}
+];
+/* The 1.1 list. Never change this number — append after it instead. */
+const TRY_FROZEN=30;
+
 /* Slow Burn is a paid app: everything in it is included, for everyone.
    These stay as functions rather than being inlined so there is exactly one
    place that answers "what content exists" — and no seam for a gate to creep
@@ -628,7 +1066,11 @@ function freshState(){
     partnerStage:0,partnerSeen:0,partnerDebrief:{},hb:null,
     stageOpen:null,session:null,form:{good:new Set(),more:new Set(),note:""},
     nextSession:"not-set",
-    data:{A:{ready:{},sessions:{},debrief:{}},B:{ready:{},sessions:{},debrief:{}}}
+    data:{A:{ready:{},sessions:{},debrief:{}},B:{ready:{},sessions:{},debrief:{}}},
+    /* Together tab. S.tg is the on-device store (see loadTogether); the
+       partner* fields are what a paired phone sent: its YES picks, as ids. */
+    together:"talk",talkDeck:null,talkCard:null,hobbyOpen:null,
+    tg:blankTogether(),partnerTry:[],partnerTryKnown:undefined,partnerTryMismatch:false
   };
 }
 let S=freshState();
@@ -1193,6 +1635,9 @@ const E2E=(function(){
    app, that is the whole product.
    The separators are U+0001 / U+0002 and must stay exactly that. */
 const CHIPS_FP=sha256hex(STARTER.good.join("")+""+STARTER.more.join("")).slice(0,8);
+/* The same idea for the Try list: it covers the 1.1 entries (TRY_FROZEN)
+   only, so a later version can append and still match with this one. */
+const TRY_FP=sha256hex(TRY.slice(0,TRY_FROZEN).map(h=>h.id).join("|")).slice(0,8);
 
 /* The entire cleartext of the link, assembled here and nowhere else.
    Everything in it is either an integer or an index into a fixed list. */
@@ -1204,7 +1649,10 @@ function stateEnvelope(){
           m:(d.more||[]).map(x=>MORE.indexOf(x)).filter(i=>i>=0)};
     /* d.note is deliberately absent. The private note is never sent. */
   }
-  return {v:PROTO_V,n:E2E.nextSeq(),u:myStagePointer(),cf:CHIPS_FP,r:r};
+  /* The things this person said they would try: YES only, as indexes into
+     TRY. What they passed on is never sent. */
+  const t=myTry().yes.map(id=>TRY.findIndex(h=>h.id===id)).filter(i=>i>=0);
+  return {v:PROTO_V,n:E2E.nextSeq(),u:myStagePointer(),cf:CHIPS_FP,r:r,t:t,tf:TRY_FP};
 }
 /* The ONLY function that puts app state on the wire, and it cannot run
    before the handshake is confirmed. */
@@ -1234,6 +1682,15 @@ function applyEnvelope(env){
     }
   }
   S.partnerDebrief=out;
+  /* Try picks. A 1.0 phone sends no tf at all: nothing to compare, and the
+     Together tab says to update. A different list version is not compared. */
+  if(env.tf===TRY_FP){
+    S.partnerTryKnown=true; S.partnerTryMismatch=false;
+    S.partnerTry=(Array.isArray(env.t)?env.t:[]).filter(i=>Number.isInteger(i)&&i>=0)
+      .map(i=>TRY[i]).filter(Boolean).map(h=>h.id);
+  } else {
+    S.partnerTry=[]; S.partnerTryKnown=false; S.partnerTryMismatch=(env.tf!==undefined);
+  }
   /* Their first message under this key: they may well have missed ours while
      they were still confirming, so answer with our own state once. */
   if(Number(env.n)===1) publishState();
@@ -1290,6 +1747,7 @@ function onWire(topic,body){
       .then(function(fresh){
         if(fresh===false) return null;                // same key we already have
         S.pairSecure=false; S.pairSafety=""; S.partnerDebrief={};
+        S.partnerTry=[]; S.partnerTryKnown=undefined; S.partnerTryMismatch=false;
         /* They have only just arrived, and nothing is retained for them to
            read — so re-announce our key immediately rather than making them
            wait for the next heartbeat. Gated on the key being NEW, so the
@@ -1498,6 +1956,7 @@ function leaveLive(){
   E2E.reset();
   S.mq=null;S.connected=false;S.partnerOnline=false;S.partnerStage=0;S.partnerSeen=0;
   S.partnerDebrief={};S.pairSecure=false;S.pairSafety="";S.partnerChipMismatch=false;
+  S.partnerTry=[];S.partnerTryKnown=undefined;S.partnerTryMismatch=false;
 }
 
 /* ============================================================
@@ -1707,6 +2166,7 @@ const I={
  today:'<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  program:'<svg viewBox="0 0 24 24" fill="none"><path d="M6 4.5h9l3 3v12H6V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12h6M9 15.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  chat:'<svg viewBox="0 0 24 24" fill="none"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10l-4 3.5V15.5H6.5a2 2 0 0 1-2-2v-7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ together:'<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><circle cx="15" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/></svg>',
  heart:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-7-9.3A3.7 3.7 0 0 1 12 8.2 3.7 3.7 0 0 1 19 10.7C19 15.6 12 20 12 20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
  lock:'<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" stroke="#A99A94" stroke-width="1.7"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#A99A94" stroke-width="1.7"/></svg>',
  shield:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l7 2.5v5c0 4.5-3 8-7 9.5-4-1.5-7-5-7-9.5v-5l7-2.5Z" stroke="#6E4B63" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#6E4B63" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -1817,7 +2277,7 @@ function screenSetup(){
       <div class="divider"></div>
       <div class="opt" data-action="who-sample"><div class="oic">${I.spark}</div>
         <div><div class="ttl">See a sample walkthrough</div><div class="dsc">A clearly-labelled example (Rowan &amp; Ari, both they/them) to look around without entering anything about yourself.</div></div></div>
-      <div class="foot-legal">Everything you enter about yourself — your name, pronouns, identity and private notes — stays on this device. It is never sent to us; there is no account and no server. If you pair two phones, the only things that cross are which stage you have said you are ready for and which reflection chips you tapped, and they cross end-to-end encrypted: only your two phones can read them. Nothing is stored anywhere afterwards.</div>
+      <div class="foot-legal">Everything you enter about yourself — your name, pronouns, identity and private notes — stays on this device. It is never sent to us; there is no account and no server. If you pair two phones, the only things that cross are which stage you have said you are ready for, which reflection chips you tapped and which new things you said you’d try, and they cross end-to-end encrypted: only your two phones can read them. Nothing is stored anywhere afterwards.</div>
     </div>`;
   }
 
@@ -1978,13 +2438,13 @@ function screenPairing(){
       <p class="lead mt6" style="font-size:13.5px">Two phones keeps each person’s answers on their own phone. One phone works too — you just hand it back and forth.</p>
       <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
         <div class="opt" data-action="pair-create"><div class="oic">${I.phone}</div>
-          <div><div class="ttl">Pair two devices</div><div class="dsc">Invite ${esc(otherName())} with a code or QR. The consent gate and your reflection matches sync live across both, end-to-end encrypted.</div></div></div>
+          <div><div class="ttl">Pair two devices</div><div class="dsc">Invite ${esc(otherName())} with a code or QR. The consent gate, your reflection matches and what you’d both try sync live across both, end-to-end encrypted.</div></div></div>
         <div class="opt" data-action="pair-join"><div class="oic">${I.link}</div>
           <div><div class="ttl">Join with a code</div><div class="dsc">They already started — enter the pair code they share.</div></div></div>
         <div class="opt" data-action="pair-shared"><div class="oic">${I.solo}</div>
           <div><div class="ttl">Share this one device</div><div class="dsc">Hand the phone back and forth, switching sides with a toggle at the top.</div></div></div>
       </div>
-      <div class="foot-legal">Your two phones agree on a key that only they hold, and everything they then send each other is encrypted with it — the relay in between carries scrambled bytes it cannot read, and keeps none of them. What crosses: which stage you have confirmed you are ready for, and which reflection chips you tapped, so the app can show what you both welcome. What never crosses, encrypted or otherwise: your name, pronouns, gender, orientation, relationship structure and every written note.</div>
+      <div class="foot-legal">Your two phones agree on a key that only they hold, and everything they then send each other is encrypted with it — the relay in between carries scrambled bytes it cannot read, and keeps none of them. What crosses: which stage you have confirmed you are ready for, which reflection chips you tapped, and which new things you said you’d try, so the app can show what you both welcome. What never crosses, encrypted or otherwise: your name, pronouns, gender, orientation, relationship structure and every written note.</div>
     </div>`;
   }
   if(S.pairPhase==="create"){
@@ -2026,7 +2486,7 @@ function screenPairing(){
       <input class="field" id="joinname" placeholder="Name or nickname" value="${esc(person("A").name)}" />
     </div>
     <button class="btn mt14" data-action="do-join">Link our devices</button>
-    <div class="foot-legal">Both phones need to be online. Your name, pronouns and everything you write stay here. The pair code never travels — your phones use it to lock the link, so only they can read what crosses: the stage you have confirmed, and the reflection chips you tapped.</div>
+    <div class="foot-legal">Both phones need to be online. Your name, pronouns and everything you write stay here. The pair code never travels — your phones use it to lock the link, so only they can read what crosses: the stage you have confirmed, the reflection chips you tapped, and the new things you said you’d try.</div>
   </div>`;
 }
 
@@ -2047,12 +2507,15 @@ function appChrome(inner){
   <div class="tabs">
     ${tabBtn("today","Today",I.today)}
     ${tabBtn("program","Program",I.program)}
+    ${tabBtn("together",isSolo()?"Explore":"Together",I.together)}
     ${tabBtn("checkins","Check-ins",I.chat)}
     ${tabBtn("partner",isSolo()?"You":"Us",I.heart)}
   </div>`;
 }
 function tabBtn(id,label,icon){
-  const on=S.tab===id;
+  /* The Together screens sit under that tab, whatever S.tab last said. */
+  const cur=["talk","saved","trylist","hobby"].indexOf(S.screen)>=0?"together":S.tab;
+  const on=cur===id;
   const notif=(id==="checkins"&&hasNewMatch())?'<span class="notif"></span>':"";
   return `<button class="tab ${on?'on':''}" data-action="tab" data-tab="${id}">${notif}${icon}<span>${label}</span></button>`;
 }
@@ -2220,7 +2683,7 @@ function tabPartner(){
       <p class="tiny" style="line-height:1.6">${solo
         ?"Your readiness answers, reflections, private notes and identity settings never leave this device. Slow Burn has no account and no server."
         :(S.mode==="live"
-          ?"Your two phones agree on a key over the link and never send it, so everything they exchange afterwards is scrambled for anyone else — including the relay carrying it, which keeps nothing once you disconnect. Two things cross, both encrypted: the stage you have confirmed you are ready for, and which reflection chips you tapped, so the app can show what you <b>both</b> named. Your name, pronouns, gender, orientation, relationship structure, session counts and every written note are never sent at all. There is no account and no server of ours."
+          ?"Your two phones agree on a key over the link and never send it, so everything they exchange afterwards is scrambled for anyone else — including the relay carrying it, which keeps nothing once you disconnect. Three things cross, all encrypted: the stage you have confirmed you are ready for, which reflection chips you tapped, and which new things you said you’d try — so the app can show what you <b>both</b> named. Your name, pronouns, gender, orientation, relationship structure, session counts and every written note are never sent at all. There is no account and no server of ours."
           :"You are both using this one phone, so everything stays here and nothing is transmitted at all. Slow Burn still only shows each of you the reflections you <b>both</b> named positively — never the rest.")}</p>
       ${(!solo&&S.mode==="live"&&S.pairSecure)?`<div class="kv mt10" style="border-top:1px solid var(--line);border-bottom:0;padding-top:10px"><span class="k">Safety word</span><span class="v" style="color:var(--sage)">${esc(S.pairSafety)}</span></div>
       <p class="tiny" style="line-height:1.6">${TE("Should read the same on {partner}’s phone. If it does, no one is in the middle.")}</p>`:""}</div>
@@ -2465,6 +2928,265 @@ function nudgeText(cur){
   return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session${canMatch()?" to see what you share":" — your own pattern builds up over time"}.`;
 }
 
+/* ---------------- TOGETHER ----------------
+   Two halves. TALK is conversation cards, drawn without repeats. TRY is
+   picking a new thing to start: each person privately marks what they would
+   try, and only the overlap is ever shown — the reflection-chip rule again.
+
+   Storage: one on-device key. Picks are kept per person (A is always this
+   phone's user, B only exists on a shared phone). Only the YES list is ever
+   sent to a paired phone, as indexes inside the encrypted envelope; the NO
+   list, the saved cards and the steps never leave this device. */
+const TOGETHER_KEY="sb_together_v1";
+function blankTogether(){
+  return {talk:{seen:{},fav:[],adultOk:false},picks:{A:{yes:[],no:[]},B:{yes:[],no:[]}},steps:{},tried:[]};
+}
+function loadTogether(){
+  const t=blankTogether();
+  try{
+    const o=JSON.parse(localStorage.getItem(TOGETHER_KEY)||"null");
+    if(o&&typeof o==="object"){
+      if(o.talk&&typeof o.talk==="object"){
+        if(o.talk.seen&&typeof o.talk.seen==="object") t.talk.seen=o.talk.seen;
+        if(Array.isArray(o.talk.fav)) t.talk.fav=o.talk.fav.filter(x=>typeof x==="string");
+        t.talk.adultOk=o.talk.adultOk===true;
+      }
+      ["A","B"].forEach(r=>{
+        const p=o.picks&&o.picks[r];
+        if(p){ ["yes","no"].forEach(k=>{ if(Array.isArray(p[k])) t.picks[r][k]=p[k].filter(id=>TRY.some(h=>h.id===id)); }); }
+      });
+      if(o.steps&&typeof o.steps==="object") t.steps=o.steps;
+      if(Array.isArray(o.tried)) t.tried=o.tried.filter(id=>TRY.some(h=>h.id===id));
+    }
+  }catch(e){}
+  S.tg=t;
+}
+function saveTogether(){ try{ localStorage.setItem(TOGETHER_KEY,JSON.stringify(S.tg)); }catch(e){} }
+function clearTogether(){ try{ localStorage.removeItem(TOGETHER_KEY); }catch(e){} S.tg=blankTogether(); }
+
+/* ---- talk ---- */
+function talkDeck(id){ return TALK.find(d=>d.id===id)||null; }
+function talkCardKey(deckId,i){ return deckId+":"+i; }
+function talkCardByKey(k){
+  const p=String(k).split(":"), d=talkDeck(p[0]), i=parseInt(p[1],10);
+  return (d&&d.cards[i])?{deck:d,i:i,cat:d.cards[i][0],text:d.cards[i][1]}:null;
+}
+/* Draw a card this deck has not shown yet. When every card has been seen the
+   deck reshuffles, and says so. */
+function talkDraw(deckId){
+  const d=talkDeck(deckId); if(!d) return null;
+  let seen=(S.tg.talk.seen[deckId]||[]).filter(i=>i>=0&&i<d.cards.length);
+  let left=d.cards.map((_,i)=>i).filter(i=>seen.indexOf(i)<0);
+  let reshuffled=false;
+  if(!left.length){ seen=[]; left=d.cards.map((_,i)=>i); reshuffled=true; }
+  const i=left[randIdx(left.length)];
+  seen.push(i); S.tg.talk.seen[deckId]=seen; saveTogether();
+  S.talkCard=i;
+  return reshuffled;
+}
+function talkIsFav(deckId,i){ return S.tg.talk.fav.indexOf(talkCardKey(deckId,i))>=0; }
+
+/* ---- try ---- */
+function tryById(id){ return TRY.find(h=>h.id===id)||null; }
+function tryPicks(role){ return S.tg.picks[role]||{yes:[],no:[]}; }
+function myTry(){ return tryPicks(activeRole()); }
+/* The other person's YES list, wherever it can come from — and null when
+   there is nothing to compare against yet. */
+function theirTryYes(){
+  if(isSolo()) return null;
+  if(S.mode==="shared"){ const p=tryPicks(partnerRole()); return (p.yes.length||p.no.length)?p.yes:null; }
+  if(S.mode==="live"&&E2E.secure()&&S.partnerTryKnown&&(S.partnerTry||[]).length) return S.partnerTry;
+  return null;
+}
+/* Solo: your own list. Partnered: ONLY what you both said yes to, in list
+   order — never the things only one of you picked. */
+function tryMatches(){
+  const mine=myTry().yes;
+  if(isSolo()) return TRY.filter(h=>mine.indexOf(h.id)>=0);
+  const theirs=theirTryYes(); if(!theirs) return [];
+  return TRY.filter(h=>mine.indexOf(h.id)>=0&&theirs.indexOf(h.id)>=0);
+}
+function tryNextUnpicked(){
+  const p=myTry();
+  return TRY.find(h=>p.yes.indexOf(h.id)<0&&p.no.indexOf(h.id)<0)||null;
+}
+function trySet(id,val){
+  const p=myTry(); if(!tryById(id)) return;
+  p.yes=p.yes.filter(x=>x!==id); p.no=p.no.filter(x=>x!==id);
+  if(val==="yes") p.yes.push(id); else if(val==="no") p.no.push(id);
+  saveTogether();
+  /* Live: the YES indexes go out inside the encrypted envelope. */
+  publishState();
+}
+function tryWhere(h){ return h.where==="in"?"Inside":h.where==="out"?"Outside":"Inside or out"; }
+/* Two conversation cards to take along, chosen from the everyday decks
+   (never After Dark) and fixed per hobby so they don't reshuffle on render. */
+function tryTalkAlong(h){
+  const pool=[];
+  TALK.forEach(d=>{ if(d.adult) return; d.cards.forEach((c,i)=>{ if(c[0]==="Do Together"||c[0]==="Playful") pool.push(c[1]); }); });
+  if(!pool.length) return [];
+  const n=TRY.indexOf(h)+1;
+  const a=(n*7)%pool.length, b=(n*7+Math.floor(pool.length/2))%pool.length;
+  return a===b?[pool[a]]:[pool[a],pool[b]];
+}
+
+function tabTogether(){
+  const solo=isSolo(), sub=S.together==="try"?"try":"talk";
+  return `<div class="view"><div class="pad-tab">
+    <div class="eyebrow">${solo?"Explore":"Together"}</div>
+    <h2 class="display" style="font-size:25px;margin-top:8px">${solo?"Prompts, and something new":"Talk, and try something new"}</h2>
+    <div class="seg mt14" role="tablist">
+      <button data-action="tg-sub" data-sub="talk" class="${sub==="talk"?"on":""}">Talk</button>
+      <button data-action="tg-sub" data-sub="try" class="${sub==="try"?"on":""}">Try something new</button>
+    </div>
+    ${sub==="try"?tryView():talkView()}
+  </div></div>`;
+}
+function talkView(){
+  const solo=isSolo(), fav=S.tg.talk.fav.length;
+  const decks=TALK.map(d=>`<div class="card card-tap mt14" data-action="open-talk" data-id="${d.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><div class="st-title" style="font-size:16px">${esc(d.title)}</div>
+          <div class="tiny" style="margin-top:3px">${d.cards.length} cards${d.adult?" · asks you both first":""}</div></div>
+        <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div>
+      <p class="tiny" style="margin-top:8px;line-height:1.55">${esc(d.blurb)}</p></div>`).join("");
+  return `<p class="lead mt14" style="font-size:13.5px">${solo
+      ?"Written for two people, and just as good as journaling prompts on your own."
+      :TE("Cards to read aloud to each other. Every one is optional — either of you can skip any card, no reason needed.")}</p>
+    ${fav?`<div class="card-soft mt14 card-tap" data-action="open-saved" style="display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-weight:700;font-size:13.5px">Saved cards</div><div class="tiny" style="margin-top:3px">${fav} saved on this phone</div></div>
+      <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div>`:""}
+    ${decks}
+    <div class="foot-legal">Cards stay on this phone. Nothing here is sent anywhere.</div>`;
+}
+function tryView(){
+  const solo=isSolo(), live=S.mode==="live", p=myTry();
+  const picked=p.yes.length+p.no.length, next=tryNextUnpicked(), matches=tryMatches();
+  const tried=S.tg.tried;
+  const intro=solo
+    ?"Mark what you’d like to try, then start one. Three small steps each."
+    :"Each of you privately marks what you’d try. Slow Burn only shows what you <b>both</b> said yes to — never the rest.";
+  const asWho=S.mode==="shared"
+    ?`<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("Picking as {Me}. When you’re done, hand the phone over and switch sides at the top.")}</p></div>`:"";
+  const row=h=>`<div class="card card-tap mt10" data-action="open-hobby" data-id="${h.id}" style="display:flex;gap:14px;align-items:center">
+      <div class="tg-emoji">${h.emoji}</div>
+      <div style="flex:1;min-width:0"><div class="st-title" style="font-size:15px">${esc(h.name)}</div>
+        <div class="tiny" style="margin-top:3px">${esc(h.line)}</div></div>
+      ${tried.indexOf(h.id)>=0?`<span class="badge done">Tried</span>`:`<div style="flex:none;color:var(--muted-2);font-size:18px">›</div>`}</div>`;
+  let status="";
+  if(matches.length){
+    status=`<div class="tiny mt18" style="font-weight:700;color:var(--sage);letter-spacing:.04em;text-transform:uppercase">${solo?"On your list":"You both said yes"}</div>
+      ${matches.map(row).join("")}`;
+  } else if(!solo&&picked){
+    let msg;
+    if(live&&!E2E.secure()) msg=TE("Your phones haven’t finished setting up their encrypted link yet. Once they have, your picks are compared privately — and only the overlap is shown.");
+    else if(live&&S.partnerTryMismatch) msg=TE("{Partner}’s copy of Slow Burn is a different version, so the app won’t compare your picks. Update both phones and they’ll match again.");
+    else if(live&&S.partnerTryKnown===false) msg=TE("{Partner}’s copy of Slow Burn doesn’t have this yet. Update both phones and you can pick together.");
+    else if(!theirTryYes()) msg=TE("Your picks are saved. Once {partner} picks too, anything you both said yes to shows up here — and nothing else does.");
+    else msg=TE("No overlaps yet, and that’s completely normal. Keep going, or change your answers any time.");
+    status=`<div class="card-soft mt18"><div style="font-weight:700;font-size:13.5px">${theirTryYes()?"Nothing shared yet":TE("Waiting on {partner}")}</div>
+      <p class="tiny" style="margin-top:4px;line-height:1.55">${msg}</p></div>`;
+  }
+  const picker=next?`<div class="card mt18 tg-pick">
+      <div class="tiny" style="color:var(--primary);font-weight:700">${tryWhere(next)} · ${picked+1} of ${TRY.length}</div>
+      <div class="tg-emoji big mt10">${next.emoji}</div>
+      <h3 style="font-size:21px;margin-top:8px">${esc(next.name)}</h3>
+      <p class="tiny" style="margin-top:4px">${esc(next.line)}</p>
+      <p class="lead mt10" style="font-size:13.5px;color:var(--ink)">${esc(next.together)}</p>
+      <div class="row mt14">
+        <button class="btn btn-soft" data-action="try-set" data-id="${next.id}" data-val="no">Not for me</button>
+        <button class="btn" data-action="try-set" data-id="${next.id}" data-val="yes">I’d try this</button>
+      </div></div>`
+    :`<div class="card-soft mt18"><p class="tiny" style="line-height:1.55">You’ve been through all ${TRY.length}. Change any answer whenever you like.</p></div>`;
+  return `<p class="lead mt14" style="font-size:13.5px">${intro}</p>
+    ${asWho}${status}${picker}
+    ${picked?`<button class="btn btn-soft mt14" data-action="open-trylist">Review my answers</button>`:""}
+    <div class="foot-legal">${solo||S.mode==="shared"
+      ?"Your picks stay on this phone."
+      :"Only the things you said yes to cross to the other phone, end-to-end encrypted — never the ones you passed on."}</div>`;
+}
+function screenTalk(id){
+  const d=talkDeck(id); if(!d) return tabTogether();
+  const back=`<button class="back" data-action="tg-back" data-sub="talk">‹ Together</button>`;
+  if(d.adult&&!S.tg.talk.adultOk){
+    return `<div class="view"><div class="pad-tab">${back}
+      <div class="eyebrow mt10">${esc(d.title)}</div>
+      <h2 class="display" style="font-size:25px;margin-top:8px">${isSolo()?"Before you open this deck":"Choose this one together"}</h2>
+      <div class="card mt18"><p class="lead" style="font-size:14px;color:var(--ink)">${esc(d.blurb)}</p>
+        <p class="tiny mt10" style="line-height:1.6">${isSolo()
+          ?"These cards are written for two. On your own, read them as reflection prompts — what you would want to say, and what you would want to hear."
+          :TE("Open it only if you’ve both chosen to — and either of you can stop at any card.")}</p>
+        <button class="btn mt14" data-action="talk-adult-ok" data-id="${d.id}">${isSolo()?"Open the deck":"We’ve both chosen this"}</button>
+        <button class="btn btn-soft mt10" data-action="tg-back" data-sub="talk">Not now</button></div>
+    </div></div>`;
+  }
+  if(S.talkCard==null||!d.cards[S.talkCard]) talkDraw(d.id);
+  const c=d.cards[S.talkCard], fav=talkIsFav(d.id,S.talkCard);
+  const seen=(S.tg.talk.seen[d.id]||[]).length;
+  return `<div class="view"><div class="pad-tab">${back}
+    <div class="eyebrow mt10">${esc(d.title)} · ${seen} of ${d.cards.length}</div>
+    <div class="card mt14 tg-card">
+      <div class="tiny" style="color:var(--plum);font-weight:700;letter-spacing:.06em;text-transform:uppercase">${esc(c[0])}</div>
+      <p class="tg-text">${esc(c[1])}</p></div>
+    <div class="row mt14">
+      <button class="btn btn-soft" data-action="talk-fav" data-id="${d.id}" aria-pressed="${fav}">${fav?"♥ Saved":"♡ Save"}</button>
+      <button class="btn" data-action="talk-next" data-id="${d.id}">Next card</button></div>
+    <div class="foot-legal">Skip any card — no reason needed.</div>
+  </div></div>`;
+}
+function screenSaved(){
+  const list=S.tg.talk.fav.map(talkCardByKey).filter(Boolean);
+  return `<div class="view"><div class="pad-tab">
+    <button class="back" data-action="tg-back" data-sub="talk">‹ Together</button>
+    <div class="eyebrow mt10">Kept on this phone</div>
+    <h2 class="display" style="font-size:25px;margin-top:8px">Saved cards</h2>
+    ${list.length?list.map(x=>`<div class="card mt14">
+        <div class="tiny" style="color:var(--plum);font-weight:700">${esc(x.deck.title)} · ${esc(x.cat)}</div>
+        <p style="font-size:15px;line-height:1.5;margin-top:6px">${esc(x.text)}</p>
+        <button class="link mt10" data-action="talk-unfav" data-key="${esc(talkCardKey(x.deck.id,x.i))}" style="padding:0">Remove</button></div>`).join("")
+      :`<p class="lead mt14" style="font-size:13.5px">Nothing saved yet. Tap ♡ Save on any card.</p>`}
+  </div></div>`;
+}
+function screenTryList(){
+  const p=myTry();
+  const rows=TRY.map(h=>{
+    const v=p.yes.indexOf(h.id)>=0?"yes":p.no.indexOf(h.id)>=0?"no":"";
+    return `<div class="kv"><span class="k" style="color:var(--ink)">${h.emoji} ${esc(h.name)}</span>
+      <span class="v" style="display:flex;gap:6px">
+        <button class="chip ${v==="yes"?"sel":""}" data-action="try-set" data-id="${h.id}" data-val="${v==="yes"?"":"yes"}" aria-pressed="${v==="yes"}" style="padding:7px 12px">Yes</button>
+        <button class="chip ${v==="no"?"sel":""}" data-action="try-set" data-id="${h.id}" data-val="${v==="no"?"":"no"}" aria-pressed="${v==="no"}" style="padding:7px 12px">No</button></span></div>`;
+  }).join("");
+  return `<div class="view"><div class="pad-tab">
+    <button class="back" data-action="tg-back" data-sub="try">‹ Together</button>
+    <div class="eyebrow mt10">${S.mode==="shared"?TE("{Me}’s answers"):"Your answers"}</div>
+    <h2 class="display" style="font-size:25px;margin-top:8px">What you’d try</h2>
+    <p class="lead mt6" style="font-size:13.5px">Change any answer. ${isSolo()?"":TE("{Partner} only ever sees the ones you both said yes to.")}</p>
+    <div class="card mt14">${rows}</div>
+  </div></div>`;
+}
+function screenHobby(id){
+  const h=tryById(id); if(!h) return tabTogether();
+  const solo=isSolo(), done=S.tg.steps[h.id]||[], tried=S.tg.tried.indexOf(h.id)>=0;
+  const steps=h.steps.map((x,i)=>`<button class="tg-step ${done[i]?"on":""}" data-action="hobby-step" data-id="${h.id}" data-i="${i}" aria-pressed="${!!done[i]}">
+      <span class="dot">${done[i]?I.check:(i+1)}</span><span class="stx">${esc(x)}</span></button>`).join("");
+  const along=tryTalkAlong(h);
+  return `<div class="view"><div class="pad-tab">
+    <button class="back" data-action="tg-back" data-sub="try">‹ Together</button>
+    <div style="display:flex;gap:14px;align-items:center" class="mt10">
+      <div class="tg-emoji big">${h.emoji}</div>
+      <div><div class="eyebrow">${tryWhere(h)}</div>
+        <h2 class="display" style="font-size:25px;margin-top:4px">${esc(h.name)}</h2></div></div>
+    <p class="lead mt10" style="font-size:14px">${esc(h.line)}</p>
+    ${solo?"":`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px">Doing it together</div>
+      <p class="tiny" style="margin-top:4px;line-height:1.6">${esc(h.together)}</p></div>`}
+    <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:4px">Three small steps</div>${steps}</div>
+    ${(!solo&&along.length)?`<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Talk while you do it</div>
+      ${along.map(t=>`<p class="tiny" style="line-height:1.6;margin-top:6px">“${esc(t)}”</p>`).join("")}</div>`:""}
+    <button class="btn ${tried?"btn-soft":""} mt14" data-action="hobby-tried" data-id="${h.id}" aria-pressed="${tried}">${tried?(solo?"✓ You tried it":"✓ You tried it together"):(solo?"I tried it":"We tried it")}</button>
+    <div class="foot-legal">Your steps and what you’ve tried are kept on this phone only.</div>
+  </div></div>`;
+}
+
 /* ---------------- FIND A CLINICIAN ---------------- */
 function clinCard(name,tag,desc,url){
   return `<a class="opt" href="${url}" data-action="open-url" data-url="${url}" style="text-decoration:none;color:inherit">
@@ -2531,8 +3253,13 @@ function render(){
   else if(S.screen==="journal")html=screenJournal();
   else if(S.screen==="practices")html=screenPractices();
   else if(S.screen==="practice")html=screenPractice(S.practiceOpen);
+  else if(S.screen==="talk")html=appChrome(screenTalk(S.talkDeck));
+  else if(S.screen==="saved")html=appChrome(screenSaved());
+  else if(S.screen==="trylist")html=appChrome(screenTryList());
+  else if(S.screen==="hobby")html=appChrome(screenHobby(S.hobbyOpen));
   else if(S.screen==="app"){
-    let inner=S.tab==="today"?tabToday():S.tab==="program"?tabProgram():S.tab==="checkins"?tabCheckins():tabPartner();
+    let inner=S.tab==="today"?tabToday():S.tab==="program"?tabProgram():S.tab==="together"?tabTogether()
+      :S.tab==="checkins"?tabCheckins():tabPartner();
     html=appChrome(inner);
   }
   root.innerHTML=html;root.scrollTop=0;
@@ -2703,11 +3430,37 @@ document.addEventListener("click",(e)=>{
     leaveLive();
     const keep=(!S.isSample&&S.profile.done)?JSON.parse(JSON.stringify(S.profile)):null;
     S=freshState();
+    /* Reset starts the partnership over, so its picks and saved cards go too;
+       leaving a pairing keeps them. */
+    if(a==="reset") clearTogether(); else loadTogether();
     if(keep){ S.profile=keep; S.screen="setup"; S.setupStep="who"; }   // keep who you are; re-choose how you're practising
     else { clearProfile(); }
     render(); return;
   }
   if(a==="set-view"){S.view=el.dataset.view;render();return;}
+
+  /* ---------- together ---------- */
+  if(a==="tg-sub"){S.together=el.dataset.sub==="try"?"try":"talk";render();return;}
+  if(a==="tg-back"){S.together=el.dataset.sub==="try"?"try":"talk";S.screen="app";S.tab="together";S.talkCard=null;render();return;}
+  if(a==="open-talk"){S.talkDeck=el.dataset.id;S.talkCard=null;S.screen="talk";render();return;}
+  if(a==="talk-adult-ok"){S.tg.talk.adultOk=true;saveTogether();S.talkCard=null;render();return;}
+  if(a==="talk-next"){const re=talkDraw(el.dataset.id);render();if(re)toast("That’s every card in this deck — shuffling.");return;}
+  if(a==="talk-fav"){const k=talkCardKey(el.dataset.id,S.talkCard),f=S.tg.talk.fav,i=f.indexOf(k);
+    if(i>=0)f.splice(i,1);else f.push(k);saveTogether();render();return;}
+  if(a==="talk-unfav"){S.tg.talk.fav=S.tg.talk.fav.filter(x=>x!==el.dataset.key);saveTogether();render();return;}
+  if(a==="open-saved"){S.screen="saved";render();return;}
+  if(a==="open-trylist"){S.screen="trylist";render();return;}
+  if(a==="try-set"){
+    const root=document.getElementById("root"),keep=root.scrollTop,id=el.dataset.id;
+    trySet(id,el.dataset.val);render();
+    if(S.screen==="trylist") root.scrollTop=keep;
+    if(el.dataset.val==="yes"&&!isSolo()&&tryMatches().some(h=>h.id===id)) toast("You both said yes to this one.");
+    return;}
+  if(a==="open-hobby"){S.hobbyOpen=el.dataset.id;S.screen="hobby";render();return;}
+  if(a==="hobby-step"){const root=document.getElementById("root"),keep=root.scrollTop,id=el.dataset.id,i=+el.dataset.i;
+    const d=(S.tg.steps[id]||[false,false,false]).slice();d[i]=!d[i];S.tg.steps[id]=d;saveTogether();render();root.scrollTop=keep;return;}
+  if(a==="hobby-tried"){const id=el.dataset.id,t=S.tg.tried,i=t.indexOf(id);if(i>=0)t.splice(i,1);else t.push(id);saveTogether();render();
+    if(i<0)toast(isSolo()?"Nice. Marked as tried.":"Nice. Marked as tried together.");return;}
 
   // app
   if(a==="tab"){S.tab=el.dataset.tab;S.screen="app";render();return;}
@@ -2748,7 +3501,7 @@ document.addEventListener("click",(e)=>{
     if(S.mode==="solo"||S.mode==="shared"){ S.screen="app"; S.tab="today"; }
     else { S.mode=null; S.screen="pairing"; S.pairPhase="choose"; }
   }
-  loadTheme(); loadJournal();
+  loadTheme(); loadJournal(); loadTogether();
   Monetize.init();
   render();
 })();

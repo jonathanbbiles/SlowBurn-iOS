@@ -139,15 +139,13 @@ workflows:
           /usr/libexec/PlistBuddy -c "Print :NSCameraUsageDescription" "$PLIST" \
             || { echo "FAILED: NSCameraUsageDescription not set — the scanner would crash the app."; exit 1; }
       # --- MARKETING VERSION ---------------------------------------------------
-      # 1.0 was REJECTED (2.1(b), business-model question), not approved. The
-      # normal fix-and-resubmit flow is to upload a new BUILD against the same
-      # version record, so this stays 1.0 and only CFBundleVersion increments.
-      # Shipping 1.1 instead would force a new version record in App Store
-      # Connect for no benefit. Change this only when 1.0 is actually released.
-      - name: Set marketing version (1.0 — resubmission build)
+      # 1.0 is live (released 2026-09-06), and an approved version takes no more
+      # binaries (ITMS-90062). 1.1 adds the Together tab (Talk cards + Try
+      # something new). Must equal the App Store Connect version string exactly.
+      - name: Set marketing version (1.1)
         script: |
           PLIST=ios/App/App/Info.plist
-          plutil -replace CFBundleShortVersionString -string "1.0" "$PLIST"
+          plutil -replace CFBundleShortVersionString -string "1.1" "$PLIST"
           echo "CFBundleShortVersionString = $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
       - name: Set build number + export-compliance flag
         script: |

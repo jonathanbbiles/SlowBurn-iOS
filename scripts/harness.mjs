@@ -90,7 +90,9 @@ export function bootPhone(broker, label, opts = {}) {
   connectLive,leaveLive,onWire,stateEnvelope,PROTO_V,TOPIC_ROOT,myStagePointer,hasNewMatch,
   DECKS,PRACTICES,THEMES,STARTER,goodChips,moreChips,decksOpen,
   practicesOpen,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal,
-  Monetize,supportCard,tabPartner};`);
+  Monetize,supportCard,tabPartner,
+  TALK,TRY,TRY_FROZEN,TRY_FP,tryMatches,theirTryYes,trySet,myTry,tabTogether,talkDraw,screenTalk,
+  screenHobby,screenTryList,screenSaved,loadTogether,saveTogether,applyEnvelope,TOGETHER_KEY};`);
 
   const api = w.__api;
   return {

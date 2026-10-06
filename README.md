@@ -3,6 +3,18 @@
 Slow Burn — a guided intimacy program, solo or with a partner. Single-file web
 app (`www/index.html`) wrapped natively with Capacitor.
 
+**1.1 adds the Together tab** (`tabTogether()` in `www/index.html`):
+- **Talk** — seven decks, 280 conversation cards (folded in from the retired
+  Closerly app), drawn without repeats, with saved cards. After Dark asks both
+  people first.
+- **Try something new** — thirty things two people can start together (adapted
+  from the retired Hobbloom app). Each person privately marks what they would
+  try; only what you **both** said yes to is shown, the same rule as the
+  reflection chips. Each has three small steps to tick off. No links, no shop.
+
+`TALK` and `TRY` are append-only (see the comments above them); `npm run
+test:together` holds the contracts.
+
 ## Privacy
 
 Everything a person enters stays on their device. The only network feature is
@@ -12,8 +24,9 @@ their public keys, authenticate it with the pair code (which never travels),
 and encrypt everything afterwards with AES-256-GCM. The relay sees ciphertext.
 
 What crosses, encrypted: the stage each person has confirmed they are ready
-for, and the indexes of the reflection chips they chose, so the app can show
-what you both welcome more of. What never crosses at all: names, pronouns,
+for, the indexes of the reflection chips they chose, and (from 1.1) the
+indexes of the things they said yes to on the Together tab, so the app can show
+what you both welcome more of — and what you would both try. What never crosses at all: names, pronouns,
 gender, orientation, relationship structure, session counts, and every written
 private note.
 

@@ -7,6 +7,11 @@ TO REVIEW THE WHOLE APP ON ONE DEVICE, NO SECOND PHONE AND NO ACCOUNT:
    - tap "Me and a partner", then on the next screen choose "Share this one device". A toggle appears at the top of the screen to switch between the two people, which exercises the dual-consent unlock and the mutual-match check-ins on a single device.
 3. "Just me" gives the full solo program — every stage has a solo form and nothing is locked off.
 
+NEW IN 1.1 — THE TOGETHER TAB (4th tab, between Program and Check-ins):
+- "Talk": seven decks of conversation cards. Tap a deck, then "Next card". Cards do not repeat until the deck is finished; "Save" keeps a card under "Saved cards". The After Dark deck is text-only, rated within this app's 17+, and asks both people to confirm before it shows any card.
+- "Try something new": thirty activities (stargazing, sourdough, hiking...). Each person privately taps "I'd try this" or "Not for me". On the one-device path above, pick a few as the first person, switch sides with the toggle at the top, pick as the second person: only the activities you BOTH said yes to appear under "You both said yes". Tap one for three small steps to tick off.
+Nothing in the Together tab is sold, linked out or gated. These two features were previously separate apps of ours, Closerly and Hobbloom. Neither was approved, and rather than resubmit them we folded them into Slow Burn.
+
 No login is required at any point. Nothing is collected about the user. The optional two-phone pairing feature uses an anonymous randomly generated pair code; the two phones perform an ephemeral ECDH key exchange and encrypt everything they exchange with AES-GCM, so the relay carries only ciphertext and retains nothing. The pair code itself is never transmitted.
 
 PAIRING AND THE CAMERA (not required to review the app): steps 2 and 3 above exercise everything on one device. If you do try pairing, the pair code can be typed or scanned. The QR contains ONLY the ten-character pair code — no URL is opened and no web page is involved — and the camera is used solely to decode it on-device; no image is recorded, stored or transmitted. Declining the camera permission hides the scan button and leaves the identical typed-code path.

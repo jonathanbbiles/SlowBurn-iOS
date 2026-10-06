@@ -45,6 +45,21 @@ export const SCENES = {
     S.partnerDebrief={1:{good:["Feeling unhurried","Eye contact","Warmth & closeness"],more:["More time","Softer touch"]}};
     canMatch=function(){return true;};render();`,
 
+  /* 1.1 — the Together tab, Try half: what you would BOTH try. Like the
+     checkins scene, the partner's picks are what a confirmed link would have
+     delivered, and the overlap is computed by the app's own tryMatches(). */
+  together: `setProfile();S.mode="live";S.screen="app";S.tab="together";S.together="try";
+    S.pairSecure=true;S.pairSafety="X4A-RTW";S.partnerOnline=true;S.partnerStage=1;S.code="RTT77MH4JN";
+    S.tg.picks.A.yes=["sourdough","stargazing","hiking","dance","coffee"];
+    S.tg.picks.A.no=["watercolor","acrylic-pour","sketching","air-dry-clay","candles","terrarium","houseplants","cake-decorating"];
+    S.partnerTry=["stargazing","sourdough","kayaking","dance"];S.partnerTryKnown=true;
+    theirTryYes=function(){return S.partnerTry;};render();`,
+
+  /* 1.1 — the Together tab, Talk half: one card from Deep Talk. */
+  talk: `setProfile();S.mode="live";S.screen="talk";S.talkDeck="deeptalk";
+    S.pairSecure=true;S.pairSafety="X4A-RTW";S.partnerOnline=true;S.code="RTT77MH4JN";
+    S.tg.talk.seen={deeptalk:[0,1,2,3,4,5]};S.talkCard=5;render();`,
+
   /* The invite screen — the one that was broken. It now shows the pair code as
      the hero and a QR that carries only that code. No origin/URL line at all. */
   invite: `setProfile();S.mode="live";S.pairSide="h";S.code="RTT77MH4JN";

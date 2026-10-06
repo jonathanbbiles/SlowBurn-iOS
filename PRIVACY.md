@@ -5,12 +5,16 @@ disagree, the code and this file are right and the copy is a bug.
 
 ## Stored on the device, never transmitted
 
-All of it lives in `localStorage` under `sb_profile_v2` plus in-memory state.
+All of it lives in `localStorage` under `sb_profile_v2` (and, from 1.1,
+`sb_together_v1`) plus in-memory state.
 
 - Name and pronouns (yours and whatever you entered about your partner)
 - Gender, orientation, relationship structure, body-area preferences
 - Session counts per stage
 - **The free-text private note attached to each reflection**
+- Together tab (1.1): saved conversation cards, which cards a deck has shown,
+  the After Dark agreement, the things you **passed on** in Try something new,
+  the steps you ticked off and what you have tried
 
 None of it is published, in any form, encrypted or otherwise. Each phone words
 its own copy of the app from its own owner's setup, so none of it needs to
@@ -75,6 +79,8 @@ plaintext of the link — which only the two phones ever see:
 | `u` | `0`–`6`: highest stage this phone's owner has confirmed they are ready for | yes |
 | `cf` | 8-hex fingerprint of the chip lists, so two app versions can't mismap chips | yes |
 | `r` | per stage, the **indexes** (never the text) of the reflection chips chosen: `{g:[…], m:[…]}` | yes |
+| `t` | 1.1: the **indexes** (never the names) of the things this person said **yes** to in Try something new. What they passed on is never sent | yes |
+| `tf` | 1.1: 8-hex fingerprint of the Try list, so two app versions can't mismap picks; a 1.0 phone sends neither field and is never compared | yes |
 
 There is no name, no pronoun, no gender, no orientation, no structure, no
 session count and **no note field** in that object — `stateEnvelope()` does not

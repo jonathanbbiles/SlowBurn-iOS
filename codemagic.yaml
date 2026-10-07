@@ -24,6 +24,13 @@ workflows:
           source: true
       # A newer push supersedes an in-flight build of the same branch.
       cancel_previous_builds: true
+    # Committing release.json is the ship gesture, not a code change: it starts only
+    # the `release` workflow below. (A changeset filter is a hint, not a guard — a
+    # stray build here is a harmless duplicate upload.)
+    when:
+      changeset:
+        excludes:
+          - 'release.json'
     integrations:
       app_store_connect: ChordLoopAPIKey   # existing API key in your Codemagic team
     environment:
@@ -36,6 +43,8 @@ workflows:
         BUNDLE_ID: "com.jonathanbiles.slowburn"
         # Apple's numeric App ID. An identifier, not a secret.
         ASC_APP_ID: "6787719986"
+        # Must equal the ASC version string exactly, and release.json's "version".
+        MARKETING_VERSION: "1.1"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
       node: 22
@@ -151,7 +160,9 @@ workflows:
       - name: Set marketing version (1.1)
         script: |
           PLIST=ios/App/App/Info.plist
-          plutil -replace CFBundleShortVersionString -string "1.1" "$PLIST"
+          plutil -replace CFBundleShortVersionString -string "$MARKETING_VERSION" "$PLIST"
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")" = "1.1" ] \
+            || { echo "FAILED: version string is not 1.1"; exit 1; }
           echo "CFBundleShortVersionString = $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
       - name: Set build number + export-compliance flag
         script: |
@@ -213,6 +224,12 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+      email:
+        recipients:
+          - jonathanbbiles@gmail.com
+        notify:
+          success: true
+          failure: true
 
         # submit_to_app_store is deliberately NOT used here. It would submit on
         # EVERY green build, and it cannot supply screenshots or release notes.
@@ -379,3 +396,64 @@ workflows:
             --build      "$RELEASE_BUILD" \
             --product-id "$IAP_PRODUCT_ID" \
             $ARGS
+
+  # ---------------------------------------------------------------------------
+  # RELEASE — committing release.json to main IS the "ship" (the app-factory
+  # release lane, scripts/release.py; its contract is the docstring at its top).
+  # It attaches the device-tested build, writes What's New, the listing copy and
+  # review notes, replaces the screenshots from store/screenshots, adds any IAP
+  # that still needs review, reads the submission's item count back, and only
+  # then submits. The gate (scripts/verify-release.js) runs it against a fake
+  # App Store Connect first.
+  # ---------------------------------------------------------------------------
+  release:
+    name: Slow Burn -> submit for App Store review
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+      cancel_previous_builds: false
+    when:
+      changeset:
+        includes:
+          - 'release.json'
+    integrations:
+      app_store_connect: ChordLoopAPIKey
+    environment:
+      vars:
+        BUNDLE_ID: "com.jonathanbiles.slowburn"
+        ASC_APP_ID: "6787719986"
+      node: 22
+    scripts:
+      - name: Release gate (the lane against a fake App Store Connect)
+        script: node scripts/verify-release.js
+      - name: Submit the tested build for review, then read the submission back
+        script: |
+          set -e
+          # The changeset filter is not a guarantee, so the lane checks for itself and
+          # acts only when THIS push changed release.json; a deliberate re-run sets
+          # FORCE_RELEASE=1.
+          if [ "${FORCE_RELEASE:-0}" != 1 ]; then
+            git rev-parse -q --verify HEAD~1 >/dev/null || git fetch -q --deepen=1 origin || true
+            CHANGED="$(git diff --name-only HEAD~1 HEAD -- release.json)" \
+              || { echo "ERROR: cannot diff against HEAD~1; re-run with FORCE_RELEASE=1"; exit 1; }
+            [ -n "$CHANGED" ] || { echo "release.json did not change in this push: nothing to release."; exit 0; }
+          fi
+          # codemagic-cli-tools' interpreter carries PyJWT; release.py falls back to openssl.
+          CLI_PY="$(head -1 "$(command -v app-store-connect)" | sed 's|^#!||' | awk '{print $1}')"
+          [ -x "$CLI_PY" ] || CLI_PY=python3
+          "$CLI_PY" scripts/release.py "${RELEASE_FILE:-release.json}"
+    artifacts:
+      - release-status.json
+    publishing:
+      email:
+        recipients:
+          - jonathanbbiles@gmail.com
+        notify:
+          success: true
+          failure: true

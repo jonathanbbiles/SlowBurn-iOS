@@ -73,6 +73,7 @@ HOW IT WORKS
 TOGETHER
 • Talk — seven decks of conversation cards for two, from easy warm-ups to deeper questions. Every card is optional, and you can save the ones you love.
 • Try something new — each of you privately marks what you'd like to try, from stargazing to sourdough. Slow Burn shows only what you BOTH said yes to, with three small steps to get started.
+• Journal — a fresh writing prompt each night, your reflections in one place, and one tap into Permission, our private journal app.
 
 FOR EVERY KIND OF PERSON
 Slow Burn adapts its language to you — your pronouns, your words for your partner, your relationship structure. It assumes no gender, no orientation, and no particular shape of relationship.

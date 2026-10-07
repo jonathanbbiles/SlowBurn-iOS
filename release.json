@@ -1,0 +1,10 @@
+{
+  "version": "1.1",
+  "build": "202610071505",
+  "submit": true,
+  "iaps": ["com.jonathanbiles.slowburn.tip.small"],
+  "screenshots": true,
+  "copy": "store/listing-1.1.json",
+  "reviewNotes": "store/review-notes-1.1.txt",
+  "releaseType": "AFTER_APPROVAL"
+}

@@ -48,12 +48,27 @@ export const SCENES = {
   /* 1.1 — the Together tab, Try half: what you would BOTH try. Like the
      checkins scene, the partner's picks are what a confirmed link would have
      delivered, and the overlap is computed by the app's own tryMatches(). */
-  together: `setProfile();S.mode="live";S.screen="app";S.tab="together";S.together="try";
+  together: `setProfile();S.mode="live";S.screen="app";S.tab="try";
     S.pairSecure=true;S.pairSafety="X4A-RTW";S.partnerOnline=true;S.partnerStage=1;S.code="RTT77MH4JN";
     S.tg.picks.A.yes=["sourdough","stargazing","hiking","dance","coffee"];
     S.tg.picks.A.no=["watercolor","acrylic-pour","sketching","air-dry-clay","candles","terrarium","houseplants","cake-decorating"];
     S.partnerTry=["stargazing","sourdough","kayaking","dance"];S.partnerTryKnown=true;
     theirTryYes=function(){return S.partnerTry;};render();`,
+
+  /* 1.1 — Home: a live card, the three big doors, the matches strip and the
+     program at a glance. Deals a fixed Warm Up card so the capture is stable. */
+  home: `setProfile();S.mode="live";S.screen="app";S.tab="today";
+    S.pairSecure=true;S.pairSafety="X4A-RTW";S.partnerOnline=true;S.partnerStage=2;S.code="RTT77MH4JN";
+    S.data.A.ready={1:true,2:true};
+    S.tg.picks.A.yes=["sourdough","stargazing","hiking","dance"];S.partnerTry=["stargazing","sourdough","dance"];S.partnerTryKnown=true;
+    theirTryYes=function(){return S.partnerTry;};
+    S.homeDeck="warmup";S.homeCardI=1;render();`,
+
+  /* 1.1 — the match moment, exactly as the app draws it. */
+  match: `setProfile();S.mode="live";S.screen="app";S.tab="try";
+    S.pairSecure=true;S.pairSafety="X4A-RTW";S.partnerOnline=true;S.code="RTT77MH4JN";
+    S.tg.picks.A.yes=["stargazing"];S.partnerTry=["stargazing"];S.partnerTryKnown=true;
+    theirTryYes=function(){return S.partnerTry;};S.matchShow="stargazing";render();`,
 
   /* 1.1 — the Together tab, Talk half: one card from Deep Talk. */
   talk: `setProfile();S.mode="live";S.screen="talk";S.talkDeck="deeptalk";

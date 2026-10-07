@@ -3,7 +3,9 @@
 Slow Burn — a guided intimacy program, solo or with a partner. Single-file web
 app (`www/index.html`) wrapped natively with Capacitor.
 
-**1.1 adds the Together tab** (`tabTogether()` in `www/index.html`):
+**1.1 adds Talk and Try** (`tabTalk()` / `tabTry()` in `www/index.html`), as tabs 2 and 3,
+with a redesigned Home (`tabToday()`) that deals a live Talk card and links to both. Shared
+reflections live under Home and Program now; `S.tab="checkins"` still renders them.
 - **Talk** — seven decks, 280 conversation cards (folded in from the retired
   Closerly app), drawn without repeats, with saved cards. After Dark asks both
   people first.

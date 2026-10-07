@@ -1156,8 +1156,9 @@ function freshState(){
       areas:"inclusive"
     },
     code:"",pairPhase:"choose",pending:null,
-    /* On-device personalisation: chosen theme, and the opt-in keepsake journal. */
-    theme:"ember",journalOn:false,journal:[],
+    /* On-device personalisation: chosen theme. journal = entries a 1.0 phone
+       saved in the old keepsake journal, kept readable (see loadJournal). */
+    theme:"ember",journal:[],
     /* in-app pair-code scanner (camera stays on-device; see Scanner) */
     scanning:false,scanError:"",
     mq:null,connected:false,partnerOnline:false,
@@ -1469,33 +1470,20 @@ function loadTheme(){
   applyTheme(id);
 }
 
-/* ---- keepsake journal (opt-in, never leaves the device) ----
-   OFF by default on purpose — a PRIVACY call, not a commercial one. A
-   reflection is the most personal thing in the app, and writing one to disk
-   should be a decision somebody makes rather than one they discover later.
-   Turning it off deletes what is already there. */
+/* ---- journaling lives in Permission (1.1) ----
+   Slow Burn no longer keeps a journal of its own: the Journal button opens
+   Permission, the private journal app from the same creators (see
+   openPermission). 1.0 had an opt-in keepsake journal; a phone that switched
+   it on keeps what it saved — readable and deletable from Settings, never
+   added to and never sent. */
 const JOURNAL_KEY="sb_journal_v1", JOURNAL_ON_KEY="sb_journal_on_v1";
 function loadJournal(){
-  try{ S.journalOn=localStorage.getItem(JOURNAL_ON_KEY)==="1"; }catch(e){ S.journalOn=false; }
   try{ S.journal=JSON.parse(localStorage.getItem(JOURNAL_KEY)||"[]")||[]; }catch(e){ S.journal=[]; }
   if(!Array.isArray(S.journal)) S.journal=[];
 }
-function saveJournal(){
-  try{ localStorage.setItem(JOURNAL_KEY,JSON.stringify(S.journal.slice(-300))); }catch(e){}
-}
-function journalAdd(stage,good,more,note){
-  if(!S.journalOn) return;
-  S.journal.push({ts:Date.now(),stage:stage,good:good.slice(),more:more.slice(),note:note||""});
-  saveJournal();
-}
 function journalClear(){
   S.journal=[];
-  try{ localStorage.removeItem(JOURNAL_KEY); }catch(e){}
-}
-function setJournalOn(on){
-  S.journalOn=!!on;
-  try{ localStorage.setItem(JOURNAL_ON_KEY,S.journalOn?"1":"0"); }catch(e){}
-  if(!S.journalOn) journalClear();      // off means gone, not hidden
+  try{ localStorage.removeItem(JOURNAL_KEY); localStorage.removeItem(JOURNAL_ON_KEY); }catch(e){}
 }
 function journalDate(ts){
   try{ return new Date(ts).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }
@@ -2135,6 +2123,27 @@ function openSite(url){
   catch(e){ try{ window.open(url,"_blank","noopener"); }catch(e2){ location.href=url; } }
 }
 
+/* PERMISSION — the creators' private journal app (App Store id 6789405787).
+   The Journal button opens it if it is installed (its URL scheme, via
+   @capacitor/app-launcher: openUrl reports completed:false when no app
+   answers) and otherwise its App Store page, as a campaign link so App
+   Analytics shows the installs Slow Burn sends. A Permission without the
+   scheme (1.7.0 and earlier) also lands on that page, which says "Open". */
+const PERMISSION_URL="permissionjournal://";
+const PERMISSION_STORE="https://apps.apple.com/app/apple-store/id6789405787?pt=129125244&ct=slowburn-journal&mt=8";
+function openPermission(){
+  const L=capPlugin("AppLauncher");
+  if(capNative()&&L&&L.openUrl){
+    try{
+      Promise.resolve(L.openUrl({url:PERMISSION_URL}))
+        .then(function(r){ if(!(r&&r.completed)) openSite(PERMISSION_STORE); })
+        .catch(function(){ openSite(PERMISSION_STORE); });
+      return;
+    }catch(e){}
+  }
+  openSite(PERMISSION_STORE);
+}
+
 /* ============================================================
    SUPPORT / TIP JAR — one real StoreKit CONSUMABLE via
    cordova-plugin-purchase (CdvPurchase v13), the same
@@ -2561,7 +2570,7 @@ function screenProfile(){
       <p class="tiny" style="line-height:1.6">Pronouns and the name you chose rewrite the app’s wording. Gender and orientation are recorded for you alone — no stage, prompt, or boundary is gated on them, and no combination is treated as the norm. Anything left blank stays neutral.</p>
     </div>
 
-    <button class="nudge-card mt14" data-action="open-settings"><span class="nc-e">⚙︎</span><span class="nc-b"><span class="nc-t">Appearance, journal &amp; more</span><span class="nc-s">Light or dark, colour, motion — in Settings.</span></span></button>
+    <button class="nudge-card mt14" data-action="open-settings"><span class="nc-e">⚙︎</span><span class="nc-b"><span class="nc-t">Appearance &amp; more</span><span class="nc-s">Light or dark, colour, motion — in Settings.</span></span></button>
 
     <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Start over</div>
       <p class="tiny" style="line-height:1.6">Clears this setup and your progress on this device — useful if you want to begin a separate run${isMultiPartner()?" with another partner":""}.</p>
@@ -2711,6 +2720,11 @@ function tabProgram(){
         <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div></div>
     </div></div>`;
 }
+/* Check-ins end with the way to write more than chips: Permission. */
+function permissionNudge(){
+  return `<button class="nudge-card mt18" data-action="open-permission"><span class="nc-e">✍️</span>
+    <span class="nc-b"><span class="nc-t">Want to write about it? ↗</span><span class="nc-s">Journal privately in Permission — opens the app, or the App Store if you don’t have it.</span></span></button>`;
+}
 function tabCheckins(){
   /* Your own reflections over time — the view whenever there is nothing to
      match against: solo (no partner), or live pairing before the encrypted
@@ -2735,6 +2749,7 @@ function tabCheckins(){
       ${own||`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
         <p class="lead" style="font-size:14px">No reflections yet.</p>
         <p class="tiny mt6">Run a session and reflect — your pattern over time shows up here.</p></div>`}
+      ${permissionNudge()}
     </div></div>`;
   }
   let blocks="";
@@ -2777,6 +2792,7 @@ function tabCheckins(){
     ${empty?`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
       <p class="lead" style="font-size:14px">No shared reflections yet.</p>
       <p class="tiny mt6">Run a session and reflect. ${live?TE("When {partner} reflects too, your overlap appears here."):TE("Then switch to {partner} and reflect — the overlap appears here.")}</p></div>`:(blocks+pending)}
+    ${permissionNudge()}
   </div></div>`;
 }
 function tabPartner(){
@@ -2961,20 +2977,18 @@ function deckChipsHtml(grp,sel){
 
 function journalCard(){
   const n=S.journal.length;
-  return `<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Keepsake journal</div>
-    <p class="tiny" style="line-height:1.6">Keeps every reflection you save on this phone, with the date, so you can look back at how things changed. It never leaves this device and is never part of pairing.</p>
-    <div class="check-row" data-action="toggle-journal"><div class="cbox ${S.journalOn?'on':''}">${I.check}</div>
-      <div class="ctext">Keep a journal on this phone${S.journalOn?"":" — off right now"}</div></div>
-    ${S.journalOn?`<button class="btn btn-soft" data-action="open-journal" style="font-size:13.5px">Read my journal${n?" ("+n+")":""}</button>`:""}
-    <p class="tiny" style="margin-top:8px;color:var(--muted-2);line-height:1.5">Switching it off deletes everything already saved. There is no copy anywhere else.</p></div>`;
+  return `<button class="nudge-card perm-card mt10" data-action="open-permission"><span class="nc-e">✍️</span>
+      <span class="nc-b"><span class="nc-t">Journal in Permission ↗</span>
+      <span class="nc-s">Our private journal app — a prompt a day, passcode and Face ID, nothing in the cloud. Opens Permission, or the App Store if you don’t have it yet.</span></span></button>
+    ${n?`<button class="btn btn-soft mt10" data-action="open-journal" style="font-size:13.5px">Your saved Slow Burn journal (${n})</button>`:""}`;
 }
 function screenJournal(){
   const items=S.journal.slice().reverse();
   return `<div class="view"><div class="pad">
-    <button class="back" data-action="open-profile">‹ Back</button>
+    <button class="back" data-action="open-settings">‹ Settings</button>
     <div class="eyebrow mt10">On this phone only</div>
-    <h2 class="display" style="font-size:25px;margin-top:8px">Your keepsake journal</h2>
-    <p class="lead mt6" style="font-size:13.5px">${items.length?"Newest first. Nothing here has ever left this device.":"Nothing saved yet — your next reflection will appear here."}</p>
+    <h2 class="display" style="font-size:25px;margin-top:8px">Your saved journal</h2>
+    <p class="lead mt6" style="font-size:13.5px">${items.length?"What you saved in Slow Burn 1.0, newest first. Nothing here has ever left this device. New journaling happens in Permission.":"Nothing saved here. Journaling now lives in Permission."}</p>
     ${items.map(e=>`<div class="card mt14">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div class="st-title" style="font-size:15px">Stage ${e.stage} · ${esc(stTitle(STAGES[e.stage-1])||"")}</div>
@@ -3444,7 +3458,7 @@ function screenHobby(id){
 
 /* ================= SETTINGS =================
    One place for the normal things: who you both are (and so how every card
-   and prompt speaks), Light/Dark, colour, motion, the journal, data, about.
+   and prompt speaks), Light/Dark, colour, motion, the journal (Permission), data, about.
    Everything here is stored on this phone and nothing here is ever sent. */
 function seg(group,cur,opts){
   return `<div class="seg wide" role="radiogroup">${opts.map(o=>`<button data-action="pref" data-k="${group}" data-v="${o[0]}" role="radio" aria-checked="${cur===o[0]}" class="${cur===o[0]?"on":""}">${o[1]}</button>`).join("")}</div>`;
@@ -3482,9 +3496,11 @@ function screenSettings(){
       ${toggleRow("calm",pf.calm,"Calm motion","No confetti, no card animations.")}
     </div>
 
-    <div class="set-h">Privacy &amp; data</div>
+    <div class="set-h">Journal</div>
     ${journalCard()}
-    <div class="set-card mt10">
+
+    <div class="set-h">Privacy &amp; data</div>
+    <div class="set-card">
       <p class="set-note" style="margin-top:0">${solo||S.mode!=="live"
         ?"Nothing you enter leaves this phone. There is no account and no server."
         :"Paired phones exchange only your stage, your reflection chips and your Try “yes” picks — end-to-end encrypted. Names, pronouns, notes and settings never leave this phone."}</p>
@@ -3728,7 +3744,7 @@ document.addEventListener("click",(e)=>{
   if(a==="edit-person"){ S.editReturn=true; S.setupIntent=isSolo()?"solo":"two"; S.setupStep=(el.dataset.role==="B")?"partner":"you"; S.screen="setup"; render(); return; }
   if(a==="edit-structure"){ S.editReturn=true; S.setupIntent=isSolo()?"solo":"two"; S.setupStep="structure"; S.screen="setup"; render(); return; }
   if(a==="reset-all"){
-    /* Deliberately does NOT touch the Pro entitlement or the journal switch —
+    /* Deliberately does NOT touch the Pro entitlement or the saved 1.0 journal —
        a purchase is not app state, and silently revoking it would be theft. */
     leaveLive(); clearProfile(); S=freshState(); loadPrefs(); loadTheme(); loadJournal();
     render(); toast("Reset. Slow Burn starts fresh."); return;
@@ -3739,13 +3755,8 @@ document.addEventListener("click",(e)=>{
     if(t) applyTheme(t.id);
     render(); return;
   }
-  if(a==="toggle-journal"){
-    const turningOff=S.journalOn;
-    setJournalOn(!S.journalOn);
-    render(); toast(turningOff?"Journal off — everything saved has been deleted.":"Journal on. It stays on this phone.");
-    return;
-  }
-  if(a==="open-journal"){ if(S.journalOn){ S.screen="journal"; render(); } return; }
+  if(a==="open-permission"){ openPermission(); return; }
+  if(a==="open-journal"){ if(S.journal.length){ S.screen="journal"; render(); } return; }
   if(a==="clear-journal"){ journalClear(); render(); toast("Journal deleted from this phone."); return; }
   if(a==="open-practices"){ S.screen="practices"; render(); return; }
   if(a==="open-practice"){ S.practiceOpen=el.dataset.id; S.screen="practice"; render(); return; }
@@ -3827,8 +3838,6 @@ document.addEventListener("click",(e)=>{
   if(a==="submit-debrief"){
     const id=+el.dataset.id;const note=(document.getElementById("privnote")||{}).value||"";
     me().debrief[id]={good:[...S.form.good],more:[...S.form.more],note};
-    /* Pro + opt-in only. Writes to this phone and nowhere else. */
-    journalAdd(id,[...S.form.good],[...S.form.more],note);
     me().sessions[id]=(me().sessions[id]||0)+1;
     S.session=null;S.screen="app";S.stageOpen=id;
     /* Live: the chip indexes go out inside the encrypted envelope. The note

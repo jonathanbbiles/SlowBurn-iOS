@@ -120,7 +120,7 @@ Earlier builds encoded `location.origin + "?pair=<code>"` in that QR, which
 inside the native app is `capacitor://localhost/?pair=…`. Nothing could open
 it, so scanning did nothing at all; it was a broken affordance, not a leak.
 
-## Purchases, and the keepsake journal
+## Purchases, and journaling
 
 Slow Burn is a **paid app**: one price on the App Store, and every stage,
 deck, practice and theme is present for everyone who installs it. There are
@@ -142,14 +142,17 @@ receives — an aggregate sales figure in App Store Connect, not attached to a
 person. So "Data Not Collected" is unchanged by the tip jar, and the tipped
 flag stays on the device that set it.
 
-**The keepsake journal is the one thing that writes reflections to disk**, and
-it is **off until you switch it on**. With it on, each saved reflection,
-including the free-text note, is appended to `sb_journal_v1` in the app's own
-storage on that phone. It is never transmitted, never part of pairing, and
-never leaves the device. Switching the journal off **deletes** what is stored;
-so does deleting the app. It is off by default because a reflection is the
-most personal thing in Slow Burn, and putting one on disk should be a decision
-somebody makes rather than one they discover later.
+**Slow Burn keeps no journal (1.1).** The Journal button in Settings and on
+Check-ins opens **Permission**, a separate private journal app from the same
+creators, or its App Store page when it is not installed. Opening it passes
+nothing: the app is launched by its bare URL scheme (`permissionjournal://`,
+no path, no query), and the App Store link carries only Apple's campaign tag
+(`ct=slowburn-journal`), which says which app sent the visit, never who.
+What you write in Permission is governed by Permission's own policy.
+
+Slow Burn 1.0 had an opt-in keepsake journal (`sb_journal_v1`). A phone that
+switched it on keeps what it saved: readable under Settings → Journal, deleted
+by its Delete button or by deleting the app, never added to, never transmitted.
 
 ## Threat model
 

@@ -121,7 +121,7 @@ No login is required at any point. Nothing is collected about the user. The opti
 
 PAIRING AND THE CAMERA (not required to review the app): steps 2 and 3 above exercise everything on one device. If you do try pairing, the pair code can be typed or scanned. The QR contains ONLY the ten-character pair code — no URL is opened and no web page is involved — and the camera is used solely to decode it on-device; no image is recorded, stored or transmitted. Declining the camera permission hides the scan button and leaves the identical typed-code path.
 
-BUSINESS MODEL: a one-time PAID app plus ONE optional in-app purchase, submitted with this version: "Small Tip" (com.jonathanbiles.slowburn.tip.small), a consumable tip jar. It UNLOCKS NOTHING. There are no subscriptions and no premium or locked content — every stage, deck, practice, theme, the journal and pairing are there for everyone on first launch, tip or no tip.
+BUSINESS MODEL: a one-time PAID app plus ONE optional in-app purchase, submitted with this version: "Small Tip" (com.jonathanbiles.slowburn.tip.small), a consumable tip jar. It UNLOCKS NOTHING. There are no subscriptions and no premium or locked content — every stage, deck, practice, theme and pairing are there for everyone on first launch, tip or no tip.
 
 WHERE TO FIND IT: last tab ("Us"/"You") -> scroll to the bottom -> "Support Slow Burn" -> "Leave a tip - $1.99". The button appears only once StoreKit returns the product; otherwise the card shows a plain "tell someone about it" note rather than a button that would do nothing. A completed tip only adds a thank-you line to that same card: it sets one on-device flag, that flag is read in exactly one place in the app, and no stage, deck, practice, theme or setting consults it.
 

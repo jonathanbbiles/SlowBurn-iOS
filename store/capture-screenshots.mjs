@@ -66,7 +66,7 @@ for (const [dev, d] of Object.entries(DEVICES)) {
     const ready = await page.evaluate(() => ({ jsQR: typeof window.jsQR === "function", qr: typeof window.QRCode === "function" }));
     if (!ready.jsQR) problems.push(`${dev}/${scene}: jsQR did not load — the scan copy would be wrong`);
     if (!ready.qr) problems.push(`${dev}/${scene}: QRCode did not load — the invite QR would be missing`);
-    const out = path.join(OUT, `${dev}_0${i + 1}_${NAME[scene]}.png`);
+    const out = path.join(OUT, `${dev}_${String(i + 1).padStart(2, "0")}_${NAME[scene]}.png`);
     await page.screenshot({ path: out });
     await page.close();
   }

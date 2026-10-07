@@ -282,6 +282,41 @@
   @keyframes fall{to{top:105%;transform:rotate(720deg) translateX(40px)}}
   @media (prefers-reduced-motion: reduce){.deal-in,.match-card,.confetti i{animation:none}.confetti{display:none}}
 
+  /* ---- settings ---- */
+  .gear{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .gear svg{width:21px;height:21px}
+  .set-h{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--primary);font-weight:700;margin:24px 2px 8px}
+  .set-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px 16px}
+  .set-row{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 0;min-height:52px;text-align:left;cursor:pointer;font-family:var(--sans);color:var(--ink)}
+  .set-row:last-child{border-bottom:0}
+  .sr-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.sr-t{font-weight:700;font-size:14.5px;color:var(--ink)}
+  .sr-s{font-size:12px;color:var(--muted)}.sr-go{color:var(--muted-2);font-size:20px}
+  .switch{flex:none;width:50px;height:30px;border-radius:99px;background:var(--line-2);position:relative;transition:.2s}
+  .switch i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.2s}
+  .switch.on{background:linear-gradient(90deg,var(--primary),var(--plum))}.switch.on i{left:23px}
+  .set-prev{margin-top:10px;border-radius:14px;padding:10px 12px;background:var(--surface-2)}
+  .set-prev p{margin:4px 0 0;font-family:var(--serif);font-size:16px;line-height:1.35;color:var(--ink)}
+  .set-note{font-size:12px;color:var(--muted);line-height:1.55;margin:10px 0 0}
+  .seg.wide{display:flex;width:100%}.seg.wide button{flex:1;justify-content:center;min-height:42px}
+  .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
+  .swatch{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface-2);cursor:pointer;font-family:var(--sans);color:var(--ink)}
+  .swatch.on{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary) inset}
+  .sw-dot{width:30px;height:30px;border-radius:50%}.sw-l{font-size:11.5px;font-weight:600}
+  /* ---- dark mode: the spots that were hard-coded light ---- */
+  html.dark body{background:var(--app-bg)}
+  html.dark .tabs{background:rgba(23,16,26,.92)}
+  html.dark .notif{border-color:var(--app-bg)}
+  html.dark .toast{background:#F6EAF1;color:#2A0A22}
+  html.dark .gate{background:linear-gradient(160deg,#2A1D2B,#231925)}
+  html.dark .livebar{background:#1E3A2C;border-color:#2C5240;color:#B9E3C8}
+  html.dark .livebar.off{background:#3A2620;border-color:#553A30;color:#E7BFA8}
+  html.dark .badge.cur{background:#4A2236;color:#FFB3DA}
+  html.dark .badge.done{color:#B9E3C8}
+  html.dark .chip.match{border-color:#2C5240;color:#B9E3C8}
+  html.dark .chip.readonly[style]{background:#3A2030 !important;border-color:#5A2E48 !important;color:#FFB3DA !important}
+  html.dark .yn.no{background:var(--surface)}
+  html.calm .deal-in,html.calm .match-card,html.calm .match-ov{animation:none}
+
   /* Large screens (iPad, landscape iPhone, desktop). The app still fills the window; content is
      constrained to a comfortable reading column centred on the app's OWN background, while the
      chrome (top bar, tab bar) stays full-bleed. Because the column sits on the same background,
@@ -651,11 +686,11 @@ const PRACTICES=[
    ============================================================ */
 const THEMES=[
  {id:"ember",label:"Ember",swatch:["#FF42B3","#F94F5C","#FFF8F1"],vars:{}},
- {id:"midnight",label:"Midnight",swatch:["#8B7BE8","#5FB3C9","#141026"],
-  vars:{"--app-bg":"#171128","--surface":"#211936","--surface-2":"#2A2044","--primary":"#9B8BF0",
-   "--primary-d":"#8272E4","--plum":"#5FB3C9","--plum-d":"#4A9DB3","--rose":"#B3A6F5",
-   "--ink":"#EFE9FF","--muted":"#A99CC9","--muted-2":"#7F739E","--line":"#2F2450","--line-2":"#3C2F63",
-   "--sage":"#7FC9A0","--sage-bg":"#1E3A2C","--gold":"#E8C46A","--page":"#0E0A1C","--page-2":"#171128"}},
+ /* "midnight" keeps its id so a saved choice still resolves; since 1.1 it is
+    the violet colour, and darkness is the separate Light/Dark setting. */
+ {id:"midnight",label:"Violet",swatch:["#8B7BE8","#5FB3C9","#F7F4FF"],
+  vars:{"--primary":"#8B6BF0","--primary-d":"#7357E0","--plum":"#3FA3BD","--plum-d":"#2F8BA3","--rose":"#B3A6F5",
+   "--app-bg":"#F8F6FF","--surface-2":"#F1EDFF","--line":"#E6E0FA","--line-2":"#D8CFF6"}},
  {id:"sage",label:"Sage",swatch:["#6E8B6E","#B08968","#F5F3EC"],
   vars:{"--app-bg":"#F5F3EC","--surface":"#FFFFFF","--surface-2":"#EDF1E9","--primary":"#6E8B6E",
    "--primary-d":"#5A745A","--plum":"#B08968","--plum-d":"#957256","--rose":"#A8BFA3",
@@ -1142,6 +1177,7 @@ function freshState(){
        partner* fields are what a paired phone sent: its YES picks, as ids. */
     together:"talk",talkDeck:null,talkCard:null,hobbyOpen:null,
     homeDeck:null,homeCardI:null,matchShow:null,
+    prefs:defaultPrefs(),
     tg:blankTogether(),partnerTry:[],partnerTryKnown:undefined,partnerTryMismatch:false
   };
 }
@@ -1374,14 +1410,58 @@ function clearProfile(){ try{ localStorage.removeItem(PROFILE_KEY); }catch(e){} 
 /* ---- theme (cosmetic, on-device) ---- */
 const THEME_KEY="sb_theme_v1";
 function themeById(id){ return THEMES.find(t=>t.id===id)||THEMES[0]; }
+/* ---- settings (on-device): light/dark/auto, card names, calm motion ---- */
+const PREFS_KEY="sb_prefs_v1";
+const DARK_VARS={"--app-bg":"#17101A","--surface":"#231925","--surface-2":"#2E2130","--ink":"#F6EAF1",
+  "--muted":"#BBA3B4","--muted-2":"#8C7488","--line":"#36263A","--line-2":"#48334B","--sage-bg":"#1E3A2C",
+  "--page":"#0E0A10","--page-2":"#17101A"};
+function defaultPrefs(){ return {mode:"light",cardNames:true,calm:false}; }
+function loadPrefs(){
+  let o=null; try{ o=JSON.parse(localStorage.getItem(PREFS_KEY)||"null"); }catch(e){ o=null; }
+  const p=defaultPrefs();
+  if(o&&typeof o==="object"){
+    if(["light","dark","auto"].indexOf(o.mode)>=0) p.mode=o.mode;
+    p.cardNames=o.cardNames!==false; p.calm=o.calm===true;
+  } else {
+    /* First run on 1.1: a phone that had chosen the old dark "Midnight" theme
+       stays dark. */
+    let t=""; try{ t=localStorage.getItem(THEME_KEY)||""; }catch(e){}
+    if(t==="midnight") p.mode="dark";
+  }
+  S.prefs=p;
+}
+function savePrefs(){ try{ localStorage.setItem(PREFS_KEY,JSON.stringify(S.prefs)); }catch(e){} }
+function isDark(){
+  const m=(S.prefs||{}).mode;
+  if(m==="dark") return true;
+  if(m==="auto"){ try{ return !!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches); }catch(e){} }
+  return false;
+}
 function applyTheme(id){
   const use=themeById(id);
   S.theme=use.id;
   const root=document.documentElement;
   /* Reset first so switching themes never leaves a stale variable behind. */
   THEMES.forEach(x=>Object.keys(x.vars).forEach(k=>root.style.removeProperty(k)));
+  Object.keys(DARK_VARS).forEach(k=>root.style.removeProperty(k));
   Object.keys(use.vars).forEach(k=>root.style.setProperty(k,use.vars[k]));
+  const dark=isDark();
+  if(dark) Object.keys(DARK_VARS).forEach(k=>root.style.setProperty(k,DARK_VARS[k]));
+  root.classList.toggle("dark",dark);
+  root.classList.toggle("calm",!!(S.prefs&&S.prefs.calm));
+  root.style.colorScheme=dark?"dark":"light";
   try{ localStorage.setItem(THEME_KEY,use.id); }catch(e){}
+}
+/* Talk cards are written to "your partner". With names on, they speak to the
+   actual person: "Tell Honeywood one small thing…". Wording only — nothing
+   about which cards exist or who sees them changes. */
+function personalizeCard(text){
+  if(isSolo()||!(S.prefs&&S.prefs.cardNames)) return text;
+  const name=firstName(person(partnerRole()).name);
+  const term=partnerTerm();
+  return String(text)
+    .replace(/\b([Yy])our partner(’s|'s)?/g,(m,y,poss)=>name?(name+(poss||"")):((y==="Y"?"Your ":"your ")+term+(poss||"")))
+    .replace(/\b([Tt])he other person(’s|'s)?/g,(m,t,poss)=>name?(name+(poss||"")):m);
 }
 function loadTheme(){
   let id="ember";
@@ -2041,6 +2121,8 @@ function leaveLive(){
    ============================================================ */
 const LINK_JESSICA="https://www.jessicaleighbiles.com";
 const LINK_JONATHAN="https://jonathanscribbles.com";
+/* How the two creators are credited everywhere in the app: their show names. */
+const CREDIT_HER="Glitoris✨", CREDIT_HIM="Honeywood";
 function capNative(){ try{ return !!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()); }catch(e){ return false; } }
 function capPlugin(name){ try{ return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins[name])||null; }catch(e){ return null; } }
 function openSite(url){
@@ -2239,6 +2321,7 @@ const I={
  today:'<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  program:'<svg viewBox="0 0 24 24" fill="none"><path d="M6 4.5h9l3 3v12H6V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12h6M9 15.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  chat:'<svg viewBox="0 0 24 24" fill="none"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10l-4 3.5V15.5H6.5a2 2 0 0 1-2-2v-7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ gear:'<svg viewBox="0 0 24 24" fill="none"><path d="M10.3 3.2h3.4l.5 2.4c.6.2 1.2.5 1.7.9l2.3-.8 1.7 2.9-1.8 1.6c.1.6.1 1.2 0 1.8l1.8 1.6-1.7 2.9-2.3-.8c-.5.4-1.1.7-1.7.9l-.5 2.4h-3.4l-.5-2.4c-.6-.2-1.2-.5-1.7-.9l-2.3.8-1.7-2.9 1.8-1.6a5.6 5.6 0 0 1 0-1.8L4.1 8.6l1.7-2.9 2.3.8c.5-.4 1.1-.7 1.7-.9l.5-2.4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="11.9" r="2.6" stroke="currentColor" stroke-width="1.6"/></svg>',
  home:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5s5 4 5 9a5 5 0 0 1-10 0c0-1.6.7-3 1.5-3.9.3 1.4 1 2.2 2 2.6C9.8 8.6 12 6.4 12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
  cards:'<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="6.5" width="11" height="14" rx="2.4" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 4.2 17.8 3a2 2 0 0 1 2.2 1.7l1.3 10.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  sparkle:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18.5 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" fill="currentColor"/></svg>',
@@ -2268,9 +2351,9 @@ function screenWelcome(){
       <button class="btn" data-action="go" data-to="disclaimer">Begin</button>
       <div class="center mt14"><span class="tiny">Built on Sensate Focus · used by licensed therapists since 1970</span></div>
       <div class="center mt6" style="display:flex;align-items:center;justify-content:center;gap:2px;flex-wrap:wrap">
-        <a class="link" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:12px">Jessica Leigh Biles &#8599;</a>
+        <a class="link" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:12px">${CREDIT_HER} &#8599;</a>
         <span class="tiny" style="font-size:12px">&middot;</span>
-        <a class="link" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:12px">Jonathan Biles &#8599;</a>
+        <a class="link" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:12px">${CREDIT_HIM} &#8599;</a>
       </div>
       <div class="center" style="margin-top:2px"><span class="tiny" style="font-size:11px">Created together</span></div>
     </div></div>`;
@@ -2478,8 +2561,7 @@ function screenProfile(){
       <p class="tiny" style="line-height:1.6">Pronouns and the name you chose rewrite the app’s wording. Gender and orientation are recorded for you alone — no stage, prompt, or boundary is gated on them, and no combination is treated as the norm. Anything left blank stays neutral.</p>
     </div>
 
-    ${themePicker()}
-    ${journalCard()}
+    <button class="nudge-card mt14" data-action="open-settings"><span class="nc-e">⚙︎</span><span class="nc-b"><span class="nc-t">Appearance, journal &amp; more</span><span class="nc-s">Light or dark, colour, motion — in Settings.</span></span></button>
 
     <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Start over</div>
       <p class="tiny" style="line-height:1.6">Clears this setup and your progress on this device — useful if you want to begin a separate run${isMultiPartner()?" with another partner":""}.</p>
@@ -2577,7 +2659,8 @@ function appChrome(inner){
   return `
   <div class="apphead">
     <div><div class="greet">Welcome back</div><div class="who">${esc(cap1(meName()))}</div></div>
-    ${pill}
+    <div style="display:flex;gap:8px;align-items:center">${pill}
+      <button class="gear" data-action="open-settings" aria-label="Settings">${I.gear}</button></div>
   </div>
   ${inner}
   <div class="tabs">
@@ -2734,6 +2817,7 @@ function tabPartner(){
 
   return `<div class="view"><div class="pad-tab">
     ${header}
+    <button class="nudge-card mt14" data-action="open-settings"><span class="nc-e">⚙︎</span><span class="nc-b"><span class="nc-t">Settings</span><span class="nc-s">Names, gender &amp; pronouns, light or dark, colours.</span></span></button>
     ${summary}
     <div class="card card-tap mt14" data-action="open-profile">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
@@ -2755,11 +2839,11 @@ function tabPartner(){
     <div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px;margin-bottom:8px">For clinicians</div>
       <p class="tiny" style="line-height:1.6">A licensed therapist or pelvic-floor PT can prescribe Slow Burn between sessions and follow your pace.</p>
       <button class="btn btn-soft mt10" data-action="find-clinician" style="font-size:14px">Share with my clinician</button></div>
-    <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jessica Leigh Biles</div>
-      <p class="tiny" style="line-height:1.6">Slow Burn is created with Jessica Leigh Biles — SAR-certified intimacy coach, educator and podcast host.</p>
-      <a class="btn mt10" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:14px;text-decoration:none">Visit jessicaleighbiles.com &#8599;</a></div>
-    <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From Jonathan Biles</div>
-      <p class="tiny" style="line-height:1.6">The other half of Slow Burn — Jonathan writes and builds the apps behind the program. More of his work, and the best way to reach us, lives at jonathanscribbles.com.</p>
+    <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From ${CREDIT_HER}</div>
+      <p class="tiny" style="line-height:1.6">Slow Burn is created with ${CREDIT_HER} — SAR-certified intimacy coach, educator and podcast host.</p>
+      <a class="btn mt10" href="${LINK_JESSICA}" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:14px;text-decoration:none">Visit ${CREDIT_HER}&#8217;s site &#8599;</a></div>
+    <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From ${CREDIT_HIM}</div>
+      <p class="tiny" style="line-height:1.6">The other half of Slow Burn — ${CREDIT_HIM} writes and builds the apps behind the program. More of his work, and the best way to reach us, lives at jonathanscribbles.com.</p>
       <a class="btn btn-plum mt10" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:14px;text-decoration:none">Visit jonathanscribbles.com &#8599;</a></div>
     ${supportCard()}
     <div class="foot-legal">Wellness &amp; education only · not medical advice · consult a licensed clinician for pain or medical concerns.</div>
@@ -2788,8 +2872,8 @@ function supportCard(){
     <div style="font-weight:700;font-size:14px;margin-bottom:6px">Support Slow Burn</div>
     <p class="tiny" style="line-height:1.6">No ads, nothing gated, no upsells — the whole program is yours. If it&#8217;s helped ${esc(T("{us}"))}, the kindest support is telling someone else about it, or saying hello from either of our sites.</p>
     <div class="row mt10" style="gap:8px">
-      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:13px">Jessica&#8217;s site</button>
-      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:13px">Jonathan&#8217;s site</button>
+      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:13px">${CREDIT_HER}&#8217;s site</button>
+      <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:13px">${CREDIT_HIM}&#8217;s site</button>
     </div>${thanks}</div>`;
 }
 
@@ -2875,16 +2959,6 @@ function deckChipsHtml(grp,sel){
       `<span class="chip ${sel.has(x)?'sel':''}" data-action="chip" data-grp="${grp}" data-val="${esc(x)}">${esc(x)}</span>`).join("")}</div></div>`).join("");
 }
 
-function themePicker(){
-  const open=themesOpen();
-  return `<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:8px">Theme</div>
-    <div style="display:flex;flex-direction:column;gap:9px">${open.map(t=>`
-      <div class="opt" data-action="set-theme" data-theme="${t.id}" style="${S.theme===t.id?'border-color:var(--primary);background:var(--surface-2)':''}">
-        <div style="flex:none;display:flex;gap:4px">${t.swatch.map(c=>`<span style="width:16px;height:26px;border-radius:5px;background:${c};border:1px solid var(--line-2);display:inline-block"></span>`).join("")}</div>
-        <div style="flex:1"><div class="ttl" style="font-size:15px">${esc(t.label)}</div></div>
-        ${S.theme===t.id?`<div style="flex:none">${I.check.replace(/#fff/g,'var(--primary)')}</div>`:""}
-      </div>`).join("")}</div></div>`;
-}
 function journalCard(){
   const n=S.journal.length;
   return `<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Keepsake journal</div>
@@ -3114,6 +3188,7 @@ function tryGrad(h){ const a=tryHue(h); return `linear-gradient(150deg,hsl(${a} 
 /* ---- confetti + match moment. Purely decorative: CSS pieces that remove
    themselves, nothing stored, nothing sent. */
 function confetti(){
+  if(S.prefs&&S.prefs.calm) return;
   const box=document.createElement("div"); box.className="confetti"; box.setAttribute("aria-hidden","true");
   const colors=["#FF42B3","#FFC94D","#5FCE8F","#5B8CFF","#F94F5C","#C04BE0"];
   for(let i=0;i<46;i++){
@@ -3166,7 +3241,7 @@ function tabToday(){
   const live=`<div class="eyebrow mt24">Ask each other</div>
     <div class="deal mt10" style="background:${look.g}" data-swipe="home">
       <div class="deal-top"><span class="deal-chip">${look.e} ${esc(d.title)}</span><span class="deal-chip">${esc(c[0])}</span></div>
-      <p class="deal-text">${esc(c[1])}</p>
+      <p class="deal-text">${esc(personalizeCard(c[1]))}</p>
       <div class="deal-row">
         <button class="pill-w" data-action="home-card-next">Another one ↻</button>
         <button class="pill-w ghost" data-action="open-talk" data-id="${d.id}">Open deck</button>
@@ -3250,7 +3325,7 @@ function screenTalk(id){
     <div class="deal big mt14 deal-in" style="background:${l.g}" data-swipe="talk" data-id="${d.id}">
       <div class="deal-top"><span class="deal-chip">${l.e} ${esc(d.title)}</span><span class="deal-chip">${seen} / ${d.cards.length}</span></div>
       <div class="deal-cat">${esc(c[0])}</div>
-      <p class="deal-text">${esc(c[1])}</p>
+      <p class="deal-text">${esc(personalizeCard(c[1]))}</p>
       <div class="deal-hint">swipe for the next card</div>
     </div>
     <div class="row mt14">
@@ -3267,7 +3342,7 @@ function screenSaved(){
     <h2 class="display" style="font-size:28px;margin-top:6px">Saved cards</h2>
     ${list.length?list.map(x=>{const l=deckLook(x.deck.id);return `<div class="deal mt14" style="background:${l.g};min-height:0">
         <div class="deal-top"><span class="deal-chip">${l.e} ${esc(x.deck.title)}</span><span class="deal-chip">${esc(x.cat)}</span></div>
-        <p class="deal-text" style="font-size:19px">${esc(x.text)}</p>
+        <p class="deal-text" style="font-size:19px">${esc(personalizeCard(x.text))}</p>
         <div class="deal-row"><button class="pill-w ghost" data-action="talk-unfav" data-key="${esc(talkCardKey(x.deck.id,x.i))}">Remove</button></div></div>`;}).join("")
       :`<p class="lead mt14" style="font-size:13.5px">Nothing saved yet. Tap ♡ Save on any card.</p>`}
   </div></div>`;
@@ -3361,9 +3436,72 @@ function screenHobby(id){
     <div class="card mt14"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
       <div style="font-weight:700;font-size:14px">Three small steps</div><div class="tiny">${nDone} / 3</div></div>${steps}</div>
     ${(!solo&&along.length)?`<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Talk while you do it</div>
-      ${along.map(t=>`<p class="tiny" style="line-height:1.6;margin-top:6px">“${esc(t)}”</p>`).join("")}</div>`:""}
+      ${along.map(t=>`<p class="tiny" style="line-height:1.6;margin-top:6px">“${esc(personalizeCard(t))}”</p>`).join("")}</div>`:""}
     <button class="btn ${tried?"btn-soft":""} mt14" data-action="hobby-tried" data-id="${h.id}" aria-pressed="${tried}">${tried?(solo?"✓ You tried it":"✓ You tried it together"):(solo?"I tried it 🎉":"We tried it 🎉")}</button>
     <div class="foot-legal">Your steps and what you’ve tried are kept on this phone only.</div>
+  </div></div>`;
+}
+
+/* ================= SETTINGS =================
+   One place for the normal things: who you both are (and so how every card
+   and prompt speaks), Light/Dark, colour, motion, the journal, data, about.
+   Everything here is stored on this phone and nothing here is ever sent. */
+function seg(group,cur,opts){
+  return `<div class="seg wide" role="radiogroup">${opts.map(o=>`<button data-action="pref" data-k="${group}" data-v="${o[0]}" role="radio" aria-checked="${cur===o[0]}" class="${cur===o[0]?"on":""}">${o[1]}</button>`).join("")}</div>`;
+}
+function toggleRow(k,on,title,sub){
+  return `<button class="set-row" data-action="pref-toggle" data-k="${k}" role="switch" aria-checked="${on}">
+    <span class="sr-b"><span class="sr-t">${title}</span>${sub?`<span class="sr-s">${sub}</span>`:""}</span>
+    <span class="switch ${on?"on":""}"><i></i></span></button>`;
+}
+function screenSettings(){
+  const solo=isSolo(), pf=S.prefs;
+  const who=r=>`${esc(cap1(firstName(person(r).name)||(r==="A"?"You":cap1(partnerTerm()))))} · ${esc(genderLabel(r))} · ${esc(pronounLabel(r))}`;
+  const sample=TALK[0].cards[0][1];
+  const colours=themesOpen().map(t=>`<button class="swatch ${S.theme===t.id?"on":""}" data-action="set-theme" data-theme="${t.id}" aria-label="${esc(t.label)}" aria-pressed="${S.theme===t.id}">
+      <span class="sw-dot" style="background:linear-gradient(150deg,${t.swatch[0]},${t.swatch[1]})"></span><span class="sw-l">${esc(t.label)}</span></button>`).join("");
+  return `<div class="view"><div class="pad-tab">
+    <button class="back" data-action="settings-back">‹ Back</button>
+    <h2 class="display" style="font-size:32px;margin-top:8px">Settings</h2>
+
+    <div class="set-h">${solo?"You":"You two"}</div>
+    <div class="set-card">
+      <button class="set-row" data-action="open-profile"><span class="sr-b"><span class="sr-t">${solo?"Name, gender &amp; pronouns":"Names, genders &amp; pronouns"}</span>
+        <span class="sr-s">${who("A")}</span>${solo?"":`<span class="sr-s">${who("B")}</span>`}</span><span class="sr-go">›</span></button>
+      ${solo?"":toggleRow("cardNames",pf.cardNames,"Cards speak to "+esc(cap1(otherName())),"Talk cards use their name instead of “your partner”.")}
+      ${solo?"":`<div class="set-prev"><span class="tiny">Preview</span><p>${esc(personalizeCard(sample))}</p></div>`}
+      <p class="set-note">Gender and pronouns set the tone of the whole program — every stage, prompt and boundary is worded from them. Anything left blank stays neutral.</p>
+    </div>
+
+    <div class="set-h">Appearance</div>
+    <div class="set-card">
+      <div class="sr-t" style="margin-bottom:8px">Mode</div>
+      ${seg("mode",pf.mode,[["light","☀︎ Light"],["dark","☾ Dark"],["auto","◐ Auto"]])}
+      <div class="sr-t" style="margin:16px 0 8px">Colour</div>
+      <div class="swatches">${colours}</div>
+      ${toggleRow("calm",pf.calm,"Calm motion","No confetti, no card animations.")}
+    </div>
+
+    <div class="set-h">Privacy &amp; data</div>
+    ${journalCard()}
+    <div class="set-card mt10">
+      <p class="set-note" style="margin-top:0">${solo||S.mode!=="live"
+        ?"Nothing you enter leaves this phone. There is no account and no server."
+        :"Paired phones exchange only your stage, your reflection chips and your Try “yes” picks — end-to-end encrypted. Names, pronouns, notes and settings never leave this phone."}</p>
+      <button class="btn btn-soft mt10" data-action="reset-all" style="font-size:13.5px">Reset Slow Burn on this phone</button>
+    </div>
+
+    <div class="set-head-mt"></div>
+    <div class="set-h">About</div>
+    <div class="set-card">
+      <div class="kv"><span class="k">Version</span><span class="v">1.1</span></div>
+      <div class="kv"><span class="k">Created by</span><span class="v">${CREDIT_HER} &amp; ${CREDIT_HIM}</span></div>
+      <div class="row mt10" style="gap:8px">
+        <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:13px">${CREDIT_HER}</button>
+        <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:13px">${CREDIT_HIM}</button></div>
+      <button class="link mt10" data-action="find-clinician" style="padding:0">Find a clinician →</button>
+    </div>
+    <div class="foot-legal">Wellness &amp; education only · not medical advice.</div>
   </div></div>`;
 }
 
@@ -3437,6 +3575,7 @@ function render(){
   else if(S.screen==="saved")html=appChrome(screenSaved());
   else if(S.screen==="trylist")html=appChrome(screenTryList());
   else if(S.screen==="hobby")html=appChrome(screenHobby(S.hobbyOpen));
+  else if(S.screen==="settings")html=appChrome(screenSettings());
   else if(S.screen==="app"){
     let inner=S.tab==="today"?tabToday():S.tab==="program"?tabProgram()
       :S.tab==="talk"?tabTalk():S.tab==="try"?tabTry():S.tab==="together"?tabTogether()
@@ -3591,7 +3730,7 @@ document.addEventListener("click",(e)=>{
   if(a==="reset-all"){
     /* Deliberately does NOT touch the Pro entitlement or the journal switch —
        a purchase is not app state, and silently revoking it would be theft. */
-    leaveLive(); clearProfile(); S=freshState(); loadTheme(); loadJournal();
+    leaveLive(); clearProfile(); S=freshState(); loadPrefs(); loadTheme(); loadJournal();
     render(); toast("Reset. Slow Burn starts fresh."); return;
   }
   /* ---------- personalisation (everything is included; nothing is gated) ---------- */
@@ -3652,6 +3791,11 @@ document.addEventListener("click",(e)=>{
   if(a==="home-card-next"){const d=S.homeDeck;talkDraw(d);S.homeCardI=S.talkCard;S.talkCard=null;render();
     const card=document.querySelector(".deal");if(card)card.classList.add("deal-in");return;}
   if(a==="match-close"){S.matchShow=null;render();return;}
+  /* ---------- settings ---------- */
+  if(a==="open-settings"){ if(S.screen!=="settings") S.settingsReturn={screen:S.screen,tab:S.tab}; S.screen="settings"; render(); return; }
+  if(a==="settings-back"){ const r=S.settingsReturn||{screen:"app",tab:"today"}; S.screen=r.screen==="settings"?"app":(r.screen||"app"); S.tab=r.tab||"today"; render(); return; }
+  if(a==="pref"){ if(el.dataset.k==="mode"&&["light","dark","auto"].indexOf(el.dataset.v)>=0){ S.prefs.mode=el.dataset.v; savePrefs(); applyTheme(S.theme); } render(); return; }
+  if(a==="pref-toggle"){ const k=el.dataset.k; if(k==="cardNames"||k==="calm"){ S.prefs[k]=!S.prefs[k]; savePrefs(); applyTheme(S.theme); } render(); return; }
   if(a==="open-talk"){S.talkDeck=el.dataset.id;S.talkCard=(el.dataset.id===S.homeDeck&&S.screen==="app"&&S.tab==="today")?S.homeCardI:null;S.screen="talk";render();return;}
   if(a==="talk-adult-ok"){S.tg.talk.adultOk=true;saveTogether();S.talkCard=null;render();return;}
   if(a==="talk-next"){const re=talkDraw(el.dataset.id);render();if(re)toast("That’s every card in this deck — shuffling.");return;}
@@ -3712,7 +3856,9 @@ document.addEventListener("click",(e)=>{
     if(S.mode==="solo"||S.mode==="shared"){ S.screen="app"; S.tab="today"; }
     else { S.mode=null; S.screen="pairing"; S.pairPhase="choose"; }
   }
-  loadTheme(); loadJournal(); loadTogether();
+  loadPrefs(); loadTheme(); loadJournal(); loadTogether();
+  /* "Match iPhone" follows the system setting live. */
+  try{ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ if(S.prefs.mode==="auto"){ applyTheme(S.theme); render(); } }); }catch(e){}
   Monetize.init();
   render();
 })();

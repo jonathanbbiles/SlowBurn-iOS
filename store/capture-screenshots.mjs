@@ -29,9 +29,11 @@ const DEVICES = {
 };
 /* Numbered so App Store Connect keeps the order. */
 /* 1.1 redesign: lead with what is fun — Home, the Try game, a match, a Talk card. */
-const ORDER = ["home", "together", "match", "talk", "program", "consent", "checkins", "welcome", "pairchoose", "invite"];
-const NAME = { home: "home", together: "try", match: "match", talk: "talk", program: "program", consent: "consent",
-  checkins: "checkins", welcome: "welcome", pairchoose: "pairing-choice", invite: "pair-code" };
+/* Welcome is left out: it credits the creators by their show names, which
+   stay in the app and off the App Store page (Guideline 1.1 history). */
+const ORDER = ["home", "together", "match", "talk", "settings", "program", "consent", "checkins", "pairchoose", "invite"];
+const NAME = { home: "home", together: "try", match: "match", talk: "talk", settings: "settings-dark", program: "program",
+  consent: "consent", checkins: "checkins", pairchoose: "pairing-choice", invite: "pair-code" };
 
 if (!fs.existsSync(CHROME)) { console.error("Chrome not found at " + CHROME + " — set CHROME_PATH"); process.exit(1); }
 fs.mkdirSync(OUT, { recursive: true });

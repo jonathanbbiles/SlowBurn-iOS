@@ -33,7 +33,7 @@ const DEVICES = {
    stay in the app and off the App Store page (Guideline 1.1 history). */
 const ORDER = ["home", "together", "match", "talk", "settings", "program", "consent", "checkins", "pairchoose", "invite"];
 const NAME = { home: "home", together: "try", match: "match", talk: "talk", settings: "settings-dark", program: "program",
-  consent: "consent", checkins: "checkins", pairchoose: "pairing-choice", invite: "pair-code" };
+  consent: "consent", checkins: "journal", pairchoose: "pairing-choice", invite: "pair-code" };
 
 if (!fs.existsSync(CHROME)) { console.error("Chrome not found at " + CHROME + " — set CHROME_PATH"); process.exit(1); }
 fs.mkdirSync(OUT, { recursive: true });

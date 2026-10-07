@@ -142,8 +142,8 @@ receives — an aggregate sales figure in App Store Connect, not attached to a
 person. So "Data Not Collected" is unchanged by the tip jar, and the tipped
 flag stays on the device that set it.
 
-**Slow Burn keeps no journal (1.1).** The Journal button in Settings and on
-Check-ins opens **Permission**, a separate private journal app from the same
+**Slow Burn keeps no journal (1.1).** The Journal tab's buttons (and the one
+in Settings) open **Permission**, a separate private journal app from the same
 creators, or its App Store page when it is not installed. Opening it passes
 nothing: the app is launched by its bare URL scheme (`permissionjournal://`,
 no path, no query), and the App Store link carries only Apple's campaign tag

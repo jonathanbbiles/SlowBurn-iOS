@@ -5,7 +5,10 @@ app (`www/index.html`) wrapped natively with Capacitor.
 
 **1.1 adds Talk and Try** (`tabTalk()` / `tabTry()` in `www/index.html`), as tabs 2 and 3,
 with a redesigned Home (`tabToday()`) that deals a live Talk card and links to both. Shared
-reflections live under Home and Program now; `S.tab="checkins"` still renders them.
+The tab bar is Home, Talk, Try, Journal, Us. **Journal** (`tabJournal()`) holds the
+reflections (`reflectionsInner()`, formerly Check-ins — `S.tab="checkins"` still renders it), a
+rotating prompt, and the jump to Permission. The Program has no tab: Home's "Your journey"
+card and Stage tile open it (`S.tab="program"`).
 - **Talk** — seven decks, 280 conversation cards (folded in from the retired
   Closerly app), drawn without repeats, with saved cards. After Dark asks both
   people first.

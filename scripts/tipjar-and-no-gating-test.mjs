@@ -272,6 +272,18 @@ console.log("2  no entitlement, no paywall screen, no pro flags on any content")
   ok(fails, !w.document.querySelector('[data-action="toggle-journal"]'), "8: Settings still offers the old journal switch");
   phone.S.screen = "app"; phone.S.tab = "checkins"; api.render();
   ok(fails, !!w.document.querySelector('button[data-action="open-permission"]'), "8: Check-ins has no Permission button");
+  /* Journal is a main tab: in the tab bar, a Home tile, and it holds the
+     reflections, a prompt that changes, and the Permission button. */
+  ok(fails, !!w.document.querySelector('.tabs [data-tab="journal"]'), "8: Journal is not in the tab bar");
+  ok(fails, !!w.document.querySelector('.tabs .tab.on[data-tab="journal"]'), "8: the old Check-ins tab does not light Journal");
+  phone.S.tab = "today"; api.render();
+  ok(fails, !!w.document.querySelector('.tiles [data-tab="journal"]'), "8: Home has no Journal tile");
+  ok(fails, !!w.document.querySelector('.journey[data-tab="program"]'), "8: Home has no way into the Program");
+  w.document.querySelector('.tiles [data-tab="journal"]').click();
+  const before = w.document.querySelector(".jprompt .deal-text").textContent;
+  w.document.querySelector('[data-action="journal-next"]').click();
+  ok(fails, phone.S.tab === "journal" && w.document.querySelector(".jprompt .deal-text").textContent !== before, "8: the journal prompt does not change");
+  ok(fails, /reflections|both felt/i.test(w.document.getElementById("root").textContent), "8: reflections are not in the Journal tab");
   /* Web / no plugin: straight to the App Store page. */
   w.document.querySelector('button[data-action="open-permission"]').click();
   ok(fails, opened[0] === api.PERMISSION_STORE, `8: without the launcher the button did not open the App Store page (${opened[0]})`);

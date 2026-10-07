@@ -316,6 +316,30 @@
   html.dark .chip.readonly[style]{background:#3A2030 !important;border-color:#5A2E48 !important;color:#FFB3DA !important}
   html.dark .yn.no{background:var(--surface)}
   html.calm .deal-in,html.calm .match-card,html.calm .match-ov{animation:none}
+  /* 1.1 Home + Journal: pictures over paragraphs */
+  .tiles.four{grid-template-columns:repeat(2,1fr)}.tiles.four .tile{min-height:84px}
+  .tile .tb{position:absolute;top:9px;right:10px;background:#fff;color:#C2185B;font-size:10.5px;font-weight:800;border-radius:99px;padding:2px 7px}
+  .tile{position:relative}
+  .journey{width:100%;border:0;border-radius:24px;padding:16px 16px 14px;cursor:pointer;text-align:left;font-family:var(--sans);color:#fff;
+    background:linear-gradient(150deg,#1F1446,#4B2A86 55%,#B4458F);box-shadow:0 18px 36px -22px rgba(31,20,70,.8);display:flex;flex-direction:column;gap:12px}
+  .jr-top{display:flex;justify-content:space-between;align-items:center}
+  .jr-k{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#FFC94D}
+  .jr-go{font-size:12px;font-weight:700;background:rgba(255,255,255,.16);border-radius:99px;padding:4px 10px}
+  .jr-path{display:flex;align-items:center}
+  .jr-dot{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.35)}
+  .jr-dot.done{background:#7BC79A;border:0;color:#fff;font-size:16px;font-weight:800}
+  .jr-dot.cur{width:48px;height:48px;font-size:24px;border:0;background:linear-gradient(150deg,#FF5C8A,#FFB23F);box-shadow:0 0 0 6px rgba(255,178,63,.22);animation:glow 2.2s ease-in-out infinite}
+  .jr-line{flex:1;height:3px;min-width:4px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.45) 0 5px,transparent 5px 9px)}
+  .jr-line.done{background:#7BC79A}
+  .jr-t{font-family:var(--display);font-size:24px;line-height:1.05;letter-spacing:.02em}
+  @keyframes glow{0%,100%{box-shadow:0 0 0 5px rgba(255,178,63,.22)}50%{box-shadow:0 0 0 11px rgba(255,178,63,.08)}}
+  html.calm .jr-dot.cur{animation:none}
+  .jhero{position:relative;overflow:hidden;border-radius:26px;padding:22px 18px 18px;color:#fff;background:linear-gradient(155deg,#2B1B4E 0%,#6A3FA0 55%,#E86AA6 115%);box-shadow:0 18px 40px -22px rgba(43,27,78,.75)}
+  .jhero svg.jh-art{position:absolute;right:-6px;top:10px;width:132px;height:132px;opacity:.95}
+  .jhero .hero-h{max-width:62%}.jhero .hero-s{max-width:60%}
+  .jhero .pill-w{margin-top:16px}
+  .jprompt{border-radius:24px;padding:18px;color:#fff;background:linear-gradient(150deg,#0E7C86,#3BB39B 60%,#C9E265);box-shadow:0 18px 36px -22px rgba(14,124,134,.7);display:flex;flex-direction:column}
+  .jprompt .deal-text{text-shadow:0 1px 10px rgba(0,0,0,.18)}
 
   /* Large screens (iPad, landscape iPhone, desktop). The app still fills the window; content is
      constrained to a comfortable reading column centred on the app's OWN background, while the
@@ -2335,6 +2359,7 @@ const I={
  cards:'<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="6.5" width="11" height="14" rx="2.4" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 4.2 17.8 3a2 2 0 0 1 2.2 1.7l1.3 10.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  sparkle:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18.5 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" fill="currentColor"/></svg>',
  together:'<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><circle cx="15" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/></svg>',
+ pen:'<svg viewBox="0 0 24 24" fill="none"><path d="M5 19l1-4L15.5 5.5a2.1 2.1 0 0 1 3 3L9 18l-4 1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.5 7.5l3 3" stroke="currentColor" stroke-width="1.8"/></svg>',
  heart:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-7-9.3A3.7 3.7 0 0 1 12 8.2 3.7 3.7 0 0 1 19 10.7C19 15.6 12 20 12 20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
  lock:'<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" stroke="#A99A94" stroke-width="1.7"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#A99A94" stroke-width="1.7"/></svg>',
  shield:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l7 2.5v5c0 4.5-3 8-7 9.5-4-1.5-7-5-7-9.5v-5l7-2.5Z" stroke="#6E4B63" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="#6E4B63" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -2676,19 +2701,20 @@ function appChrome(inner){
     ${tabBtn("today","Home",I.home)}
     ${tabBtn("talk","Talk",I.cards)}
     ${tabBtn("try","Try",I.sparkle)}
-    ${tabBtn("program","Program",I.program)}
+    ${tabBtn("journal","Journal",I.pen)}
     ${tabBtn("partner",isSolo()?"You":"Us",I.heart)}
   </div>${matchOverlay()}`;
 }
 function tabBtn(id,label,icon){
   /* The Together screens sit under that tab, whatever S.tab last said. */
-  /* Screens under a tab light that tab; Check-ins now lives under Home. */
+  /* Screens under a tab light that tab. Reflections (Check-ins) live in
+     Journal; the Program is opened from Home, so it lights Home. */
   const cur=["talk","saved"].indexOf(S.screen)>=0?"talk"
     :["trylist","hobby"].indexOf(S.screen)>=0?"try"
     :S.tab==="together"?(S.together==="try"?"try":"talk")
-    :S.tab==="checkins"?"today":S.tab;
+    :S.tab==="checkins"?"journal":S.tab==="program"?"today":S.tab;
   const on=cur===id;
-  const notif=(id==="today"&&hasNewMatch())?'<span class="notif"></span>':"";
+  const notif=(id==="journal"&&hasNewMatch())?'<span class="notif"></span>':"";
   return `<button class="tab ${on?'on':''}" data-action="tab" data-tab="${id}">${notif}${icon}<span>${label}</span></button>`;
 }
 function tabProgram(){
@@ -2703,13 +2729,15 @@ function tabProgram(){
       <div class="st-body"><div class="st-title">${esc(stTitle(s))}</div><div class="st-sub">${s.weeks} · ${esc(stSub(s))}</div></div>${tag}</div>`;
   }).join("");
   return `<div class="view"><div class="pad-tab">
-    <div class="eyebrow">The program</div><h2 class="display" style="font-size:25px;margin-top:8px">${solo?"Six stages, your pace":"Six stages, together"}</h2>
+    <button class="back" data-action="tab" data-tab="today">‹ Home</button>
+    <div class="eyebrow mt10">The program</div><h2 class="display" style="font-size:25px;margin-top:8px">${solo?"Six stages, your pace":"Six stages, together"}</h2>
     <p class="lead mt6" style="font-size:13.5px">${solo
       ?"You unlock each stage when you privately confirm you’re ready. No schedule, no pressure."
       :"You unlock each stage only when you’ve both privately confirmed you’re ready. No negotiating, no pressure."}</p>
     <div class="rail mt18">${rail}</div><div class="tiny" style="margin-top:4px">${cur-1} of 6 stages explored</div>
     <div class="mt18">${items}</div>
-    <button class="nudge-card mt18" data-action="tab" data-tab="checkins"><span class="nc-e">💬</span>
+    ${S.nextSession==="not-set"?`<button class="link mt14" data-action="schedule" style="padding:0">Schedule your next session →</button>`:""}
+    <button class="nudge-card mt18" data-action="tab" data-tab="journal"><span class="nc-e">💬</span>
       <span class="nc-b"><span class="nc-t">${isSolo()?"Your reflections":"Shared reflections"}</span>
       <span class="nc-s">${isSolo()?"What you noticed after each session.":"What you both named after each session — never the rest."}</span></span>
       ${hasNewMatch()?'<span class="badge cur">New</span>':''}</button>
@@ -2720,12 +2748,8 @@ function tabProgram(){
         <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div></div>
     </div></div>`;
 }
-/* Check-ins end with the way to write more than chips: Permission. */
-function permissionNudge(){
-  return `<button class="nudge-card mt18" data-action="open-permission"><span class="nc-e">✍️</span>
-    <span class="nc-b"><span class="nc-t">Want to write about it? ↗</span><span class="nc-s">Journal privately in Permission — opens the app, or the App Store if you don’t have it.</span></span></button>`;
-}
-function tabCheckins(){
+/* Reflections — what used to be the Check-ins screen, now a section of Journal. */
+function reflectionsInner(){
   /* Your own reflections over time — the view whenever there is nothing to
      match against: solo (no partner), or live pairing before the encrypted
      handshake has been confirmed. */
@@ -2741,16 +2765,12 @@ function tabCheckins(){
         ${d.more.length?`<div class="tiny mt18" style="font-weight:700;color:var(--plum);letter-spacing:.04em;text-transform:uppercase">You’d welcome more of</div><div class="chips mt10">${d.more.map(x=>`<span class="chip readonly" style="border-color:#F1C9E0;background:#FFF0F7;color:var(--plum-d)">${esc(x)}</span>`).join("")}</div>`:""}
       </div>`;
     }
-    return `<div class="view"><div class="pad-tab">
-      <button class="back" data-action="tab" data-tab="today">‹ Home</button>
-      <div class="eyebrow mt10">Your reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you noticed</h2>
-      <p class="lead mt6" style="font-size:13.5px">After each session you reflect privately. Your written note stays on this device and is never sent anywhere.</p>
+    return `<div class="eyebrow mt24">💭 Your reflections</div>
       ${S.mode==="live"?`<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("Your two phones haven’t finished setting up their encrypted link yet, so there’s nothing to compare. Once it’s live, the chips you both chose are matched privately between your phones — and your written note still never leaves this one.")}</p></div>`:""}
       ${own||`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
         <p class="lead" style="font-size:14px">No reflections yet.</p>
         <p class="tiny mt6">Run a session and reflect — your pattern over time shows up here.</p></div>`}
-      ${permissionNudge()}
-    </div></div>`;
+`;
   }
   let blocks="";
   for(let s=6;s>=1;s--){
@@ -2780,21 +2800,64 @@ function tabCheckins(){
   const mismatch=live&&S.partnerChipMismatch
     ? `<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("{Partner}’s copy of Slow Burn is a different version, so the app won’t try to line your answers up — comparing them could put the wrong words in {their} mouth. Update both phones and they’ll match again.")}</p></div>`
     : "";
-  return `<div class="view"><div class="pad-tab">
-    <button class="back" data-action="tab" data-tab="today">‹ Home</button>
-    <div class="eyebrow mt10">Shared reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you both felt</h2>
-    <p class="lead mt6" style="font-size:13.5px">After each session you each reflect privately. Slow Burn only surfaces what <b>both</b> of you named — never the rest.</p>
+  return `<div class="eyebrow mt24">💞 What you both felt</div>
+    <p class="tiny mt6">Only what you <b>both</b> named after a session — never the rest.</p>
     ${live?`<div class="card-soft mt14" style="display:flex;gap:11px;align-items:flex-start">
       <div style="flex:none;margin-top:1px">${I.lock}</div>
       <div><div style="font-weight:700;font-size:13px">End-to-end encrypted</div>
-      <p class="tiny" style="margin-top:3px;line-height:1.55">${TE("Your chip selections travel between your two phones scrambled with a key only your phones hold — the relay in the middle can’t read them. Your written note isn’t sent at all.")}${S.pairSafety?` Safety word: <b>${esc(S.pairSafety)}</b> — it should read the same on ${TE("{partner}")}’s phone.`:""}</p></div></div>`:""}
+      <p class="tiny" style="margin-top:3px;line-height:1.55">${TE("Only your two phones can read these. Notes are never sent.")}${S.pairSafety?` Safety word: <b>${esc(S.pairSafety)}</b> — it should read the same on ${TE("{partner}")}’s phone.`:""}</p></div></div>`:""}
     ${mismatch}
     ${empty?`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
       <p class="lead" style="font-size:14px">No shared reflections yet.</p>
       <p class="tiny mt6">Run a session and reflect. ${live?TE("When {partner} reflects too, your overlap appears here."):TE("Then switch to {partner} and reflect — the overlap appears here.")}</p></div>`:(blocks+pending)}
-    ${permissionNudge()}
+`;
+}
+/* ================= JOURNAL =================
+   Writing lives in Permission (openPermission); this tab is the doorway, a
+   prompt to carry over, and the reflections Slow Burn itself keeps. */
+const JOURNAL_PROMPTS=[
+ "What made you feel close today, even for a second?",
+ "Something your partner did lately that you haven’t thanked them for.",
+ "A moment from tonight you want to remember in ten years.",
+ "What felt easy this week? What felt hard?",
+ "Describe a touch you’d like more of — in words only you will read.",
+ "What are you curious about, between the two of you, right now?",
+ "Write the first thing you noticed about them, and the newest.",
+ "Where in your body do you feel calm? Where do you feel tense?",
+ "A small promise to yourself for the next stage.",
+ "What would make next time feel even more unhurried?",
+ "Something you said yes to recently. How did it feel?",
+ "Write a thank-you note you might never send."
+];
+const JH_ART=`<svg class="jh-art" viewBox="0 0 140 140" fill="none" aria-hidden="true">
+  <rect x="26" y="22" width="78" height="98" rx="10" transform="rotate(-8 65 71)" fill="#fff" fill-opacity=".14" stroke="#fff" stroke-opacity=".55" stroke-width="2"/>
+  <rect x="34" y="18" width="78" height="98" rx="10" transform="rotate(6 73 67)" fill="#fff" fill-opacity=".92"/>
+  <path d="M48 46h44M48 60h40M48 74h44M48 88h28" stroke="#B9A6D9" stroke-width="3.2" stroke-linecap="round" transform="rotate(6 73 67)"/>
+  <path d="M96 104l6-20 22-34a6 6 0 0 1 10 6l-22 34-16 14Z" fill="#FFB23F"/><path d="M96 104l6-20 10 6-16 14Z" fill="#FFE2A8"/>
+  <circle cx="30" cy="28" r="3" fill="#FFC94D"/><circle cx="118" cy="22" r="2.4" fill="#fff"/><path d="M20 98l3 6 6 3-6 3-3 6-3-6-6-3 6-3 3-6Z" fill="#fff" fill-opacity=".8"/>
+</svg>`;
+function tabJournal(){
+  const i=(S.jp||0)%JOURNAL_PROMPTS.length, n=S.journal.length;
+  return `<div class="view"><div class="pad-tab">
+    <div class="jhero">${JH_ART}
+      <div class="hero-kick">Journal</div>
+      <h2 class="hero-h">Write it down</h2>
+      <p class="hero-s">Private and passcode-locked, in Permission.</p>
+      <button class="pill-w" data-action="open-permission">Open Permission ↗</button>
+    </div>
+    <div class="jprompt mt14">
+      <div class="deal-top"><span class="deal-chip">✍️ Tonight’s prompt</span><span class="deal-chip">${i+1}/${JOURNAL_PROMPTS.length}</span></div>
+      <p class="deal-text">${esc(JOURNAL_PROMPTS[i])}</p>
+      <div class="deal-row">
+        <button class="pill-w" data-action="journal-next">Another ↻</button>
+        <button class="pill-w ghost" data-action="open-permission">Write it ↗</button>
+      </div></div>
+    ${reflectionsInner()}
+    ${n?`<button class="btn btn-soft mt18" data-action="open-journal" style="font-size:13.5px">Your saved Slow Burn journal (${n})</button>`:""}
+    <div class="foot-legal">Reflections stay on this phone. Permission is a separate app; nothing is passed to it.</div>
   </div></div>`;
 }
+function tabCheckins(){ return tabJournal(); }
 function tabPartner(){
   const cur=maxUnlocked(),solo=isSolo();
   const initial=r=>{const n=firstName(person(r).name);return (n?n[0]:(r==="A"?"Y":"P")).toUpperCase();};
@@ -3067,17 +3130,6 @@ function screenSession(){
     <div class="foot-legal">You can update your reflection any time before your next session.</div></div></div>`;
 }
 
-function nudgeText(cur){
-  const st=STAGES[cur-1],mine=me().sessions[cur]||0,title=esc(stTitle(st));
-  if(isSolo()){
-    if(mine===0) return `You’re on <b>${title}</b>. Next time you have a quiet hour, open the stage and try a first session — there’s nothing to get right.`;
-    if(me().ready[cur]) return `You’ve confirmed you’re ready for the next stage. Move on whenever you like — or stay here a while longer.`;
-    return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session to see your pattern.`;
-  }
-  if(mine===0) return T(`You’re on <b>${title}</b>. When {us} have a quiet evening, open the stage and try a first session — there’s nothing to get right.`);
-  if(me().ready[cur]&&!partnerReadyFor(cur)) return T(`You’ve confirmed you’re ready for the next stage. {Partner} will get there in {their} own time — you’ll unlock it together.`);
-  return `Nicely done staying with <b>${title}</b>. Repeating a stage is not falling behind — it’s the point. Reflect after your next session${canMatch()?" to see what you share":" — your own pattern builds up over time"}.`;
-}
 
 /* ---------------- TOGETHER ----------------
    Two halves. TALK is conversation cards, drawn without repeats. TRY is
@@ -3240,20 +3292,21 @@ function homeCardEnsure(){
   S.homeDeck=decks[randIdx(decks.length)].id;
   talkDraw(S.homeDeck); S.homeCardI=S.talkCard;
 }
+const STAGE_EMOJI=["🌱","🤲","🗺️","🌊","🔥","✨"];
 function tabToday(){
   const cur=maxUnlocked(),st=STAGES[cur-1],solo=isSolo();
   homeCardEnsure();
   const d=talkDeck(S.homeDeck),c=d.cards[S.homeCardI],look=deckLook(d.id);
   const matches=tryMatches(),p=myTry(),picked=p.yes.length+p.no.length;
-  const rail=STAGES.map(s=>`<i class="${s.id<cur?'done':(s.id===cur?'cur':'')}"></i>`).join("");
   const greet=solo?"Tonight, just you":T("Tonight, you & {partner}");
-  const tiles=`<div class="tiles">
+  const newRefl=!solo&&hasNewMatch();
+  const tiles=`<div class="tiles four">
       <button class="tile" data-action="tab" data-tab="talk" style="background:${deckLook("flirty").g}"><span class="te">🃏</span><span class="tl">Talk</span><span class="ts">280 cards</span></button>
       <button class="tile" data-action="tab" data-tab="try" style="background:linear-gradient(150deg,#5B8CFF,#C04BE0)"><span class="te">✨</span><span class="tl">Try</span><span class="ts">${matches.length?matches.length+(solo?" picked":" matches"):"30 ideas"}</span></button>
       <button class="tile" data-action="open-stage" data-id="${cur}" style="background:linear-gradient(150deg,#F94F5C,#FFB23F)"><span class="te">🔥</span><span class="tl">Stage ${cur}</span><span class="ts">${esc(stTitle(st))}</span></button>
+      <button class="tile" data-action="tab" data-tab="journal" style="background:linear-gradient(150deg,#0E7C86,#3BB39B 70%,#C9E265)"><span class="te">✍️</span><span class="tl">Journal</span><span class="ts">${newRefl?"New reflection":"Write it down"}</span>${newRefl?'<span class="tb">New</span>':''}</button>
     </div>`;
-  const live=`<div class="eyebrow mt24">Ask each other</div>
-    <div class="deal mt10" style="background:${look.g}" data-swipe="home">
+  const live=`<div class="deal mt18" style="background:${look.g}" data-swipe="home">
       <div class="deal-top"><span class="deal-chip">${look.e} ${esc(d.title)}</span><span class="deal-chip">${esc(c[0])}</span></div>
       <p class="deal-text">${esc(personalizeCard(c[1]))}</p>
       <div class="deal-row">
@@ -3261,17 +3314,21 @@ function tabToday(){
         <button class="pill-w ghost" data-action="open-talk" data-id="${d.id}">Open deck</button>
       </div></div>`;
   const tryBlock=matches.length
-    ?`<div class="eyebrow mt24">${solo?"On your list":"You both said yes"}</div>
+    ?`<div class="eyebrow mt24">${solo?"⭐ On your list":"💞 You both said yes"}</div>
       <div class="hscroll mt10">${matches.map(h=>`<button class="mini" data-action="open-hobby" data-id="${h.id}" style="background:${tryGrad(h)}">
         <span class="me">${h.emoji}</span><span class="mn">${esc(h.name)}</span>${S.tg.tried.indexOf(h.id)>=0?'<span class="mt">Tried ✓</span>':''}</button>`).join("")}</div>`
-    :`<button class="nudge-card mt24" data-action="tab" data-tab="try">
+    :`<button class="nudge-card mt18" data-action="tab" data-tab="try">
         <span class="nc-e">✨</span>
-        <span class="nc-b"><span class="nc-t">${picked?"Keep picking":"What would you two try?"}</span>
-        <span class="nc-s">${picked?(picked+" of "+TRY.length+" picked"+(solo?"":" — matches appear when you both say yes")):(solo?"Thirty small adventures. Pick a few.":"Pick privately. Only the ones you both want show up.")}</span>
+        <span class="nc-b"><span class="nc-t">${picked?"Keep picking":(solo?"What would you try?":"What would you two try?")}</span>
         <span class="bar"><i style="width:${Math.round(100*picked/TRY.length)}%"></i></span></span></button>`;
-  const reflections=(!solo&&hasNewMatch())
-    ?`<button class="nudge-card mt14" data-action="tab" data-tab="checkins"><span class="nc-e">💬</span>
-        <span class="nc-b"><span class="nc-t">You have a shared reflection</span><span class="nc-s">See what you both felt — and nothing else.</span></span></button>`:"";
+  const path=STAGES.map((s,k)=>{
+    const cls=s.id<cur?"done":(s.id===cur?"cur":"");
+    return (k?`<span class="jr-line ${s.id<=cur?"done":""}"></span>`:"")+`<span class="jr-dot ${cls}">${s.id<cur?"✓":STAGE_EMOJI[k]}</span>`;
+  }).join("");
+  const journey=`<button class="journey mt24" data-action="tab" data-tab="program" aria-label="The program, stage ${cur} of 6">
+      <span class="jr-top"><span class="jr-k">Your journey</span><span class="jr-go">${cur} of 6 ›</span></span>
+      <span class="jr-path">${path}</span>
+      <span class="jr-t">${esc(stTitle(st))}</span></button>`;
   return `<div class="view"><div class="pad-tab">
     <div class="hero">
       <div class="hero-kick">${S.nextSession==="not-set"?"Slow Burn":"Next: "+esc(S.nextSession)}</div>
@@ -3281,18 +3338,8 @@ function tabToday(){
     </div>
     ${live}
     ${tryBlock}
-    ${reflections}
-    <div class="eyebrow mt24">The program</div>
-    <button class="prog-card mt10" data-action="open-stage" data-id="${cur}">
-      <span class="pc-top"><span class="pc-n">${cur}</span><span class="pc-b"><span class="pc-t">${esc(stTitle(st))}</span><span class="pc-s">${st.weeks} · ${esc(stSub(st))}</span></span><span class="pc-go">›</span></span>
-      <span class="rail6">${rail}</span>
-      <span class="pc-f">“${esc(st.focus)}”</span></button>
-    <div class="card-soft mt14" style="display:flex;gap:13px;align-items:flex-start">
-      <div style="flex:none;margin-top:1px">${I.spark}</div>
-      <div><div style="font-weight:700;font-size:13.5px">A gentle nudge</div>
-        <p class="tiny" style="margin-top:4px;line-height:1.55">${nudgeText(cur)}</p></div></div>
-    ${S.nextSession==="not-set"?`<button class="link mt10" data-action="schedule" style="padding:0">Schedule your next session →</button>`:""}
-    <div class="foot-legal">Slow Burn is a wellness program, not medical advice. · <button class="link" data-action="find-clinician" style="font-size:10.5px;padding:0">Find a clinician</button></div>
+    ${journey}
+    <div class="foot-legal">A wellness program, not medical advice. · <button class="link" data-action="find-clinician" style="font-size:10.5px;padding:0">Find a clinician</button></div>
   </div></div>`;
 }
 
@@ -3595,7 +3642,7 @@ function render(){
   else if(S.screen==="app"){
     let inner=S.tab==="today"?tabToday():S.tab==="program"?tabProgram()
       :S.tab==="talk"?tabTalk():S.tab==="try"?tabTry():S.tab==="together"?tabTogether()
-      :S.tab==="checkins"?tabCheckins():tabPartner();
+      :(S.tab==="journal"||S.tab==="checkins")?tabJournal():tabPartner();
     html=appChrome(inner);
   }
   root.innerHTML=html;root.scrollTop=0;
@@ -3829,7 +3876,8 @@ document.addEventListener("click",(e)=>{
     if(i<0){confetti();toast(isSolo()?"Nice. Marked as tried.":"Nice. Marked as tried together.");}return;}
 
   // app
-  if(a==="tab"){S.tab=el.dataset.tab;S.screen="app";render();return;}
+  if(a==="tab"){S.tab=el.dataset.tab==="checkins"?"journal":el.dataset.tab;S.screen="app";render();return;}
+  if(a==="journal-next"){S.jp=((S.jp||0)+1)%JOURNAL_PROMPTS.length;render();return;}
   if(a==="open-stage"){S.stageOpen=+el.dataset.id;S.screen="stage";render();return;}
   if(a==="schedule"){S.nextSession="This weekend";render();toast("We’ll send a gentle reminder — never a demand.");return;}
   if(a==="start-session"){S.session={stageId:+el.dataset.id,startedAt:Date.now(),phase:"guide"};S.screen="session";render();return;}
@@ -3843,9 +3891,9 @@ document.addEventListener("click",(e)=>{
     /* Live: the chip indexes go out inside the encrypted envelope. The note
        is stored above but stateEnvelope() never reads it. */
     publishState();
-    if(!canMatch()){ S.tab="checkins"; render(); toast("Reflection saved — on this phone, just for you."); return; }
+    if(!canMatch()){ S.tab="journal"; render(); toast("Reflection saved — on this phone, just for you."); return; }
     const bothIn=!!matchFor(id);
-    S.tab=bothIn?"checkins":"today";render();
+    S.tab=bothIn?"journal":"today";render();
     toast(bothIn?"Reflection saved — see what you both shared":T("Saved privately. {Partner} hasn’t reflected yet."));
     return;
   }

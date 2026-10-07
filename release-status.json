@@ -1,0 +1,5 @@
+{
+  "result": "failed",
+  "step": "setup",
+  "reason": "set ASC_APP_ID (numeric) or BUNDLE_ID so the app can be looked up"
+}

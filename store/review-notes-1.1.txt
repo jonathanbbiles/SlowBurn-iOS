@@ -1,0 +1,19 @@
+Slow Burn is a wellness / education app based on Sensate Focus (Masters & Johnson), a standard therapist-led exercise protocol. Content is instructional text only — there is NO explicit or sexual imagery. A not-medical-advice disclaimer is shown on first launch and must be acknowledged before use. The app links to licensed-clinician directories (AASECT, APTA Pelvic Health).
+
+TO REVIEW THE WHOLE APP ON ONE DEVICE, NO SECOND PHONE AND NO ACCOUNT:
+1. Tap Begin, tick the acknowledgement, tap Continue.
+2. On "Who's practising?": tap "See a sample walkthrough" for a labelled example couple with everything populated, or "Me and a partner" -> "Share this one device" (a toggle at the top switches between the two people), or "Just me" for the full solo program.
+
+WHAT'S NEW IN 1.1 — the tabs are now Home, Talk, Try, Journal, Us:
+- Home: four big buttons (Talk, Try, current stage, Journal), a live conversation card ("Another one" deals the next), the things you both said yes to, and "Your journey" — tap it for the six-stage program.
+- Talk: seven decks of conversation cards. Tap a deck, then "Next card" (or swipe); "Save" keeps a card. The After Dark deck is text-only, within this app's 17+, and asks both people to confirm before showing any card.
+- Try: thirty activities (stargazing, sourdough, hiking...). Each person privately taps "I'd try this" or "Not for me". On the shared-device path, pick as the first person, switch with the toggle, pick as the second: when you both say yes, "It's a match" appears, and only shared yeses are listed.
+- Journal: a rotating writing prompt and the post-session reflections. "Open Permission" opens our separate journal app Permission (App Store id 6789405787) if installed, otherwise its App Store page. Nothing is passed to it.
+- Settings (gear, top right): names, gender and pronouns, Light / Dark / Auto, colour, calm motion, reset.
+Talk and Try were previously two separate apps of ours, Closerly and Hobbloom. Neither was approved; rather than resubmit them we folded them into Slow Burn.
+
+PRIVACY: no login, nothing collected. Optional two-phone pairing uses an anonymous random pair code; the phones do an ephemeral ECDH key exchange and encrypt everything with AES-GCM, so the relay carries only ciphertext and retains nothing. Only stage progress, reflection selections and Try "yes" picks cross, encrypted. The camera is used only to scan the pair code on-device; declining it leaves the typed-code path.
+
+BUSINESS MODEL: a one-time PAID app plus one optional consumable tip, "Small Tip" (com.jonathanbiles.slowburn.tip.small), unchanged since 1.0. It UNLOCKS NOTHING: no subscriptions, no locked content. Find it at Us -> bottom -> "Support Slow Burn". A tip only adds a thank-you line to that card.
+
+"Unlocks" in the app means a stage opens when both partners privately confirm they are ready — a consent gate between two people, not a purchase.

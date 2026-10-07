@@ -211,6 +211,77 @@
   .tg-step.on .stx{color:var(--muted);text-decoration:line-through}
   .seg[role="tablist"] button{min-height:40px}
 
+  /* ---- 1.1 redesign: the fun parts get colour ---- */
+  .hero{border-radius:26px;padding:20px 18px 18px;background:linear-gradient(155deg,#3A0E2E 0%,#8E1C5C 55%,#FF42B3 120%);color:#fff;box-shadow:0 18px 40px -22px rgba(58,14,46,.7)}
+  .hero-kick{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#FFC94D}
+  .hero-h{font-family:var(--display);font-weight:400;font-size:31px;line-height:1.02;color:#fff;margin-top:6px;letter-spacing:.02em}
+  .hero-s{margin:6px 0 0;font-size:13.5px;color:rgba(255,255,255,.82)}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px}
+  .tile{border:0;border-radius:18px;padding:12px 10px 11px;color:#fff;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-height:96px;font-family:var(--sans);box-shadow:0 8px 18px -10px rgba(0,0,0,.45);transition:transform .15s}
+  .tile:active,.deck:active,.mini:active,.yn:active,.nudge-card:active,.prog-card:active{transform:scale(.97)}
+  .tile .te{font-size:24px;line-height:1}.tile .tl{font-family:var(--display);font-size:19px;letter-spacing:.03em;text-transform:uppercase;margin-top:auto}
+  .tile .ts{font-size:10.5px;opacity:.88;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .deal{border-radius:24px;padding:18px 18px 16px;color:#fff;min-height:200px;display:flex;flex-direction:column;box-shadow:0 18px 36px -22px rgba(0,0,0,.6);touch-action:pan-y}
+  .deal.big{min-height:320px;justify-content:space-between}
+  .deal-top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .deal-chip{background:rgba(255,255,255,.2);border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;letter-spacing:.02em;color:#fff}
+  .deal-cat{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:rgba(255,255,255,.8);margin-top:18px}
+  .deal-text{font-family:var(--serif);font-size:23px;line-height:1.3;font-weight:500;margin:12px 0 6px;color:#fff;letter-spacing:.005em}
+  .deal-sub{font-size:13.5px;line-height:1.55;color:rgba(255,255,255,.9);margin:8px 0 0}
+  .deal-hint{font-size:11px;color:rgba(255,255,255,.7);text-align:center;margin-top:10px}
+  .deal-row{display:flex;gap:8px;margin-top:auto;padding-top:12px}
+  .pill-w{border:0;border-radius:999px;padding:10px 16px;min-height:44px;background:#fff;color:#3A0E2E;font-family:var(--sans);font-weight:700;font-size:13.5px;cursor:pointer}
+  .pill-w.ghost{background:rgba(255,255,255,.18);color:#fff}
+  .btn-white{background:#fff;color:#3A0E2E;box-shadow:none}
+  .btn-ghost-w{background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
+  .deal-in{animation:dealIn .32s cubic-bezier(.2,.8,.2,1)}
+  @keyframes dealIn{from{opacity:0;transform:translateY(14px) rotate(-1.2deg) scale(.97)}to{opacity:1;transform:none}}
+  .hscroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin-right:-20px;padding-right:20px;scrollbar-width:none}
+  .hscroll::-webkit-scrollbar{display:none}
+  .mini{flex:none;width:132px;min-height:118px;border:0;border-radius:20px;padding:12px;color:#fff;text-align:left;display:flex;flex-direction:column;gap:4px;cursor:pointer;font-family:var(--sans);box-shadow:0 10px 22px -14px rgba(0,0,0,.6)}
+  .mini .me{font-size:30px}.mini .mn{font-weight:700;font-size:13.5px;line-height:1.25;margin-top:auto}.mini .mt{font-size:10.5px;opacity:.9}
+  .nudge-card{width:100%;display:flex;gap:13px;align-items:center;text-align:left;border:1.5px dashed var(--line-2);background:var(--surface);border-radius:20px;padding:14px 16px;cursor:pointer;font-family:var(--sans);color:var(--ink)}
+  .nc-e{font-size:26px;flex:none}.nc-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .nc-t{font-weight:700;font-size:14.5px}.nc-s{font-size:12px;color:var(--muted);line-height:1.45}
+  .bar{display:block;height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+  .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--plum));transition:width .3s}
+  .prog-card{width:100%;display:flex;flex-direction:column;gap:12px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:22px;padding:16px;cursor:pointer;font-family:var(--sans);color:var(--ink)}
+  .pc-top{display:flex;gap:12px;align-items:center}.pc-n{flex:none;width:44px;height:44px;border-radius:14px;background:linear-gradient(150deg,var(--primary),var(--plum));color:#fff;font-family:var(--display);font-size:24px;display:flex;align-items:center;justify-content:center}
+  .pc-b{flex:1;min-width:0;display:flex;flex-direction:column}.pc-t{font-family:var(--serif);font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.02em}
+  .pc-s{font-size:12px;color:var(--muted)}.pc-go{color:var(--muted-2);font-size:20px}
+  .rail6{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}.rail6 i{height:7px;border-radius:99px;background:var(--surface-2)}
+  .rail6 i.done{background:var(--sage)}.rail6 i.cur{background:linear-gradient(90deg,var(--primary),var(--plum))}
+  .pc-f{font-size:12.5px;color:var(--plum);font-style:italic}
+  .decks{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .deck{border:0;border-radius:22px;min-height:150px;padding:14px;color:#fff;text-align:left;display:flex;flex-direction:column;gap:3px;cursor:pointer;font-family:var(--sans);box-shadow:0 12px 26px -16px rgba(0,0,0,.6);transition:transform .15s}
+  .dk-e{font-size:32px}.dk-t{font-family:var(--display);font-size:21px;line-height:1.05;letter-spacing:.03em;text-transform:uppercase;margin-top:auto}
+  .dk-s{font-size:11.5px;opacity:.9}.dk-bar{height:4px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:6px}.dk-bar i{display:block;height:100%;background:#fff}
+  .swipe-card,.hob-hero{border-radius:28px;padding:18px;color:#fff;text-align:center;display:flex;flex-direction:column;align-items:stretch;box-shadow:0 22px 44px -24px rgba(0,0,0,.65);touch-action:pan-y}
+  .swipe-card{min-height:0}
+  .sc-emoji{font-size:64px;line-height:1;margin-top:12px}
+  .deal,.swipe-card,.hob-hero,.mini,.deck,.tile,.match-card{text-shadow:0 1px 2px rgba(0,0,0,.16)}
+  .sc-name{font-family:var(--display);font-size:30px;line-height:1.02;letter-spacing:.03em;text-transform:uppercase;margin-top:14px}
+  .sc-line{font-size:14px;color:rgba(255,255,255,.9);margin:8px 0 0}
+  .sc-tog{font-size:13px;line-height:1.5;color:#fff;margin:12px 0 2px;background:rgba(0,0,0,.14);border-radius:16px;padding:12px 14px;text-align:left}
+  .yesno{display:flex;gap:16px;justify-content:center}
+  .yn{width:120px;height:76px;border-radius:24px;border:0;cursor:pointer;font-size:26px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--sans);transition:transform .15s}
+  .yn span{font-size:11.5px;font-weight:600}
+  .yn.no{background:var(--surface);color:var(--muted);border:1.5px solid var(--line-2)}
+  .yn.yes{background:linear-gradient(150deg,var(--primary),var(--plum));color:#fff;box-shadow:0 12px 24px -12px rgba(249,79,92,.8)}
+  .who-chip{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:600}
+  .match-ov{position:fixed;inset:0;z-index:80;background:rgba(30,6,24,.62);display:flex;align-items:center;justify-content:center;padding:22px;animation:fadeIn .2s}
+  .match-card{width:100%;max-width:380px;border-radius:30px;padding:26px 22px 20px;color:#fff;text-align:center;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+  .match-kicker{font-family:var(--display);font-size:34px;letter-spacing:.04em;text-transform:uppercase}
+  .match-emoji{font-size:84px;margin-top:10px}.match-name{font-family:var(--serif);font-size:22px;font-weight:700;text-transform:uppercase;margin-top:8px}
+  .match-sub{font-size:14px;color:rgba(255,255,255,.92);margin:8px 0 16px}
+  .match-card .btn+.btn{margin-top:10px}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:scale(.7) rotate(-4deg)}to{opacity:1;transform:none}}
+  .confetti{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+  .confetti i{position:absolute;top:-14px;width:9px;height:14px;border-radius:2px;animation-name:fall;animation-timing-function:cubic-bezier(.3,.6,.5,1);animation-fill-mode:forwards}
+  @keyframes fall{to{top:105%;transform:rotate(720deg) translateX(40px)}}
+  @media (prefers-reduced-motion: reduce){.deal-in,.match-card,.confetti i{animation:none}.confetti{display:none}}
+
   /* Large screens (iPad, landscape iPhone, desktop). The app still fills the window; content is
      constrained to a comfortable reading column centred on the app's OWN background, while the
      chrome (top bar, tab bar) stays full-bleed. Because the column sits on the same background,
@@ -1070,6 +1141,7 @@ function freshState(){
     /* Together tab. S.tg is the on-device store (see loadTogether); the
        partner* fields are what a paired phone sent: its YES picks, as ids. */
     together:"talk",talkDeck:null,talkCard:null,hobbyOpen:null,
+    homeDeck:null,homeCardI:null,matchShow:null,
     tg:blankTogether(),partnerTry:[],partnerTryKnown:undefined,partnerTryMismatch:false
   };
 }
@@ -2167,6 +2239,9 @@ const I={
  today:'<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  program:'<svg viewBox="0 0 24 24" fill="none"><path d="M6 4.5h9l3 3v12H6V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12h6M9 15.5h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
  chat:'<svg viewBox="0 0 24 24" fill="none"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H10l-4 3.5V15.5H6.5a2 2 0 0 1-2-2v-7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ home:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5s5 4 5 9a5 5 0 0 1-10 0c0-1.6.7-3 1.5-3.9.3 1.4 1 2.2 2 2.6C9.8 8.6 12 6.4 12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+ cards:'<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="6.5" width="11" height="14" rx="2.4" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 4.2 17.8 3a2 2 0 0 1 2.2 1.7l1.3 10.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+ sparkle:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18.5 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" fill="currentColor"/></svg>',
  together:'<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><circle cx="15" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/></svg>',
  heart:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.4-7-9.3A3.7 3.7 0 0 1 12 8.2 3.7 3.7 0 0 1 19 10.7C19 15.6 12 20 12 20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
  lock:'<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4" stroke="#A99A94" stroke-width="1.7"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#A99A94" stroke-width="1.7"/></svg>',
@@ -2506,42 +2581,23 @@ function appChrome(inner){
   </div>
   ${inner}
   <div class="tabs">
-    ${tabBtn("today","Today",I.today)}
+    ${tabBtn("today","Home",I.home)}
+    ${tabBtn("talk","Talk",I.cards)}
+    ${tabBtn("try","Try",I.sparkle)}
     ${tabBtn("program","Program",I.program)}
-    ${tabBtn("together",isSolo()?"Explore":"Together",I.together)}
-    ${tabBtn("checkins","Check-ins",I.chat)}
     ${tabBtn("partner",isSolo()?"You":"Us",I.heart)}
-  </div>`;
+  </div>${matchOverlay()}`;
 }
 function tabBtn(id,label,icon){
   /* The Together screens sit under that tab, whatever S.tab last said. */
-  const cur=["talk","saved","trylist","hobby"].indexOf(S.screen)>=0?"together":S.tab;
+  /* Screens under a tab light that tab; Check-ins now lives under Home. */
+  const cur=["talk","saved"].indexOf(S.screen)>=0?"talk"
+    :["trylist","hobby"].indexOf(S.screen)>=0?"try"
+    :S.tab==="together"?(S.together==="try"?"try":"talk")
+    :S.tab==="checkins"?"today":S.tab;
   const on=cur===id;
-  const notif=(id==="checkins"&&hasNewMatch())?'<span class="notif"></span>':"";
+  const notif=(id==="today"&&hasNewMatch())?'<span class="notif"></span>':"";
   return `<button class="tab ${on?'on':''}" data-action="tab" data-tab="${id}">${notif}${icon}<span>${label}</span></button>`;
-}
-function tabToday(){
-  const cur=maxUnlocked(),st=STAGES[cur-1],mySess=me().sessions[cur]||0;
-  return `<div class="view"><div class="pad-tab">
-    <div class="eyebrow">Your current stage</div>
-    <div class="card card-tap mt10" data-action="open-stage" data-id="${cur}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="tiny" style="color:var(--primary);font-weight:700">${st.weeks} · Stage ${cur}</div>
-          <h3 style="font-size:21px;margin-top:5px">${esc(stTitle(st))}</h3><p class="tiny" style="margin-top:3px">${esc(stSub(st))}</p></div>
-        <div class="st-num cur" style="width:44px;height:44px;border-radius:13px">${cur}</div></div>
-      <p class="lead" style="font-size:13.5px;margin-top:12px;color:var(--ink)">${esc(stIntent(st))}</p>
-      <div class="row mt14"><button class="btn" data-action="open-stage" data-id="${cur}">Open this stage →</button></div>
-    </div>
-    <div class="card-soft mt14" style="display:flex;gap:13px;align-items:flex-start">
-      <div style="flex:none;margin-top:1px">${I.spark}</div>
-      <div><div style="font-weight:700;font-size:13.5px">A gentle nudge</div>
-        <p class="tiny" style="margin-top:4px;line-height:1.55">${nudgeText(cur)}</p></div></div>
-    <div class="card mt14">
-      <div class="kv"><span class="k">Sessions you’ve logged here</span><span class="v">${mySess}</span></div>
-      <div class="kv"><span class="k">Next session</span><span class="v">${S.nextSession==="not-set"?'<button class="link" data-action="schedule" style="padding:0">Schedule →</button>':esc(S.nextSession)}</span></div>
-      <div class="kv"><span class="k">Stage focus</span><span class="v" style="color:var(--plum)">“${st.focus}”</span></div></div>
-    <div class="foot-legal">Slow Burn is a wellness program, not medical advice. · <button class="link" data-action="find-clinician" style="font-size:10.5px;padding:0">Find a clinician</button></div>
-  </div></div>`;
 }
 function tabProgram(){
   const cur=maxUnlocked(),solo=isSolo();
@@ -2561,7 +2617,11 @@ function tabProgram(){
       :"You unlock each stage only when you’ve both privately confirmed you’re ready. No negotiating, no pressure."}</p>
     <div class="rail mt18">${rail}</div><div class="tiny" style="margin-top:4px">${cur-1} of 6 stages explored</div>
     <div class="mt18">${items}</div>
-    <div class="card card-tap mt18" data-action="open-practices">
+    <button class="nudge-card mt18" data-action="tab" data-tab="checkins"><span class="nc-e">💬</span>
+      <span class="nc-b"><span class="nc-t">${isSolo()?"Your reflections":"Shared reflections"}</span>
+      <span class="nc-s">${isSolo()?"What you noticed after each session.":"What you both named after each session — never the rest."}</span></span>
+      ${hasNewMatch()?'<span class="badge cur">New</span>':''}</button>
+    <div class="card card-tap mt14" data-action="open-practices">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div><div style="font-weight:700;font-size:14px">Practices</div>
           <p class="tiny" style="margin-top:4px;line-height:1.55">${PRACTICES.length} short sessions you can run alongside any stage.</p></div>
@@ -2585,7 +2645,8 @@ function tabCheckins(){
       </div>`;
     }
     return `<div class="view"><div class="pad-tab">
-      <div class="eyebrow">Your reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you noticed</h2>
+      <button class="back" data-action="tab" data-tab="today">‹ Home</button>
+      <div class="eyebrow mt10">Your reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you noticed</h2>
       <p class="lead mt6" style="font-size:13.5px">After each session you reflect privately. Your written note stays on this device and is never sent anywhere.</p>
       ${S.mode==="live"?`<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("Your two phones haven’t finished setting up their encrypted link yet, so there’s nothing to compare. Once it’s live, the chips you both chose are matched privately between your phones — and your written note still never leaves this one.")}</p></div>`:""}
       ${own||`<div class="card mt18 center" style="padding:34px 20px"><div style="opacity:.5;margin-bottom:12px">${I.heart.replace(/currentColor/g,'#B85C41')}</div>
@@ -2622,7 +2683,8 @@ function tabCheckins(){
     ? `<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("{Partner}’s copy of Slow Burn is a different version, so the app won’t try to line your answers up — comparing them could put the wrong words in {their} mouth. Update both phones and they’ll match again.")}</p></div>`
     : "";
   return `<div class="view"><div class="pad-tab">
-    <div class="eyebrow">Shared reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you both felt</h2>
+    <button class="back" data-action="tab" data-tab="today">‹ Home</button>
+    <div class="eyebrow mt10">Shared reflections</div><h2 class="display" style="font-size:25px;margin-top:8px">What you both felt</h2>
     <p class="lead mt6" style="font-size:13.5px">After each session you each reflect privately. Slow Burn only surfaces what <b>both</b> of you named — never the rest.</p>
     ${live?`<div class="card-soft mt14" style="display:flex;gap:11px;align-items:flex-start">
       <div style="flex:none;margin-top:1px">${I.lock}</div>
@@ -3031,53 +3093,197 @@ function tryTalkAlong(h){
   return a===b?[pool[a]]:[pool[a],pool[b]];
 }
 
-function tabTogether(){
-  const solo=isSolo(), sub=S.together==="try"?"try":"talk";
+/* ---- look: each deck and each hobby carries its own colour, so the fun
+   parts of the app read as fun on every theme. Content cards use their own
+   gradient with white text; nothing here depends on the theme palette. */
+const DECK_LOOK={
+  warmup:   {e:"☕", g:"linear-gradient(150deg,#FF9A62 0%,#FF5E7E 100%)"},
+  datenight:{e:"🌙", g:"linear-gradient(150deg,#5B4BDB 0%,#C04BE0 100%)"},
+  flirty:   {e:"💌", g:"linear-gradient(150deg,#FF42B3 0%,#FF8A5B 100%)"},
+  deeptalk: {e:"🌊", g:"linear-gradient(150deg,#1F8FA8 0%,#3B5BDB 100%)"},
+  longterm: {e:"🏡", g:"linear-gradient(150deg,#2F9E6E 0%,#94C23D 100%)"},
+  weekend:  {e:"🧳", g:"linear-gradient(150deg,#F59F00 0%,#F2542D 100%)"},
+  afterdark:{e:"🕯️", g:"linear-gradient(150deg,#2A0A22 0%,#8E1C5C 100%)"}
+};
+function deckLook(id){ return DECK_LOOK[id]||{e:"💬",g:"linear-gradient(150deg,var(--primary),var(--plum))"}; }
+/* Hues kept to the pink–violet–blue–red–orange arc (no yellow-greens), so
+   white text stays readable on every card. */
+function tryHue(h){ return (180+(TRY.indexOf(h)*53)%210)%360; }
+function tryGrad(h){ const a=tryHue(h); return `linear-gradient(150deg,hsl(${a} 78% 58%) 0%,hsl(${(a+40)%360} 72% 48%) 100%)`; }
+
+/* ---- confetti + match moment. Purely decorative: CSS pieces that remove
+   themselves, nothing stored, nothing sent. */
+function confetti(){
+  const box=document.createElement("div"); box.className="confetti"; box.setAttribute("aria-hidden","true");
+  const colors=["#FF42B3","#FFC94D","#5FCE8F","#5B8CFF","#F94F5C","#C04BE0"];
+  for(let i=0;i<46;i++){
+    const p=document.createElement("i");
+    p.style.left=(randIdx(100))+"%";
+    p.style.background=colors[i%colors.length];
+    p.style.animationDelay=(randIdx(40)/100)+"s";
+    p.style.animationDuration=(1.6+randIdx(120)/100)+"s";
+    p.style.transform="rotate("+randIdx(360)+"deg)";
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(()=>{ try{box.remove();}catch(e){} },3600);
+}
+function showMatch(h){
+  S.matchShow=h.id; render(); confetti();
+}
+function matchOverlay(){
+  const h=S.matchShow&&tryById(S.matchShow); if(!h) return "";
+  return `<div class="match-ov" role="dialog" aria-label="It’s a match">
+    <div class="match-card" style="background:${tryGrad(h)}">
+      <div class="match-kicker">It’s a match</div>
+      <div class="match-emoji">${h.emoji}</div>
+      <div class="match-name">${esc(h.name)}</div>
+      <p class="match-sub">${TE("You and {partner} both want to try this.")}</p>
+      <button class="btn btn-white" data-action="open-hobby" data-id="${h.id}">See the first three steps</button>
+      <button class="btn btn-ghost-w" data-action="match-close">Keep picking</button>
+    </div></div>`;
+}
+
+/* ================= HOME ================= */
+function homeCardEnsure(){
+  if(S.homeDeck&&S.homeCardI!=null&&talkDeck(S.homeDeck)&&talkDeck(S.homeDeck).cards[S.homeCardI]) return;
+  const decks=TALK.filter(d=>!d.adult);
+  S.homeDeck=decks[randIdx(decks.length)].id;
+  talkDraw(S.homeDeck); S.homeCardI=S.talkCard;
+}
+function tabToday(){
+  const cur=maxUnlocked(),st=STAGES[cur-1],solo=isSolo();
+  homeCardEnsure();
+  const d=talkDeck(S.homeDeck),c=d.cards[S.homeCardI],look=deckLook(d.id);
+  const matches=tryMatches(),p=myTry(),picked=p.yes.length+p.no.length;
+  const rail=STAGES.map(s=>`<i class="${s.id<cur?'done':(s.id===cur?'cur':'')}"></i>`).join("");
+  const greet=solo?"Tonight, just you":T("Tonight, you & {partner}");
+  const tiles=`<div class="tiles">
+      <button class="tile" data-action="tab" data-tab="talk" style="background:${deckLook("flirty").g}"><span class="te">🃏</span><span class="tl">Talk</span><span class="ts">280 cards</span></button>
+      <button class="tile" data-action="tab" data-tab="try" style="background:linear-gradient(150deg,#5B8CFF,#C04BE0)"><span class="te">✨</span><span class="tl">Try</span><span class="ts">${matches.length?matches.length+(solo?" picked":" matches"):"30 ideas"}</span></button>
+      <button class="tile" data-action="open-stage" data-id="${cur}" style="background:linear-gradient(150deg,#F94F5C,#FFB23F)"><span class="te">🔥</span><span class="tl">Stage ${cur}</span><span class="ts">${esc(stTitle(st))}</span></button>
+    </div>`;
+  const live=`<div class="eyebrow mt24">Ask each other</div>
+    <div class="deal mt10" style="background:${look.g}" data-swipe="home">
+      <div class="deal-top"><span class="deal-chip">${look.e} ${esc(d.title)}</span><span class="deal-chip">${esc(c[0])}</span></div>
+      <p class="deal-text">${esc(c[1])}</p>
+      <div class="deal-row">
+        <button class="pill-w" data-action="home-card-next">Another one ↻</button>
+        <button class="pill-w ghost" data-action="open-talk" data-id="${d.id}">Open deck</button>
+      </div></div>`;
+  const tryBlock=matches.length
+    ?`<div class="eyebrow mt24">${solo?"On your list":"You both said yes"}</div>
+      <div class="hscroll mt10">${matches.map(h=>`<button class="mini" data-action="open-hobby" data-id="${h.id}" style="background:${tryGrad(h)}">
+        <span class="me">${h.emoji}</span><span class="mn">${esc(h.name)}</span>${S.tg.tried.indexOf(h.id)>=0?'<span class="mt">Tried ✓</span>':''}</button>`).join("")}</div>`
+    :`<button class="nudge-card mt24" data-action="tab" data-tab="try">
+        <span class="nc-e">✨</span>
+        <span class="nc-b"><span class="nc-t">${picked?"Keep picking":"What would you two try?"}</span>
+        <span class="nc-s">${picked?(picked+" of "+TRY.length+" picked"+(solo?"":" — matches appear when you both say yes")):(solo?"Thirty small adventures. Pick a few.":"Pick privately. Only the ones you both want show up.")}</span>
+        <span class="bar"><i style="width:${Math.round(100*picked/TRY.length)}%"></i></span></span></button>`;
+  const reflections=(!solo&&hasNewMatch())
+    ?`<button class="nudge-card mt14" data-action="tab" data-tab="checkins"><span class="nc-e">💬</span>
+        <span class="nc-b"><span class="nc-t">You have a shared reflection</span><span class="nc-s">See what you both felt — and nothing else.</span></span></button>`:"";
   return `<div class="view"><div class="pad-tab">
-    <div class="eyebrow">${solo?"Explore":"Together"}</div>
-    <h2 class="display" style="font-size:25px;margin-top:8px">${solo?"Prompts, and something new":"Talk, and try something new"}</h2>
-    <div class="seg mt14" role="tablist">
-      <button data-action="tg-sub" data-sub="talk" class="${sub==="talk"?"on":""}">Talk</button>
-      <button data-action="tg-sub" data-sub="try" class="${sub==="try"?"on":""}">Try something new</button>
+    <div class="hero">
+      <div class="hero-kick">${S.nextSession==="not-set"?"Slow Burn":"Next: "+esc(S.nextSession)}</div>
+      <h2 class="hero-h">${esc(greet)}</h2>
+      <p class="hero-s">Pick one thing. That’s enough.</p>
+      ${tiles}
     </div>
-    ${sub==="try"?tryView():talkView()}
+    ${live}
+    ${tryBlock}
+    ${reflections}
+    <div class="eyebrow mt24">The program</div>
+    <button class="prog-card mt10" data-action="open-stage" data-id="${cur}">
+      <span class="pc-top"><span class="pc-n">${cur}</span><span class="pc-b"><span class="pc-t">${esc(stTitle(st))}</span><span class="pc-s">${st.weeks} · ${esc(stSub(st))}</span></span><span class="pc-go">›</span></span>
+      <span class="rail6">${rail}</span>
+      <span class="pc-f">“${esc(st.focus)}”</span></button>
+    <div class="card-soft mt14" style="display:flex;gap:13px;align-items:flex-start">
+      <div style="flex:none;margin-top:1px">${I.spark}</div>
+      <div><div style="font-weight:700;font-size:13.5px">A gentle nudge</div>
+        <p class="tiny" style="margin-top:4px;line-height:1.55">${nudgeText(cur)}</p></div></div>
+    ${S.nextSession==="not-set"?`<button class="link mt10" data-action="schedule" style="padding:0">Schedule your next session →</button>`:""}
+    <div class="foot-legal">Slow Burn is a wellness program, not medical advice. · <button class="link" data-action="find-clinician" style="font-size:10.5px;padding:0">Find a clinician</button></div>
   </div></div>`;
 }
-function talkView(){
+
+/* ================= TALK ================= */
+function tabTalk(){
   const solo=isSolo(), fav=S.tg.talk.fav.length;
-  const decks=TALK.map(d=>`<div class="card card-tap mt14" data-action="open-talk" data-id="${d.id}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-        <div><div class="st-title" style="font-size:16px">${esc(d.title)}</div>
-          <div class="tiny" style="margin-top:3px">${d.cards.length} cards${d.adult?" · asks you both first":""}</div></div>
-        <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div>
-      <p class="tiny" style="margin-top:8px;line-height:1.55">${esc(d.blurb)}</p></div>`).join("");
-  return `<p class="lead mt14" style="font-size:13.5px">${solo
-      ?"Written for two people, and just as good as journaling prompts on your own."
-      :TE("Cards to read aloud to each other. Every one is optional — either of you can skip any card, no reason needed.")}</p>
-    ${fav?`<div class="card-soft mt14 card-tap" data-action="open-saved" style="display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-weight:700;font-size:13.5px">Saved cards</div><div class="tiny" style="margin-top:3px">${fav} saved on this phone</div></div>
-      <div style="flex:none;color:var(--muted-2);font-size:18px">›</div></div>`:""}
-    ${decks}
-    <div class="foot-legal">Cards stay on this phone. Nothing here is sent anywhere.</div>`;
+  const tiles=TALK.map(d=>{const l=deckLook(d.id),seen=(S.tg.talk.seen[d.id]||[]).length;
+    return `<button class="deck" data-action="open-talk" data-id="${d.id}" style="background:${l.g}">
+      <span class="dk-e">${l.e}</span>
+      <span class="dk-t">${esc(d.title)}</span>
+      <span class="dk-s">${d.cards.length} cards${d.adult?" · asks first":""}</span>
+      ${seen?`<span class="dk-bar"><i style="width:${Math.min(100,Math.round(100*seen/d.cards.length))}%"></i></span>`:""}
+    </button>`;}).join("");
+  return `<div class="view"><div class="pad-tab">
+    <div class="eyebrow">Talk</div>
+    <h2 class="display" style="font-size:30px;margin-top:6px">Pick a deck</h2>
+    <p class="lead mt6" style="font-size:13.5px">${solo?"Written for two — just as good as journaling prompts on your own.":TE("Read one aloud. Either of you can skip any card, no reason needed.")}</p>
+    ${fav?`<button class="nudge-card mt14" data-action="open-saved"><span class="nc-e">♥</span><span class="nc-b"><span class="nc-t">Saved cards</span><span class="nc-s">${fav} kept on this phone</span></span></button>`:""}
+    <div class="decks mt14">${tiles}</div>
+    <div class="foot-legal">Cards stay on this phone. Nothing here is sent anywhere.</div>
+  </div></div>`;
 }
-function tryView(){
+function screenTalk(id){
+  const d=talkDeck(id); if(!d) return tabTalk();
+  const l=deckLook(d.id);
+  const back=`<button class="back" data-action="tg-back" data-sub="talk">‹ All decks</button>`;
+  if(d.adult&&!S.tg.talk.adultOk){
+    return `<div class="view"><div class="pad-tab">${back}
+      <div class="deal mt14" style="background:${l.g};min-height:0">
+        <div class="deal-top"><span class="deal-chip">${l.e} ${esc(d.title)}</span></div>
+        <p class="deal-text" style="font-size:24px">${isSolo()?"Before you open this deck":"Choose this one together"}</p>
+        <p class="deal-sub">${esc(d.blurb)}</p>
+        <p class="deal-sub">${isSolo()
+          ?"These cards are written for two. On your own, read them as reflection prompts — what you would want to say, and what you would want to hear."
+          :TE("Open it only if you’ve both chosen to — and either of you can stop at any card.")}</p>
+        <button class="btn btn-white mt14" data-action="talk-adult-ok" data-id="${d.id}">${isSolo()?"Open the deck":"We’ve both chosen this"}</button>
+        <button class="btn btn-ghost-w mt10" data-action="tg-back" data-sub="talk">Not now</button></div>
+    </div></div>`;
+  }
+  if(S.talkCard==null||!d.cards[S.talkCard]) talkDraw(d.id);
+  const c=d.cards[S.talkCard], fav=talkIsFav(d.id,S.talkCard);
+  const seen=(S.tg.talk.seen[d.id]||[]).length;
+  return `<div class="view"><div class="pad-tab">${back}
+    <div class="deal big mt14 deal-in" style="background:${l.g}" data-swipe="talk" data-id="${d.id}">
+      <div class="deal-top"><span class="deal-chip">${l.e} ${esc(d.title)}</span><span class="deal-chip">${seen} / ${d.cards.length}</span></div>
+      <div class="deal-cat">${esc(c[0])}</div>
+      <p class="deal-text">${esc(c[1])}</p>
+      <div class="deal-hint">swipe for the next card</div>
+    </div>
+    <div class="row mt14">
+      <button class="btn btn-soft" data-action="talk-fav" data-id="${d.id}" aria-pressed="${fav}">${fav?"♥ Saved":"♡ Save"}</button>
+      <button class="btn" data-action="talk-next" data-id="${d.id}">Next card →</button></div>
+    <div class="foot-legal">Skip any card — no reason needed.</div>
+  </div></div>`;
+}
+function screenSaved(){
+  const list=S.tg.talk.fav.map(talkCardByKey).filter(Boolean);
+  return `<div class="view"><div class="pad-tab">
+    <button class="back" data-action="tg-back" data-sub="talk">‹ All decks</button>
+    <div class="eyebrow mt10">Kept on this phone</div>
+    <h2 class="display" style="font-size:28px;margin-top:6px">Saved cards</h2>
+    ${list.length?list.map(x=>{const l=deckLook(x.deck.id);return `<div class="deal mt14" style="background:${l.g};min-height:0">
+        <div class="deal-top"><span class="deal-chip">${l.e} ${esc(x.deck.title)}</span><span class="deal-chip">${esc(x.cat)}</span></div>
+        <p class="deal-text" style="font-size:19px">${esc(x.text)}</p>
+        <div class="deal-row"><button class="pill-w ghost" data-action="talk-unfav" data-key="${esc(talkCardKey(x.deck.id,x.i))}">Remove</button></div></div>`;}).join("")
+      :`<p class="lead mt14" style="font-size:13.5px">Nothing saved yet. Tap ♡ Save on any card.</p>`}
+  </div></div>`;
+}
+
+/* ================= TRY ================= */
+function tabTry(){
   const solo=isSolo(), live=S.mode==="live", p=myTry();
   const picked=p.yes.length+p.no.length, next=tryNextUnpicked(), matches=tryMatches();
-  const tried=S.tg.tried;
-  const intro=solo
-    ?"Mark what you’d like to try, then start one. Three small steps each."
-    :"Each of you privately marks what you’d try. Slow Burn only shows what you <b>both</b> said yes to — never the rest.";
   const asWho=S.mode==="shared"
-    ?`<div class="card-soft mt14"><p class="tiny" style="line-height:1.6">${TE("Picking as {Me}. When you’re done, hand the phone over and switch sides at the top.")}</p></div>`:"";
-  const row=h=>`<div class="card card-tap mt10" data-action="open-hobby" data-id="${h.id}" style="display:flex;gap:14px;align-items:center">
-      <div class="tg-emoji">${h.emoji}</div>
-      <div style="flex:1;min-width:0"><div class="st-title" style="font-size:15px">${esc(h.name)}</div>
-        <div class="tiny" style="margin-top:3px">${esc(h.line)}</div></div>
-      ${tried.indexOf(h.id)>=0?`<span class="badge done">Tried</span>`:`<div style="flex:none;color:var(--muted-2);font-size:18px">›</div>`}</div>`;
+    ?`<div class="who-chip mt10">${TE("Picking as {Me}")} · <span class="tiny">switch sides at the top</span></div>`:"";
   let status="";
   if(matches.length){
-    status=`<div class="tiny mt18" style="font-weight:700;color:var(--sage);letter-spacing:.04em;text-transform:uppercase">${solo?"On your list":"You both said yes"}</div>
-      ${matches.map(row).join("")}`;
+    status=`<div class="eyebrow mt18" style="color:var(--sage)">${solo?"On your list":"You both said yes"}</div>
+      <div class="hscroll mt10">${matches.map(h=>`<button class="mini" data-action="open-hobby" data-id="${h.id}" style="background:${tryGrad(h)}">
+        <span class="me">${h.emoji}</span><span class="mn">${esc(h.name)}</span>${S.tg.tried.indexOf(h.id)>=0?'<span class="mt">Tried ✓</span>':''}</button>`).join("")}</div>`;
   } else if(!solo&&picked){
     let msg;
     if(live&&!E2E.secure()) msg=TE("Your phones haven’t finished setting up their encrypted link yet. Once they have, your picks are compared privately — and only the overlap is shown.");
@@ -3088,66 +3294,36 @@ function tryView(){
     status=`<div class="card-soft mt18"><div style="font-weight:700;font-size:13.5px">${theirTryYes()?"Nothing shared yet":TE("Waiting on {partner}")}</div>
       <p class="tiny" style="margin-top:4px;line-height:1.55">${msg}</p></div>`;
   }
-  const picker=next?`<div class="card mt18 tg-pick">
-      <div class="tiny" style="color:var(--primary);font-weight:700">${tryWhere(next)} · ${picked+1} of ${TRY.length}</div>
-      <div class="tg-emoji big mt10">${next.emoji}</div>
-      <h3 style="font-size:21px;margin-top:8px">${esc(next.name)}</h3>
-      <p class="tiny" style="margin-top:4px">${esc(next.line)}</p>
-      <p class="lead mt10" style="font-size:13.5px;color:var(--ink)">${esc(next.together)}</p>
-      <div class="row mt14">
-        <button class="btn btn-soft" data-action="try-set" data-id="${next.id}" data-val="no">Not for me</button>
-        <button class="btn" data-action="try-set" data-id="${next.id}" data-val="yes">I’d try this</button>
-      </div></div>`
+  const picker=next?`<div class="swipe-card mt18 deal-in" style="background:${tryGrad(next)}" data-swipe="try" data-id="${next.id}">
+      <div class="deal-top"><span class="deal-chip">${tryWhere(next)}</span><span class="deal-chip">${picked+1} / ${TRY.length}</span></div>
+      <div class="sc-emoji">${next.emoji}</div>
+      <div class="sc-name">${esc(next.name)}</div>
+      <p class="sc-line">${esc(next.line)}</p>
+      <p class="sc-tog">${esc(solo?next.line:next.together)}</p>
+    </div>
+    <div class="yesno mt14">
+      <button class="yn no" data-action="try-set" data-id="${next.id}" data-val="no" aria-label="Not for me">✕<span>Not for me</span></button>
+      <button class="yn yes" data-action="try-set" data-id="${next.id}" data-val="yes" aria-label="I’d try this">♥<span>I’d try this</span></button>
+    </div>`
     :`<div class="card-soft mt18"><p class="tiny" style="line-height:1.55">You’ve been through all ${TRY.length}. Change any answer whenever you like.</p></div>`;
-  return `<p class="lead mt14" style="font-size:13.5px">${intro}</p>
-    ${asWho}${status}${picker}
-    ${picked?`<button class="btn btn-soft mt14" data-action="open-trylist">Review my answers</button>`:""}
+  return `<div class="view"><div class="pad-tab">
+    <div class="eyebrow">Try something new</div>
+    <h2 class="display" style="font-size:30px;margin-top:6px">${solo?"What would you try?":"What would you two try?"}</h2>
+    <p class="lead mt6" style="font-size:13.5px">${solo
+      ?"Swipe through thirty small adventures. Each has three easy steps."
+      :"Each of you picks privately. Slow Burn only shows what you <b>both</b> said yes to — never the rest."}</p>
+    <div class="bar mt10"><i style="width:${Math.round(100*picked/TRY.length)}%"></i></div>
+    ${asWho}${picker}${status}
+    ${picked?`<button class="link mt14" data-action="open-trylist" style="padding:0">Review my answers →</button>`:""}
     <div class="foot-legal">${solo||S.mode==="shared"
       ?"Your picks stay on this phone."
-      :"Only the things you said yes to cross to the other phone, end-to-end encrypted — never the ones you passed on."}</div>`;
-}
-function screenTalk(id){
-  const d=talkDeck(id); if(!d) return tabTogether();
-  const back=`<button class="back" data-action="tg-back" data-sub="talk">‹ Together</button>`;
-  if(d.adult&&!S.tg.talk.adultOk){
-    return `<div class="view"><div class="pad-tab">${back}
-      <div class="eyebrow mt10">${esc(d.title)}</div>
-      <h2 class="display" style="font-size:25px;margin-top:8px">${isSolo()?"Before you open this deck":"Choose this one together"}</h2>
-      <div class="card mt18"><p class="lead" style="font-size:14px;color:var(--ink)">${esc(d.blurb)}</p>
-        <p class="tiny mt10" style="line-height:1.6">${isSolo()
-          ?"These cards are written for two. On your own, read them as reflection prompts — what you would want to say, and what you would want to hear."
-          :TE("Open it only if you’ve both chosen to — and either of you can stop at any card.")}</p>
-        <button class="btn mt14" data-action="talk-adult-ok" data-id="${d.id}">${isSolo()?"Open the deck":"We’ve both chosen this"}</button>
-        <button class="btn btn-soft mt10" data-action="tg-back" data-sub="talk">Not now</button></div>
-    </div></div>`;
-  }
-  if(S.talkCard==null||!d.cards[S.talkCard]) talkDraw(d.id);
-  const c=d.cards[S.talkCard], fav=talkIsFav(d.id,S.talkCard);
-  const seen=(S.tg.talk.seen[d.id]||[]).length;
-  return `<div class="view"><div class="pad-tab">${back}
-    <div class="eyebrow mt10">${esc(d.title)} · ${seen} of ${d.cards.length}</div>
-    <div class="card mt14 tg-card">
-      <div class="tiny" style="color:var(--plum);font-weight:700;letter-spacing:.06em;text-transform:uppercase">${esc(c[0])}</div>
-      <p class="tg-text">${esc(c[1])}</p></div>
-    <div class="row mt14">
-      <button class="btn btn-soft" data-action="talk-fav" data-id="${d.id}" aria-pressed="${fav}">${fav?"♥ Saved":"♡ Save"}</button>
-      <button class="btn" data-action="talk-next" data-id="${d.id}">Next card</button></div>
-    <div class="foot-legal">Skip any card — no reason needed.</div>
+      :"Only the things you said yes to cross to the other phone, end-to-end encrypted — never the ones you passed on."}</div>
   </div></div>`;
 }
-function screenSaved(){
-  const list=S.tg.talk.fav.map(talkCardByKey).filter(Boolean);
-  return `<div class="view"><div class="pad-tab">
-    <button class="back" data-action="tg-back" data-sub="talk">‹ Together</button>
-    <div class="eyebrow mt10">Kept on this phone</div>
-    <h2 class="display" style="font-size:25px;margin-top:8px">Saved cards</h2>
-    ${list.length?list.map(x=>`<div class="card mt14">
-        <div class="tiny" style="color:var(--plum);font-weight:700">${esc(x.deck.title)} · ${esc(x.cat)}</div>
-        <p style="font-size:15px;line-height:1.5;margin-top:6px">${esc(x.text)}</p>
-        <button class="link mt10" data-action="talk-unfav" data-key="${esc(talkCardKey(x.deck.id,x.i))}" style="padding:0">Remove</button></div>`).join("")
-      :`<p class="lead mt14" style="font-size:13.5px">Nothing saved yet. Tap ♡ Save on any card.</p>`}
-  </div></div>`;
-}
+/* Kept as the name tests, scenes and older state use; dispatches to the
+   two tabs that replaced it. */
+function tabTogether(){ return S.together==="try"?tabTry():tabTalk(); }
+
 function screenTryList(){
   const p=myTry();
   const rows=TRY.map(h=>{
@@ -3158,32 +3334,35 @@ function screenTryList(){
         <button class="chip ${v==="no"?"sel":""}" data-action="try-set" data-id="${h.id}" data-val="${v==="no"?"":"no"}" aria-pressed="${v==="no"}" style="padding:7px 12px">No</button></span></div>`;
   }).join("");
   return `<div class="view"><div class="pad-tab">
-    <button class="back" data-action="tg-back" data-sub="try">‹ Together</button>
+    <button class="back" data-action="tg-back" data-sub="try">‹ Try something new</button>
     <div class="eyebrow mt10">${S.mode==="shared"?TE("{Me}’s answers"):"Your answers"}</div>
-    <h2 class="display" style="font-size:25px;margin-top:8px">What you’d try</h2>
+    <h2 class="display" style="font-size:28px;margin-top:6px">What you’d try</h2>
     <p class="lead mt6" style="font-size:13.5px">Change any answer. ${isSolo()?"":TE("{Partner} only ever sees the ones you both said yes to.")}</p>
     <div class="card mt14">${rows}</div>
   </div></div>`;
 }
 function screenHobby(id){
-  const h=tryById(id); if(!h) return tabTogether();
+  const h=tryById(id); if(!h) return tabTry();
   const solo=isSolo(), done=S.tg.steps[h.id]||[], tried=S.tg.tried.indexOf(h.id)>=0;
+  const nDone=done.filter(Boolean).length;
   const steps=h.steps.map((x,i)=>`<button class="tg-step ${done[i]?"on":""}" data-action="hobby-step" data-id="${h.id}" data-i="${i}" aria-pressed="${!!done[i]}">
       <span class="dot">${done[i]?I.check:(i+1)}</span><span class="stx">${esc(x)}</span></button>`).join("");
   const along=tryTalkAlong(h);
   return `<div class="view"><div class="pad-tab">
-    <button class="back" data-action="tg-back" data-sub="try">‹ Together</button>
-    <div style="display:flex;gap:14px;align-items:center" class="mt10">
-      <div class="tg-emoji big">${h.emoji}</div>
-      <div><div class="eyebrow">${tryWhere(h)}</div>
-        <h2 class="display" style="font-size:25px;margin-top:4px">${esc(h.name)}</h2></div></div>
-    <p class="lead mt10" style="font-size:14px">${esc(h.line)}</p>
+    <button class="back" data-action="tg-back" data-sub="try">‹ Try something new</button>
+    <div class="hob-hero mt10" style="background:${tryGrad(h)}">
+      <div class="deal-top"><span class="deal-chip">${tryWhere(h)}</span>${tried?'<span class="deal-chip">Tried ✓</span>':""}</div>
+      <div class="sc-emoji">${h.emoji}</div>
+      <div class="sc-name">${esc(h.name)}</div>
+      <p class="sc-line">${esc(h.line)}</p>
+    </div>
     ${solo?"":`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px">Doing it together</div>
       <p class="tiny" style="margin-top:4px;line-height:1.6">${esc(h.together)}</p></div>`}
-    <div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:4px">Three small steps</div>${steps}</div>
+    <div class="card mt14"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div style="font-weight:700;font-size:14px">Three small steps</div><div class="tiny">${nDone} / 3</div></div>${steps}</div>
     ${(!solo&&along.length)?`<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Talk while you do it</div>
       ${along.map(t=>`<p class="tiny" style="line-height:1.6;margin-top:6px">“${esc(t)}”</p>`).join("")}</div>`:""}
-    <button class="btn ${tried?"btn-soft":""} mt14" data-action="hobby-tried" data-id="${h.id}" aria-pressed="${tried}">${tried?(solo?"✓ You tried it":"✓ You tried it together"):(solo?"I tried it":"We tried it")}</button>
+    <button class="btn ${tried?"btn-soft":""} mt14" data-action="hobby-tried" data-id="${h.id}" aria-pressed="${tried}">${tried?(solo?"✓ You tried it":"✓ You tried it together"):(solo?"I tried it 🎉":"We tried it 🎉")}</button>
     <div class="foot-legal">Your steps and what you’ve tried are kept on this phone only.</div>
   </div></div>`;
 }
@@ -3259,7 +3438,8 @@ function render(){
   else if(S.screen==="trylist")html=appChrome(screenTryList());
   else if(S.screen==="hobby")html=appChrome(screenHobby(S.hobbyOpen));
   else if(S.screen==="app"){
-    let inner=S.tab==="today"?tabToday():S.tab==="program"?tabProgram():S.tab==="together"?tabTogether()
+    let inner=S.tab==="today"?tabToday():S.tab==="program"?tabProgram()
+      :S.tab==="talk"?tabTalk():S.tab==="try"?tabTry():S.tab==="together"?tabTogether()
       :S.tab==="checkins"?tabCheckins():tabPartner();
     html=appChrome(inner);
   }
@@ -3304,6 +3484,32 @@ function captureSetup(){
   const sc=val("sc");   if(sc!==null) S.profile.structureCustom=sc.trim();
   const pt=val("ptc");  if(pt!==null) S.profile.partnerTermCustom=pt.trim();
 }
+/* Swipe on the colour cards: left/right = next card, or on the Try card
+   right = "I'd try this", left = "Not for me". Every swipe has a real
+   button doing the same thing, so nothing depends on the gesture. */
+(function(){
+  let sx=null,sy=null,el=null;
+  document.addEventListener("touchstart",e=>{
+    el=e.target.closest&&e.target.closest("[data-swipe]"); if(!el) return;
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener("touchend",e=>{
+    if(!el||sx==null) return;
+    const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy, kind=el.dataset.swipe;
+    const target=el; el=null; sx=null;
+    if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.3) return;
+    let btn=null;
+    if(kind==="talk") btn=document.querySelector('[data-action="talk-next"]');
+    else if(kind==="home") btn=document.querySelector('[data-action="home-card-next"]');
+    else if(kind==="try") btn=document.querySelector('[data-action="try-set"][data-val="'+(dx>0?"yes":"no")+'"]');
+    if(!btn) return;
+    target.style.transition="transform .22s ease, opacity .22s ease";
+    target.style.transform="translateX("+(dx>0?120:-120)+"%) rotate("+(dx>0?12:-12)+"deg)";
+    target.style.opacity="0";
+    setTimeout(()=>btn.click(),180);
+  },{passive:true});
+})();
+
 document.addEventListener("click",(e)=>{
   const el=e.target.closest("[data-action]");if(!el)return;
   const a=el.dataset.action;
@@ -3442,8 +3648,11 @@ document.addEventListener("click",(e)=>{
 
   /* ---------- together ---------- */
   if(a==="tg-sub"){S.together=el.dataset.sub==="try"?"try":"talk";render();return;}
-  if(a==="tg-back"){S.together=el.dataset.sub==="try"?"try":"talk";S.screen="app";S.tab="together";S.talkCard=null;render();return;}
-  if(a==="open-talk"){S.talkDeck=el.dataset.id;S.talkCard=null;S.screen="talk";render();return;}
+  if(a==="tg-back"){S.together=el.dataset.sub==="try"?"try":"talk";S.screen="app";S.tab=S.together;S.talkCard=null;render();return;}
+  if(a==="home-card-next"){const d=S.homeDeck;talkDraw(d);S.homeCardI=S.talkCard;S.talkCard=null;render();
+    const card=document.querySelector(".deal");if(card)card.classList.add("deal-in");return;}
+  if(a==="match-close"){S.matchShow=null;render();return;}
+  if(a==="open-talk"){S.talkDeck=el.dataset.id;S.talkCard=(el.dataset.id===S.homeDeck&&S.screen==="app"&&S.tab==="today")?S.homeCardI:null;S.screen="talk";render();return;}
   if(a==="talk-adult-ok"){S.tg.talk.adultOk=true;saveTogether();S.talkCard=null;render();return;}
   if(a==="talk-next"){const re=talkDraw(el.dataset.id);render();if(re)toast("That’s every card in this deck — shuffling.");return;}
   if(a==="talk-fav"){const k=talkCardKey(el.dataset.id,S.talkCard),f=S.tg.talk.fav,i=f.indexOf(k);
@@ -3453,15 +3662,16 @@ document.addEventListener("click",(e)=>{
   if(a==="open-trylist"){S.screen="trylist";render();return;}
   if(a==="try-set"){
     const root=document.getElementById("root"),keep=root.scrollTop,id=el.dataset.id;
-    trySet(id,el.dataset.val);render();
+    trySet(id,el.dataset.val);
+    if(el.dataset.val==="yes"&&!isSolo()&&tryMatches().some(h=>h.id===id)){ showMatch(tryById(id)); return; }
+    render();
     if(S.screen==="trylist") root.scrollTop=keep;
-    if(el.dataset.val==="yes"&&!isSolo()&&tryMatches().some(h=>h.id===id)) toast("You both said yes to this one.");
     return;}
-  if(a==="open-hobby"){S.hobbyOpen=el.dataset.id;S.screen="hobby";render();return;}
+  if(a==="open-hobby"){S.matchShow=null;S.hobbyOpen=el.dataset.id;S.screen="hobby";render();return;}
   if(a==="hobby-step"){const root=document.getElementById("root"),keep=root.scrollTop,id=el.dataset.id,i=+el.dataset.i;
     const d=(S.tg.steps[id]||[false,false,false]).slice();d[i]=!d[i];S.tg.steps[id]=d;saveTogether();render();root.scrollTop=keep;return;}
   if(a==="hobby-tried"){const id=el.dataset.id,t=S.tg.tried,i=t.indexOf(id);if(i>=0)t.splice(i,1);else t.push(id);saveTogether();render();
-    if(i<0)toast(isSolo()?"Nice. Marked as tried.":"Nice. Marked as tried together.");return;}
+    if(i<0){confetti();toast(isSolo()?"Nice. Marked as tried.":"Nice. Marked as tried together.");}return;}
 
   // app
   if(a==="tab"){S.tab=el.dataset.tab;S.screen="app";render();return;}

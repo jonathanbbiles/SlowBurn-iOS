@@ -57,9 +57,21 @@ for (const [label, re] of [["subscription", /\bsubscri/i], ["upgrade", /\bupgrad
 /* ---------- 2. Everything is reachable ---------- */
 seedProfile(p, { name: "Sam", gender: "nonbinary", pronouns: "they", orientation: "queer" },
                 { name: "Rae", gender: "woman", pronouns: "she", orientation: "queer" });
-p.S.mode = "shared"; p.S.view = "A"; p.S.screen = "app"; p.S.tab = "together"; p.S.together = "talk";
+p.S.mode = "shared"; p.S.view = "A"; p.S.screen = "app"; p.S.tab = "talk";
 api.render();
-ok(fails, !!p.w.document.querySelector('[data-action="tab"][data-tab="together"]'), "2: no Together tab button");
+/* 1.1 redesign: Talk and Try are tabs of their own, and Home links to both —
+   the new features must never again sit behind a toggle on a fourth tab. */
+ok(fails, !!p.w.document.querySelector('.tabs [data-tab="talk"]') && !!p.w.document.querySelector('.tabs [data-tab="try"]'),
+   "2: Talk and Try are not both in the tab bar");
+p.S.tab = "today"; api.render();
+ok(fails, !!p.w.document.querySelector('.tiles [data-tab="talk"]') && !!p.w.document.querySelector('.tiles [data-tab="try"]'),
+   "2: Home does not link straight to Talk and Try");
+const homeCard = p.w.document.querySelector(".deal .deal-text");
+ok(fails, !!homeCard && TALK.some((d) => !d.adult && d.cards.some((c) => homeCard.textContent === c[1])),
+   "2: Home does not show a live conversation card from an everyday deck");
+p.click('[data-action="home-card-next"]');
+ok(fails, !!p.w.document.querySelector(".deal .deal-text"), "2: Another one did not deal a new card on Home");
+p.S.tab = "talk"; api.render();
 for (const d of TALK) ok(fails, html().includes(`data-id="${d.id}"`), `2: deck ${d.id} is not listed`);
 for (const h of TRY) {
   p.S.screen = "hobby"; p.S.hobbyOpen = h.id; api.render();
@@ -68,7 +80,7 @@ for (const h of TRY) {
 p.S.screen = "app"; api.render();
 
 /* ---------- 3. Shared device: overlap only ---------- */
-p.S.together = "try"; api.render();
+p.S.tab = "try"; api.render();
 api.trySet("chess", "yes"); api.trySet("hiking", "yes"); api.trySet("running", "no");
 ok(fails, api.tryMatches().length === 0, "3: matches shown before the other person picked anything");
 p.S.view = "B";
@@ -83,18 +95,21 @@ ok(fails, h.includes("Chess") && !h.includes("Kayaking"), "3: side A sees the wr
 /* Through the real buttons: B changes a NO to YES in the answers list. */
 p.S.view = "B"; p.S.screen = "trylist"; api.render();
 click('[data-action="try-set"][data-id="hiking"][data-val="yes"]');
+ok(fails, html().includes("It’s a match") && html().includes("Hiking"), "3: a new mutual yes did not show the match moment");
+click('[data-action="match-close"]');
+ok(fails, !html().includes("It’s a match"), "3: the match moment did not close");
 ok(fails, api.tryMatches().map((x) => x.id).sort().join() === "chess,hiking", "3: changing an answer did not update the overlap");
 p.S.screen = "app"; p.S.view = "A"; api.render();
 
 /* Solo: your own list. */
 const solo = bootPhone(broker, "solo");
 seedProfile(solo, { name: "Kai", gender: "man", pronouns: "he", orientation: "gay" }, { name: "", gender: "", pronouns: "", orientation: "" });
-solo.S.mode = "solo"; solo.S.screen = "app"; solo.S.tab = "together"; solo.S.together = "try";
+solo.S.mode = "solo"; solo.S.screen = "app"; solo.S.tab = "try";
 solo.api.trySet("yoga", "yes");
 solo.api.render();
 ok(fails, solo.api.tryMatches().map((x) => x.id).join() === "yoga", "3: solo does not show its own list");
 ok(fails, solo.w.document.getElementById("root").innerHTML.includes("On your list"), "3: solo list heading missing");
-ok(fails, solo.w.document.querySelector('[data-tab="together"]').textContent.includes("Explore"), "3: solo tab should read Explore");
+ok(fails, !solo.w.document.getElementById("root").innerHTML.includes("It’s a match"), "3: solo should never show a match moment");
 
 /* ---------- 4. Talk draws without repeats ---------- */
 const deck = TALK.find((d) => d.id === "warmup");
@@ -108,7 +123,7 @@ for (let i = 0; i < deck.cards.length; i++) {
 ok(fails, drawn.size === deck.cards.length, `4: repeated a card before finishing (${drawn.size}/${deck.cards.length})`);
 ok(fails, api.talkDraw("warmup") === true, "4: did not reshuffle after the last card");
 /* Through the UI: open a deck, save a card, it appears in Saved. */
-p.S.screen = "app"; p.S.tab = "together"; p.S.together = "talk"; api.render();
+p.S.screen = "app"; p.S.tab = "talk"; api.render();
 click('[data-action="open-talk"][data-id="deeptalk"]');
 ok(fails, p.S.screen === "talk" && html().includes("Next card"), "4: a deck does not open to a card");
 const shown = TALK.find((d) => d.id === "deeptalk").cards[p.S.talkCard][1];
@@ -118,7 +133,7 @@ click('[data-action="open-saved"]');
 ok(fails, html().includes(shown.replace(/&/g, "&amp;")), "4: a saved card is not in Saved cards");
 
 /* ---------- 5. After Dark asks first ---------- */
-p.S.screen = "app"; p.S.tab = "together"; p.S.together = "talk"; p.S.tg.talk.adultOk = false; api.render();
+p.S.screen = "app"; p.S.tab = "talk"; p.S.tg.talk.adultOk = false; api.render();
 click('[data-action="open-talk"][data-id="afterdark"]');
 const ad = TALK.find((d) => d.id === "afterdark");
 h = html();

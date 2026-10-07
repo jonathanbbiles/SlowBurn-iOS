@@ -28,9 +28,10 @@ const DEVICES = {
   iphone65: { w: 428, h: 926, s: 3 },
 };
 /* Numbered so App Store Connect keeps the order. */
-const ORDER = ["welcome", "program", "consent", "checkins", "together", "talk", "pairchoose", "invite"];
-const NAME = { welcome: "welcome", program: "program", consent: "consent", checkins: "checkins", together: "together-try",
-  talk: "together-talk", pairchoose: "pairing-choice", invite: "pair-code" };
+/* 1.1 redesign: lead with what is fun — Home, the Try game, a match, a Talk card. */
+const ORDER = ["home", "together", "match", "talk", "program", "consent", "checkins", "welcome", "pairchoose", "invite"];
+const NAME = { home: "home", together: "try", match: "match", talk: "talk", program: "program", consent: "consent",
+  checkins: "checkins", welcome: "welcome", pairchoose: "pairing-choice", invite: "pair-code" };
 
 if (!fs.existsSync(CHROME)) { console.error("Chrome not found at " + CHROME + " — set CHROME_PATH"); process.exit(1); }
 fs.mkdirSync(OUT, { recursive: true });

@@ -92,7 +92,8 @@ export function bootPhone(broker, label, opts = {}) {
   practicesOpen,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal,
   Monetize,supportCard,tabPartner,
   TALK,TRY,TRY_FROZEN,TRY_FP,tryMatches,theirTryYes,trySet,myTry,tabTogether,talkDraw,screenTalk,
-  screenHobby,screenTryList,screenSaved,loadTogether,saveTogether,applyEnvelope,TOGETHER_KEY};`);
+  screenHobby,screenTryList,screenSaved,loadTogether,saveTogether,applyEnvelope,TOGETHER_KEY,
+  screenSettings,loadPrefs,savePrefs,isDark,personalizeCard,PREFS_KEY,CREDIT_HER,CREDIT_HIM,tabToday};`);
 
   const api = w.__api;
   return {

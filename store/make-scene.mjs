@@ -18,8 +18,10 @@ const PROFILE = `
 function setProfile(){
   S.ack=true;
   S.profile={done:true,
-    people:{A:{name:"Jessica",gender:"woman",genderCustom:"",pronouns:"she",pronounsCustom:"",orientation:"queer",orientationCustom:""},
-            B:{name:"Jonathan",gender:"man",genderCustom:"",pronouns:"he",pronounsCustom:"",orientation:"straight",orientationCustom:""}},
+    /* Neutral example names on purpose: screenshots are App Store metadata
+       (Guideline 1.1 history), so the creators' show names stay in the app. */
+    people:{A:{name:"Rowan",gender:"nonbinary",genderCustom:"",pronouns:"they",pronounsCustom:"",orientation:"queer",orientationCustom:""},
+            B:{name:"Ari",gender:"woman",genderCustom:"",pronouns:"she",pronounsCustom:"",orientation:"queer",orientationCustom:""}},
     structure:"mono",structureCustom:"",partnerTerm:"partner",partnerTermCustom:"",areas:"inclusive"};
 }`;
 
@@ -63,6 +65,10 @@ export const SCENES = {
     S.tg.picks.A.yes=["sourdough","stargazing","hiking","dance"];S.partnerTry=["stargazing","sourdough","dance"];S.partnerTryKnown=true;
     theirTryYes=function(){return S.partnerTry;};
     S.homeDeck="warmup";S.homeCardI=1;render();`,
+
+  /* 1.1 — Settings, shown in Dark mode. */
+  settings: `setProfile();S.mode="live";S.pairSecure=true;S.partnerOnline=true;S.code="RTT77MH4JN";
+    S.prefs.mode="dark";applyTheme("ember");S.screen="settings";render();`,
 
   /* 1.1 — the match moment, exactly as the app draws it. */
   match: `setProfile();S.mode="live";S.screen="app";S.tab="try";

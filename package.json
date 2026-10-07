@@ -17,12 +17,13 @@
   "scripts": {
     "audit:privacy": "node scripts/privacy-wire-audit.mjs",
     "test:crypto": "node scripts/e2e-crypto-test.mjs",
-    "test": "npm run audit:privacy && npm run test:crypto && npm run test:content && npm run test:together",
+    "test": "npm run audit:privacy && npm run test:crypto && npm run test:content && npm run test:together && npm run test:settings",
     "audit:apple": "bash scripts/apple-review-audit.sh",
     "shots": "node store/capture-screenshots.mjs",
     "test:qr": "node scripts/pairing-qr-test.mjs",
     "test:content": "node scripts/tipjar-and-no-gating-test.mjs",
     "shots:iap": "node store/capture-iap-screenshot.mjs",
-    "test:together": "node scripts/together-test.mjs"
+    "test:together": "node scripts/together-test.mjs",
+    "test:settings": "node scripts/settings-test.mjs"
   }
 }

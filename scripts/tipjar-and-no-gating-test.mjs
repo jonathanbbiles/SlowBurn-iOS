@@ -26,7 +26,9 @@
         does not do it, and tapping with no bridge does not do it
      6. the reflection screen offers the WHOLE chip vocabulary
      7. no subscription / tier / premium copy anywhere in the app
-     8. the keepsake journal is opt-in for privacy reasons and needs no purchase
+     8. journaling is Permission's job: the Journal button opens Permission (or
+        its App Store page), check-ins write no journal, and a 1.0 journal stays
+        readable and deletable
      9. the co-brand links are present (standing rule) */
 import fs from "node:fs";
 import { makeBroker, bootPhone, settle, seedProfile, ok, report } from "./harness.mjs";
@@ -256,16 +258,50 @@ console.log("2  no entitlement, no paywall screen, no pro flags on any content")
   console.log("7  no subscription / upgrade / premium / tier / restore copy in the app");
 }
 
-/* ---------- 8. Journal: opt-in, and works with no purchase ---------- */
+/* ---------- 8. Journal → Permission ---------- */
 {
-  const S = phone.S;
-  ok(fails, S.journalOn === false, "8: the journal is on by default — it must stay opt-in");
-  api.setJournalOn(true);
-  api.journalAdd(1, ["Eye contact"], ["More time"], "a note");
-  ok(fails, S.journal.length === 1, "8: the journal did not record once switched on — no purchase should be required");
-  api.setJournalOn(false);
-  ok(fails, S.journal.length === 0, "8: switching the journal off left entries behind");
-  console.log("8  journal is opt-in, needs no purchase, and deletes on off");
+  const w = phone.w;
+  const opened = [];
+  w.open = (u) => { opened.push(u); return null; };
+  ok(fails, !("journalOn" in phone.S), "8: the old journal switch is still in state");
+  ok(fails, /^https:\/\/apps\.apple\.com\/app\/apple-store\/id6789405787\?pt=129125244&ct=[a-z-]+&mt=8$/.test(api.PERMISSION_STORE),
+     "8: the Permission link is not an App Store campaign link to id6789405787");
+  /* Settings carries the button, and so do Check-ins. */
+  phone.S.screen = "settings"; api.render();
+  ok(fails, !!w.document.querySelector('button[data-action="open-permission"]'), "8: Settings has no Journal in Permission button");
+  ok(fails, !w.document.querySelector('[data-action="toggle-journal"]'), "8: Settings still offers the old journal switch");
+  phone.S.screen = "app"; phone.S.tab = "checkins"; api.render();
+  ok(fails, !!w.document.querySelector('button[data-action="open-permission"]'), "8: Check-ins has no Permission button");
+  /* Web / no plugin: straight to the App Store page. */
+  w.document.querySelector('button[data-action="open-permission"]').click();
+  ok(fails, opened[0] === api.PERMISSION_STORE, `8: without the launcher the button did not open the App Store page (${opened[0]})`);
+  /* Native, Permission installed: its URL scheme, and no App Store. */
+  const calls = [];
+  w.Capacitor = { isNativePlatform: () => true, Plugins: { AppLauncher: { openUrl: (o) => { calls.push(o.url); return Promise.resolve({ completed: true }); } } } };
+  opened.length = 0; api.openPermission(); await new Promise((r) => setTimeout(r, 0));
+  ok(fails, calls[0] === api.PERMISSION_URL && opened.length === 0, "8: an installed Permission was not opened by its URL scheme");
+  /* Native, not installed: completed:false → App Store page. Plugin missing → same. */
+  w.Capacitor.Plugins.AppLauncher.openUrl = () => Promise.resolve({ completed: false });
+  opened.length = 0; api.openPermission(); await new Promise((r) => setTimeout(r, 0));
+  ok(fails, opened[0] === api.PERMISSION_STORE, "8: a missing Permission did not fall back to the App Store");
+  w.Capacitor.Plugins.AppLauncher.openUrl = () => Promise.reject(new Error("no"));
+  opened.length = 0; api.openPermission(); await new Promise((r) => setTimeout(r, 0));
+  ok(fails, opened[0] === api.PERMISSION_STORE, "8: a launcher error did not fall back to the App Store");
+  delete w.Capacitor;
+  /* A 1.0 phone's journal: kept, readable, deletable — and never added to. */
+  w.localStorage.setItem("sb_journal_v1", JSON.stringify([{ ts: 1, stage: 1, good: ["Eye contact"], more: [], note: "a note" }]));
+  w.localStorage.setItem("sb_journal_on_v1", "1");
+  api.loadJournal();
+  ok(fails, phone.S.journal.length === 1, "8: a saved 1.0 journal was not loaded");
+  phone.S.screen = "settings"; api.render();
+  w.document.querySelector('[data-action="open-journal"]').click();
+  ok(fails, phone.S.screen === "journal" && w.document.getElementById("root").innerHTML.includes("a note"), "8: the saved journal is not readable");
+  ok(fails, !/journalAdd|journalOn/.test(SRC), "8: check-ins still write a journal");
+  w.document.querySelector('[data-action="clear-journal"]').click();
+  ok(fails, phone.S.journal.length === 0 && !w.localStorage.getItem("sb_journal_v1") && !w.localStorage.getItem("sb_journal_on_v1"),
+     "8: deleting the saved journal left something behind");
+  phone.S.screen = "app"; api.render();
+  console.log("8  Journal opens Permission (scheme, else App Store); a 1.0 journal stays readable and deletable");
 }
 
 /* ---------- 9. Links ---------- */

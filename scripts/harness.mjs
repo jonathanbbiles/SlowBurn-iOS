@@ -89,7 +89,7 @@ export function bootPhone(broker, label, opts = {}) {
   pairBase,sessionId,maxUnlocked,matchFor,canMatch,myDebrief,theirDebrief,E2E,GOOD,MORE,CHIPS_FP,
   connectLive,leaveLive,onWire,stateEnvelope,PROTO_V,TOPIC_ROOT,myStagePointer,hasNewMatch,
   DECKS,PRACTICES,THEMES,STARTER,goodChips,moreChips,decksOpen,
-  practicesOpen,themesOpen,applyTheme,journalAdd,setJournalOn,loadJournal,
+  practicesOpen,themesOpen,applyTheme,loadJournal,journalClear,openPermission,PERMISSION_URL,PERMISSION_STORE,
   Monetize,supportCard,tabPartner,
   TALK,TRY,TRY_FROZEN,TRY_FP,tryMatches,theirTryYes,trySet,myTry,tabTogether,talkDraw,screenTalk,
   screenHobby,screenTryList,screenSaved,loadTogether,saveTogether,applyEnvelope,TOGETHER_KEY,

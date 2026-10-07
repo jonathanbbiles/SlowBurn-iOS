@@ -91,6 +91,12 @@ workflows:
           grep -q 'linkedFramework("StoreKit")' "$SRC/Package.swift" \
             || { echo "ERROR: the plugin package does not link StoreKit."; exit 1; }
           echo "ok  cordova-plugin-purchase is linked into the iOS project (SPM), StoreKit framework included"
+          # The Journal button opens Permission through @capacitor/app-launcher.
+          # Dropped by cap sync, it would still fall back to the App Store page,
+          # so this only catches the silent half-feature, it is not a crash guard.
+          grep -q '.product(name: "CapacitorAppLauncher"' "$PKG" \
+            || { echo "ERROR: @capacitor/app-launcher is not linked — Journal could never open Permission directly."; exit 1; }
+          echo "ok  @capacitor/app-launcher is linked (Journal → Permission)"
 
       - name: Embed the Slow Burn app icon (replace Capacitor default)
         script: |

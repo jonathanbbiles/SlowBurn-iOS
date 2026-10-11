@@ -17,6 +17,16 @@ card and Stage tile open it (`S.tab="program"`).
   try; only what you **both** said yes to is shown, the same rule as the
   reflection chips. Each has three small steps to tick off. No links, no shop.
 
+**1.2 is universal: iPhone, iPhone Duo and iPad** (`codemagic.yaml`, "Universal app" step).
+The big-screen layout is CSS only, by width: nothing changes below 600px; from 600px the
+app uses the whole width with larger type; from 860px (iPad landscape, Duo sideways) each
+main screen becomes two columns (`.lay-home`, `.lay-talk`, `.lay-try`, … in
+`www/index.html`). An iPad is one partner's device, and on an iPad the copy says "iPad",
+never "phone" (`deviceWords()`). `npm run test:layout` renders every screen at iPhone, Duo
+and iPad sizes (needs Chrome: `CHROME_PATH=…`; it is not part of `npm test`, which runs
+on the Codemagic lane without a browser). `ONLY=ipad13 npm run shots` re-renders the 13"
+iPad App Store set, which `scripts/release.py` uploads as `APP_IPAD_PRO_3GEN_129`.
+
 `TALK` and `TRY` are append-only (see the comments above them); `npm run
 test:together` holds the contracts.
 

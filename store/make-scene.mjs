@@ -14,7 +14,7 @@ const OUT = path.join(ROOT, "store", ".scenes");
 const html = fs.readFileSync(path.join(ROOT, "www", "index.html"), "utf8");
 
 /* One shared profile so every screenshot shows the same two people. */
-const PROFILE = `
+export const PROFILE = `
 function setProfile(){
   S.ack=true;
   S.profile={done:true,

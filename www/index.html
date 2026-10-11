@@ -341,16 +341,125 @@
   .jprompt{border-radius:24px;padding:18px;color:#fff;background:linear-gradient(150deg,#0E7C86,#3BB39B 60%,#C9E265);box-shadow:0 18px 36px -22px rgba(14,124,134,.7);display:flex;flex-direction:column}
   .jprompt .deal-text{text-shadow:0 1px 10px rgba(0,0,0,.18)}
 
-  /* Large screens (iPad, landscape iPhone, desktop). The app still fills the window; content is
-     constrained to a comfortable reading column centred on the app's OWN background, while the
-     chrome (top bar, tab bar) stays full-bleed. Because the column sits on the same background,
-     it reads as an intentional layout — never as a floating card. */
-  @media(min-width:768px){
+  /* ---- Big screens: iPad, iPhone Duo, iPhone sideways (1.2) ----------------------------
+     Width-based only: nothing here asks what the device is. Below 600px wide none of it
+     applies, so an iPhone held upright renders exactly as it did in 1.1.
+
+     The layout wrappers (.home-try, .try-pick, .stg-a …) are display:contents until 860px,
+     so on a phone they produce no box at all and the page flows as before. From 860px
+     (iPad landscape, Duo open sideways) they become the cells of a two-column grid. */
+  .home-try,.try-intro,.try-pick,.try-status,.hob-side,.stg-a,.stg-b,.stg-c,.inv-code,.inv-side,
+  .jtop,.us-cards,.set-cols,.set-grp,.saved-list{display:contents}
+
+  /* >= 600: Duo open, iPad portrait, iPad split view. Use the width; bigger type and targets. */
+  @media(min-width:600px){
     .pb-sub{display:inline}
-    .apphead,.pad,.pad-tab{max-width:720px;margin-left:auto;margin-right:auto;width:100%}
-    .tabs{padding-left:max(8px,calc((100% - 720px) / 2));padding-right:max(8px,calc((100% - 720px) / 2))}
-    .toast{left:50%;right:auto;width:min(560px,calc(100% - 32px));transform:translateX(-50%) translateY(10px)}
+    .apphead,.pad,.pad-tab{width:100%;margin-left:auto;margin-right:auto;padding-left:32px;padding-right:32px}
+    .apphead,.pad-tab{max-width:1240px}
+    .pad{max-width:760px}                       /* forms and onboarding keep a readable measure */
+    .pad.wide2,.pad.pad-wide{max-width:1240px}
+    .apphead .who{font-size:23px}
+    .hero{padding:26px 26px 24px}
+    .hero-h{font-size:40px}
+    .hero-s{font-size:15px}
+    .tiles.four{grid-template-columns:repeat(4,1fr);gap:12px}
+    .tiles.four .tile{min-height:112px;padding:14px 14px 13px}
+    .tile .tl{font-size:22px}.tile .ts{font-size:12px}
+    .deal{padding:22px 24px 20px}
+    .deal-text{font-size:27px}
+    .deal-chip{font-size:12.5px;padding:6px 13px}
+    .pill-w{min-height:48px;font-size:15px;padding:12px 20px}
+    .hscroll{margin-right:-32px;padding-right:32px}
+    .mini{width:156px;min-height:136px}.mini .mn{font-size:15px}
+    .journey .jr-t{font-size:28px}
+    .decks{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .deck{min-height:176px;padding:18px}.dk-t{font-size:24px}.dk-s{font-size:12.5px}
+    .sc-emoji{font-size:80px}.sc-name{font-size:38px}.sc-line{font-size:16px}.sc-tog{font-size:14.5px}
+    .yn{width:156px;height:88px;font-size:30px}.yn span{font-size:13px}
+    .stage-item{padding:18px}.st-title{font-size:18px}
+    .set-row{min-height:56px}
+    .scanbox{max-width:520px;margin-left:auto;margin-right:auto}
+    .lock-note svg{flex:none;width:16px;height:16px}   /* unsized, it grew with the column */
+    .match-card{max-width:460px}
+    .tabs{height:88px;padding-left:max(8px,calc((100% - 760px) / 2));padding-right:max(8px,calc((100% - 760px) / 2))}
+    .tab{font-size:12px}.tab svg{width:26px;height:26px}
+    .pad-tab{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+    .toast{left:50%;right:auto;width:min(560px,calc(100% - 32px));transform:translateX(-50%) translateY(10px);bottom:104px}
     .toast.show{transform:translateX(-50%) translateY(0)}
+  }
+
+  /* >= 860: iPad landscape, Duo open sideways, big iPhones sideways. The layout changes
+     shape: two columns, each screen arranged around how it is used. */
+  @media(min-width:860px){
+    .home-try,.try-intro,.try-pick,.try-status,.hob-side,.stg-a,.stg-b,.stg-c,.inv-code,.inv-side,
+    .jtop,.us-cards,.set-cols,.set-grp,.saved-list{display:block;min-width:0}
+    .wide2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:28px;align-content:start}
+    .wide2>*{grid-column:1/-1;min-width:0}
+
+    /* Home: the doors and your journey on the left, tonight's card and your matches on the right. */
+    .lay-home{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);row-gap:24px}
+    .lay-home>.hero{grid-column:1;grid-row:1}
+    .lay-home>.home-live{grid-column:2;grid-row:1;margin-top:0}
+    .lay-home>.journey{grid-column:1;grid-row:2;margin-top:0}
+    .lay-home>.home-try{grid-column:2;grid-row:2}
+    .lay-home>.home-try>:first-child{margin-top:0}
+    .lay-home>.foot-legal{grid-row:3}
+    .lay-home .tiles.four{grid-template-columns:repeat(2,1fr)}
+
+    /* Talk: the card large on the left, its controls beside it. */
+    .lay-talk{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);grid-template-rows:auto auto 1fr}
+    .lay-talk>.back{grid-row:1}
+    .lay-talk>.deal{grid-column:1;grid-row:2/4;min-height:460px}
+    .lay-talk>.talk-actions{grid-column:2;grid-row:2;flex-direction:column;align-self:start}
+    .lay-talk>.foot-legal{grid-column:2;grid-row:3;align-self:start;text-align:left;padding-left:2px}
+    .lay-talk .deal-text{font-size:32px}
+
+    /* Try: what it is and what you both said yes to on the left, the card to decide on the right. */
+    .lay-try{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:auto auto auto 1fr auto}
+    .lay-try>.try-intro{grid-column:1;grid-row:1}
+    .lay-try>.try-pick{grid-column:2;grid-row:1/5}
+    .lay-try>.try-pick>:first-child{margin-top:0}
+    .lay-try>.try-status{grid-column:1;grid-row:2}
+    .lay-try>.link{grid-column:1;grid-row:3;justify-self:start;align-self:start}
+    .lay-try>.foot-legal{grid-row:5}
+
+    /* One thing to try: the picture on the left, the steps on the right. */
+    .lay-hobby>.back{grid-row:1}
+    .lay-hobby>.hob-hero{grid-column:1;grid-row:2;align-self:start}
+    .lay-hobby>.hob-side{grid-column:2;grid-row:2}
+    .lay-hobby>.hob-side>:first-child{margin-top:10px}
+    .lay-hobby>.foot-legal{grid-row:3}
+
+    /* A stage: intent and the consent gate on the left, how the session goes on the right. */
+    .lay-stage{grid-template-rows:auto auto 1fr auto}
+    .lay-stage>.back{grid-row:1}
+    .lay-stage>.stg-a{grid-column:1;grid-row:2}
+    .lay-stage>.stg-b{grid-column:2;grid-row:2/4}
+    .lay-stage>.stg-b>.card{margin-top:10px}
+    .lay-stage>.stg-c{grid-column:1;grid-row:3}
+    .lay-stage>.foot-legal{grid-row:4}
+
+    /* Invite: the code and QR to show your partner on the left, the rest on the right. */
+    .lay-invite>.inv-code{grid-column:1;grid-row:5}
+    .lay-invite>.inv-side{grid-column:2;grid-row:5}
+    .lay-invite .qrbox{min-height:260px}
+
+    /* Lists become grids. */
+    .opts{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr))}
+    .opts .opt{flex-direction:column;align-items:flex-start}
+    .decks{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .stages{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .stages .stage-item+.stage-item{margin-top:0}
+    .jtop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+    .jtop>.jprompt{margin-top:0}
+    .us-cards{columns:2;column-gap:24px;margin-top:14px}
+    .us-cards>*,.us-cards>.card+.card{break-inside:avoid;margin-top:0;margin-bottom:14px}
+    .wide2 .hscroll{margin-right:0;padding-right:0}
+    .set-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px;align-items:start}
+    .saved-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+    .saved-list>.deal{margin-top:0}
+    .trylist{columns:2;column-gap:32px}
+    .trylist .kv{break-inside:avoid}
   }
 </style>
 </head>
@@ -2623,12 +2732,12 @@ function safetyWordCard(){
 }
 function screenPairing(){
   if(S.pairPhase==="choose"){
-    return `<div class="pad">
+    return `<div class="pad pad-wide">
       <button class="back" data-action="pair-to-setup">‹ Back</button>
       <div class="eyebrow mt10">Set up</div>
       <h2 class="display" style="font-size:25px;margin-top:8px">One device or two?</h2>
       <p class="lead mt6" style="font-size:13.5px">Two phones keeps each person’s answers on their own phone. One phone works too — you just hand it back and forth.</p>
-      <div class="mt18" style="display:flex;flex-direction:column;gap:12px">
+      <div class="opts mt18" style="display:flex;flex-direction:column;gap:12px">
         <div class="opt" data-action="pair-create"><div class="oic">${I.phone}</div>
           <div><div class="ttl">Pair two devices</div><div class="dsc">Invite ${esc(otherName())} with a code or QR. The consent gate, your reflection matches and what you’d both try sync live across both, end-to-end encrypted.</div></div></div>
         <div class="opt" data-action="pair-join"><div class="oic">${I.link}</div>
@@ -2641,25 +2750,25 @@ function screenPairing(){
   }
   if(S.pairPhase==="create"){
     const online=S.partnerOnline;
-    return `<div class="pad">
+    return `<div class="pad wide2 lay-invite">
       <button class="back" data-action="pair-back">‹ Back</button>
       <div class="eyebrow mt10">Invite ${TE("{partner}")}</div>
       <h2 class="display" style="font-size:24px;margin-top:8px">Your pair code</h2>
       <p class="lead mt6" style="font-size:13.5px">${TE("Read it out to {them}, or let {them} scan the square — either way it’s Slow Burn on {their} phone that reads it, not a browser.")}</p>
-      <div class="codepill mt14" style="font-size:30px">${prettyCode(S.code)}</div>
+      <div class="inv-code"><div class="codepill mt14" style="font-size:30px">${prettyCode(S.code)}</div>
       <p class="tiny center mt6">${TE("In Slow Burn on {their} phone: “Join with a code”.")}</p>
       <div class="qrbox mt14" id="qrbox"></div>
       <p class="tiny center mt6">${Scanner.supported()
         ? TE("Or {they} can tap Scan on that screen and point {their} camera here.")
-        : TE("{They} can type the code above.")}</p>
-      <div class="livebar ${online?'':'off'} mt14">${online?TE("● {Partner} connected — you’re linked"):TE("○ Waiting for {partner} to join…")}</div>
+        : TE("{They} can type the code above.")}</p></div>
+      <div class="inv-side"><div class="livebar ${online?'':'off'} mt14">${online?TE("● {Partner} connected — you’re linked"):TE("○ Waiting for {partner} to join…")}</div>
       ${safetyWordCard()}
       <div class="card-soft mt14">
         <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Your name (optional)</div>
         <div class="tiny" style="margin-bottom:8px">Used only to word this phone’s copy. It is not sent to ${TE("{them}")}.</div>
         <input class="field" id="myname" placeholder="Name or nickname" value="${esc(person("A").name)}" />
       </div>
-      <button class="btn mt14" data-action="enter-app-host">Continue ${online?'':TE("— {they} can join anytime")}</button>
+      <button class="btn mt14" data-action="enter-app-host">Continue ${online?'':TE("— {they} can join anytime")}</button></div>
     </div>`;
   }
   // join
@@ -2735,7 +2844,7 @@ function tabProgram(){
       ?"You unlock each stage when you privately confirm you’re ready. No schedule, no pressure."
       :"You unlock each stage only when you’ve both privately confirmed you’re ready. No negotiating, no pressure."}</p>
     <div class="rail mt18">${rail}</div><div class="tiny" style="margin-top:4px">${cur-1} of 6 stages explored</div>
-    <div class="mt18">${items}</div>
+    <div class="stages mt18">${items}</div>
     ${S.nextSession==="not-set"?`<button class="link mt14" data-action="schedule" style="padding:0">Schedule your next session →</button>`:""}
     <button class="nudge-card mt18" data-action="tab" data-tab="journal"><span class="nc-e">💬</span>
       <span class="nc-b"><span class="nc-t">${isSolo()?"Your reflections":"Shared reflections"}</span>
@@ -2839,7 +2948,7 @@ const JH_ART=`<svg class="jh-art" viewBox="0 0 140 140" fill="none" aria-hidden=
 function tabJournal(){
   const i=(S.jp||0)%JOURNAL_PROMPTS.length, n=S.journal.length;
   return `<div class="view"><div class="pad-tab">
-    <div class="jhero">${JH_ART}
+    <div class="jtop"><div class="jhero">${JH_ART}
       <div class="hero-kick">Journal</div>
       <h2 class="hero-h">Write it down</h2>
       <p class="hero-s">Private and passcode-locked, in Permission.</p>
@@ -2851,7 +2960,7 @@ function tabJournal(){
       <div class="deal-row">
         <button class="pill-w" data-action="journal-next">Another ↻</button>
         <button class="pill-w ghost" data-action="open-permission">Write it ↗</button>
-      </div></div>
+      </div></div></div>
     ${reflectionsInner()}
     ${n?`<button class="btn btn-soft mt18" data-action="open-journal" style="font-size:13.5px">Your saved Slow Burn journal (${n})</button>`:""}
     <div class="foot-legal">Reflections stay on this phone. Permission is a separate app; nothing is passed to it.</div>
@@ -2896,7 +3005,7 @@ function tabPartner(){
 
   return `<div class="view"><div class="pad-tab">
     ${header}
-    <button class="nudge-card mt14" data-action="open-settings"><span class="nc-e">⚙︎</span><span class="nc-b"><span class="nc-t">Settings</span><span class="nc-s">Names, gender &amp; pronouns, light or dark, colours.</span></span></button>
+    <div class="us-cards"><button class="nudge-card mt14" data-action="open-settings"><span class="nc-e">⚙︎</span><span class="nc-b"><span class="nc-t">Settings</span><span class="nc-s">Names, gender &amp; pronouns, light or dark, colours.</span></span></button>
     ${summary}
     <div class="card card-tap mt14" data-action="open-profile">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
@@ -2924,7 +3033,7 @@ function tabPartner(){
     <div class="card mt14" style="border-color:var(--line-2)"><div style="font-weight:700;font-size:14px;margin-bottom:6px">From ${CREDIT_HIM}</div>
       <p class="tiny" style="line-height:1.6">The other half of Slow Burn — ${CREDIT_HIM} writes and builds the apps behind the program. More of his work, and the best way to reach us, lives at jonathanscribbles.com.</p>
       <a class="btn btn-plum mt10" href="${LINK_JONATHAN}" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:14px;text-decoration:none">Visit jonathanscribbles.com &#8599;</a></div>
-    ${supportCard()}
+    ${supportCard()}</div>
     <div class="foot-legal">Wellness &amp; education only · not medical advice · consult a licensed clinician for pain or medical concerns.</div>
   </div></div>`;
 }
@@ -3008,18 +3117,18 @@ function screenStage(id){
         <p class="lock-note">${I.lock} ${TE("Nothing you write is shared with {them}. Confirming sends one thing, encrypted: the stage you’ve reached.")}</p></div>`;
     }
   }
-  return `<div class="view"><div class="pad">
+  return `<div class="view"><div class="pad wide2 lay-stage">
     <button class="back" data-action="tab" data-tab="program">‹ Program</button>
-    <div class="eyebrow mt10">${st.weeks} · Stage ${id} of 6</div>
+    <div class="stg-a"><div class="eyebrow mt10">${st.weeks} · Stage ${id} of 6</div>
     <h2 class="display" style="font-size:27px;margin-top:8px">${esc(stTitle(st))}</h2>
     <p class="lead mt6">${esc(stSub(st))}</p>
-    <div class="card-soft mt18"><p style="font-size:14px;line-height:1.6;color:var(--ink)">${esc(stIntent(st))}</p></div>
-    <div class="card mt14"><div class="tiny" style="font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">How this session goes · ${st.mins}</div>
+    <div class="card-soft mt18"><p style="font-size:14px;line-height:1.6;color:var(--ink)">${esc(stIntent(st))}</p></div></div>
+    <div class="stg-b"><div class="card mt14"><div class="tiny" style="font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">How this session goes · ${st.mins}</div>
       <div class="mt10">${stSteps(st).map((x,i)=>`<div class="step"><div class="dot">${i+1}</div><div class="stx">${esc(x)}</div></div>`).join("")}</div>
       <div class="callout mt14" style="background:#FFF0F7;border-color:#F3D2E6;color:var(--plum-d)"><b>Boundary for this stage.</b> ${esc(stBounds(st))}</div>
-      <div class="mt14" style="display:flex;align-items:center;gap:9px;justify-content:center;color:var(--plum);font-family:var(--serif);font-size:15px">“${esc(st.focus)}”</div></div>
-    ${id<=cur?`<button class="btn mt18" data-action="start-session" data-id="${id}">Start a guided session</button>`:""}
-    ${gate}
+      <div class="mt14" style="display:flex;align-items:center;gap:9px;justify-content:center;color:var(--plum);font-family:var(--serif);font-size:15px">“${esc(st.focus)}”</div></div></div>
+    <div class="stg-c">${id<=cur?`<button class="btn mt18" data-action="start-session" data-id="${id}">Start a guided session</button>`:""}
+    ${gate}</div>
     <div class="foot-legal">${solo?"Go at your own pace. Returning to an earlier stage is always okay.":"Move at the slower person’s pace. Returning to an earlier stage is always okay."}</div>
   </div></div>`;
 }
@@ -3306,21 +3415,21 @@ function tabToday(){
       <button class="tile" data-action="open-stage" data-id="${cur}" style="background:linear-gradient(150deg,#F94F5C,#FFB23F)"><span class="te">🔥</span><span class="tl">Stage ${cur}</span><span class="ts">${esc(stTitle(st))}</span></button>
       <button class="tile" data-action="tab" data-tab="journal" style="background:linear-gradient(150deg,#0E7C86,#3BB39B 70%,#C9E265)"><span class="te">✍️</span><span class="tl">Journal</span><span class="ts">${newRefl?"New reflection":"Write it down"}</span>${newRefl?'<span class="tb">New</span>':''}</button>
     </div>`;
-  const live=`<div class="deal mt18" style="background:${look.g}" data-swipe="home">
+  const live=`<div class="deal home-live mt18" style="background:${look.g}" data-swipe="home">
       <div class="deal-top"><span class="deal-chip">${look.e} ${esc(d.title)}</span><span class="deal-chip">${esc(c[0])}</span></div>
       <p class="deal-text">${esc(personalizeCard(c[1]))}</p>
       <div class="deal-row">
         <button class="pill-w" data-action="home-card-next">Another one ↻</button>
         <button class="pill-w ghost" data-action="open-talk" data-id="${d.id}">Open deck</button>
       </div></div>`;
-  const tryBlock=matches.length
+  const tryBlock=`<div class="home-try">`+(matches.length
     ?`<div class="eyebrow mt24">${solo?"⭐ On your list":"💞 You both said yes"}</div>
       <div class="hscroll mt10">${matches.map(h=>`<button class="mini" data-action="open-hobby" data-id="${h.id}" style="background:${tryGrad(h)}">
         <span class="me">${h.emoji}</span><span class="mn">${esc(h.name)}</span>${S.tg.tried.indexOf(h.id)>=0?'<span class="mt">Tried ✓</span>':''}</button>`).join("")}</div>`
     :`<button class="nudge-card mt18" data-action="tab" data-tab="try">
         <span class="nc-e">✨</span>
         <span class="nc-b"><span class="nc-t">${picked?"Keep picking":(solo?"What would you try?":"What would you two try?")}</span>
-        <span class="bar"><i style="width:${Math.round(100*picked/TRY.length)}%"></i></span></span></button>`;
+        <span class="bar"><i style="width:${Math.round(100*picked/TRY.length)}%"></i></span></span></button>`)+`</div>`;
   const path=STAGES.map((s,k)=>{
     const cls=s.id<cur?"done":(s.id===cur?"cur":"");
     return (k?`<span class="jr-line ${s.id<=cur?"done":""}"></span>`:"")+`<span class="jr-dot ${cls}">${s.id<cur?"✓":STAGE_EMOJI[k]}</span>`;
@@ -3329,7 +3438,7 @@ function tabToday(){
       <span class="jr-top"><span class="jr-k">Your journey</span><span class="jr-go">${cur} of 6 ›</span></span>
       <span class="jr-path">${path}</span>
       <span class="jr-t">${esc(stTitle(st))}</span></button>`;
-  return `<div class="view"><div class="pad-tab">
+  return `<div class="view"><div class="pad-tab wide2 lay-home">
     <div class="hero">
       <div class="hero-kick">${S.nextSession==="not-set"?"Slow Burn":"Next: "+esc(S.nextSession)}</div>
       <h2 class="hero-h">${esc(greet)}</h2>
@@ -3382,14 +3491,14 @@ function screenTalk(id){
   if(S.talkCard==null||!d.cards[S.talkCard]) talkDraw(d.id);
   const c=d.cards[S.talkCard], fav=talkIsFav(d.id,S.talkCard);
   const seen=(S.tg.talk.seen[d.id]||[]).length;
-  return `<div class="view"><div class="pad-tab">${back}
+  return `<div class="view"><div class="pad-tab wide2 lay-talk">${back}
     <div class="deal big mt14 deal-in" style="background:${l.g}" data-swipe="talk" data-id="${d.id}">
       <div class="deal-top"><span class="deal-chip">${l.e} ${esc(d.title)}</span><span class="deal-chip">${seen} / ${d.cards.length}</span></div>
       <div class="deal-cat">${esc(c[0])}</div>
       <p class="deal-text">${esc(personalizeCard(c[1]))}</p>
       <div class="deal-hint">swipe for the next card</div>
     </div>
-    <div class="row mt14">
+    <div class="row talk-actions mt14">
       <button class="btn btn-soft" data-action="talk-fav" data-id="${d.id}" aria-pressed="${fav}">${fav?"♥ Saved":"♡ Save"}</button>
       <button class="btn" data-action="talk-next" data-id="${d.id}">Next card →</button></div>
     <div class="foot-legal">Skip any card — no reason needed.</div>
@@ -3401,10 +3510,10 @@ function screenSaved(){
     <button class="back" data-action="tg-back" data-sub="talk">‹ All decks</button>
     <div class="eyebrow mt10">Kept on this phone</div>
     <h2 class="display" style="font-size:28px;margin-top:6px">Saved cards</h2>
-    ${list.length?list.map(x=>{const l=deckLook(x.deck.id);return `<div class="deal mt14" style="background:${l.g};min-height:0">
+    ${list.length?`<div class="saved-list">`+list.map(x=>{const l=deckLook(x.deck.id);return `<div class="deal mt14" style="background:${l.g};min-height:0">
         <div class="deal-top"><span class="deal-chip">${l.e} ${esc(x.deck.title)}</span><span class="deal-chip">${esc(x.cat)}</span></div>
         <p class="deal-text" style="font-size:19px">${esc(personalizeCard(x.text))}</p>
-        <div class="deal-row"><button class="pill-w ghost" data-action="talk-unfav" data-key="${esc(talkCardKey(x.deck.id,x.i))}">Remove</button></div></div>`;}).join("")
+        <div class="deal-row"><button class="pill-w ghost" data-action="talk-unfav" data-key="${esc(talkCardKey(x.deck.id,x.i))}">Remove</button></div></div>`;}).join("")+`</div>`
       :`<p class="lead mt14" style="font-size:13.5px">Nothing saved yet. Tap ♡ Save on any card.</p>`}
   </div></div>`;
 }
@@ -3442,14 +3551,14 @@ function tabTry(){
       <button class="yn yes" data-action="try-set" data-id="${next.id}" data-val="yes" aria-label="I’d try this">♥<span>I’d try this</span></button>
     </div>`
     :`<div class="card-soft mt18"><p class="tiny" style="line-height:1.55">You’ve been through all ${TRY.length}. Change any answer whenever you like.</p></div>`;
-  return `<div class="view"><div class="pad-tab">
-    <div class="eyebrow">Try something new</div>
+  return `<div class="view"><div class="pad-tab wide2 lay-try">
+    <div class="try-intro"><div class="eyebrow">Try something new</div>
     <h2 class="display" style="font-size:30px;margin-top:6px">${solo?"What would you try?":"What would you two try?"}</h2>
     <p class="lead mt6" style="font-size:13.5px">${solo
       ?"Swipe through thirty small adventures. Each has three easy steps."
       :"Each of you picks privately. Slow Burn only shows what you <b>both</b> said yes to — never the rest."}</p>
     <div class="bar mt10"><i style="width:${Math.round(100*picked/TRY.length)}%"></i></div>
-    ${asWho}${picker}${status}
+    ${asWho}</div><div class="try-pick">${picker}</div><div class="try-status">${status}</div>
     ${picked?`<button class="link mt14" data-action="open-trylist" style="padding:0">Review my answers →</button>`:""}
     <div class="foot-legal">${solo||S.mode==="shared"
       ?"Your picks stay on this phone."
@@ -3474,7 +3583,7 @@ function screenTryList(){
     <div class="eyebrow mt10">${S.mode==="shared"?TE("{Me}’s answers"):"Your answers"}</div>
     <h2 class="display" style="font-size:28px;margin-top:6px">What you’d try</h2>
     <p class="lead mt6" style="font-size:13.5px">Change any answer. ${isSolo()?"":TE("{Partner} only ever sees the ones you both said yes to.")}</p>
-    <div class="card mt14">${rows}</div>
+    <div class="card trylist mt14">${rows}</div>
   </div></div>`;
 }
 function screenHobby(id){
@@ -3484,7 +3593,7 @@ function screenHobby(id){
   const steps=h.steps.map((x,i)=>`<button class="tg-step ${done[i]?"on":""}" data-action="hobby-step" data-id="${h.id}" data-i="${i}" aria-pressed="${!!done[i]}">
       <span class="dot">${done[i]?I.check:(i+1)}</span><span class="stx">${esc(x)}</span></button>`).join("");
   const along=tryTalkAlong(h);
-  return `<div class="view"><div class="pad-tab">
+  return `<div class="view"><div class="pad-tab wide2 lay-hobby">
     <button class="back" data-action="tg-back" data-sub="try">‹ Try something new</button>
     <div class="hob-hero mt10" style="background:${tryGrad(h)}">
       <div class="deal-top"><span class="deal-chip">${tryWhere(h)}</span>${tried?'<span class="deal-chip">Tried ✓</span>':""}</div>
@@ -3492,13 +3601,13 @@ function screenHobby(id){
       <div class="sc-name">${esc(h.name)}</div>
       <p class="sc-line">${esc(h.line)}</p>
     </div>
-    ${solo?"":`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px">Doing it together</div>
+    <div class="hob-side">${solo?"":`<div class="card-soft mt14"><div style="font-weight:700;font-size:13.5px">Doing it together</div>
       <p class="tiny" style="margin-top:4px;line-height:1.6">${esc(h.together)}</p></div>`}
     <div class="card mt14"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
       <div style="font-weight:700;font-size:14px">Three small steps</div><div class="tiny">${nDone} / 3</div></div>${steps}</div>
     ${(!solo&&along.length)?`<div class="card mt14"><div style="font-weight:700;font-size:14px;margin-bottom:6px">Talk while you do it</div>
       ${along.map(t=>`<p class="tiny" style="line-height:1.6;margin-top:6px">“${esc(personalizeCard(t))}”</p>`).join("")}</div>`:""}
-    <button class="btn ${tried?"btn-soft":""} mt14" data-action="hobby-tried" data-id="${h.id}" aria-pressed="${tried}">${tried?(solo?"✓ You tried it":"✓ You tried it together"):(solo?"I tried it 🎉":"We tried it 🎉")}</button>
+    <button class="btn ${tried?"btn-soft":""} mt14" data-action="hobby-tried" data-id="${h.id}" aria-pressed="${tried}">${tried?(solo?"✓ You tried it":"✓ You tried it together"):(solo?"I tried it 🎉":"We tried it 🎉")}</button></div>
     <div class="foot-legal">Your steps and what you’ve tried are kept on this phone only.</div>
   </div></div>`;
 }
@@ -3525,45 +3634,45 @@ function screenSettings(){
     <button class="back" data-action="settings-back">‹ Back</button>
     <h2 class="display" style="font-size:32px;margin-top:8px">Settings</h2>
 
-    <div class="set-h">${solo?"You":"You two"}</div>
+    <div class="set-cols"><div class="set-grp"><div class="set-h">${solo?"You":"You two"}</div>
     <div class="set-card">
       <button class="set-row" data-action="open-profile"><span class="sr-b"><span class="sr-t">${solo?"Name, gender &amp; pronouns":"Names, genders &amp; pronouns"}</span>
         <span class="sr-s">${who("A")}</span>${solo?"":`<span class="sr-s">${who("B")}</span>`}</span><span class="sr-go">›</span></button>
       ${solo?"":toggleRow("cardNames",pf.cardNames,"Cards speak to "+esc(cap1(otherName())),"Talk cards use their name instead of “your partner”.")}
       ${solo?"":`<div class="set-prev"><span class="tiny">Preview</span><p>${esc(personalizeCard(sample))}</p></div>`}
       <p class="set-note">Gender and pronouns set the tone of the whole program — every stage, prompt and boundary is worded from them. Anything left blank stays neutral.</p>
-    </div>
+    </div></div>
 
-    <div class="set-h">Appearance</div>
+    <div class="set-grp"><div class="set-h">Appearance</div>
     <div class="set-card">
       <div class="sr-t" style="margin-bottom:8px">Mode</div>
       ${seg("mode",pf.mode,[["light","☀︎ Light"],["dark","☾ Dark"],["auto","◐ Auto"]])}
       <div class="sr-t" style="margin:16px 0 8px">Colour</div>
       <div class="swatches">${colours}</div>
       ${toggleRow("calm",pf.calm,"Calm motion","No confetti, no card animations.")}
-    </div>
+    </div></div>
 
-    <div class="set-h">Journal</div>
-    ${journalCard()}
+    <div class="set-grp"><div class="set-h">Journal</div>
+    ${journalCard()}</div>
 
-    <div class="set-h">Privacy &amp; data</div>
+    <div class="set-grp"><div class="set-h">Privacy &amp; data</div>
     <div class="set-card">
       <p class="set-note" style="margin-top:0">${solo||S.mode!=="live"
         ?"Nothing you enter leaves this phone. There is no account and no server."
         :"Paired phones exchange only your stage, your reflection chips and your Try “yes” picks — end-to-end encrypted. Names, pronouns, notes and settings never leave this phone."}</p>
       <button class="btn btn-soft mt10" data-action="reset-all" style="font-size:13.5px">Reset Slow Burn on this phone</button>
-    </div>
+    </div></div>
 
-    <div class="set-head-mt"></div>
+    <div class="set-grp"><div class="set-head-mt"></div>
     <div class="set-h">About</div>
     <div class="set-card">
-      <div class="kv"><span class="k">Version</span><span class="v">1.1</span></div>
+      <div class="kv"><span class="k">Version</span><span class="v">1.2</span></div>
       <div class="kv"><span class="k">Created by</span><span class="v">${CREDIT_HER} &amp; ${CREDIT_HIM}</span></div>
       <div class="row mt10" style="gap:8px">
         <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JESSICA}" style="font-size:13px">${CREDIT_HER}</button>
         <button class="btn btn-soft" data-action="open-url" data-url="${LINK_JONATHAN}" style="font-size:13px">${CREDIT_HIM}</button></div>
       <button class="link mt10" data-action="find-clinician" style="padding:0">Find a clinician →</button>
-    </div>
+    </div></div></div>
     <div class="foot-legal">Wellness &amp; education only · not medical advice.</div>
   </div></div>`;
 }
@@ -3619,6 +3728,26 @@ function renderBar(){
     bar.innerHTML=`<div class="pb-title"><span class="pb-dot"></span>Slow Burn<span class="pb-sub">· guided intimacy program</span></div>`;
   }
 }
+/* WHAT THE COPY CALLS THIS DEVICE (1.2, universal app).
+   Slow Burn is a two-device program and its copy says "phone", because that is
+   what nearly everyone pairs with. From 1.2 it also runs on iPad, where "Cards
+   stay on this phone" would simply be untrue. So on an iPad, and only there,
+   the rendered copy names this device "iPad" and the partner's device — which
+   could be either — "device". Layout never reads this: every big-screen rule is
+   a width media query. iPadOS WebViews present a desktop (Macintosh) user agent,
+   hence the touch-point check. On an iPhone this returns the HTML untouched. */
+const ON_IPAD=(function(){
+  try{const u=navigator.userAgent||"";return /\biPad\b/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);}
+  catch(e){return false;}
+})();
+function deviceWords(html){
+  if(!ON_IPAD) return html;
+  return String(html)
+    .replace(/\b(this|your|This|Your)( shared| one)? phone\b/g,(m,a,b)=>a+(b||"")+" iPad")
+    .replace(/\bthe phone\b/g,"the iPad")
+    .replace(/\b([Pp])hones\b/g,(m,p)=>p==="P"?"Devices":"devices")
+    .replace(/\bphone\b/g,"device");
+}
 function render(){
   renderBar();
   const root=document.getElementById("root");
@@ -3645,7 +3774,7 @@ function render(){
       :(S.tab==="journal"||S.tab==="checkins")?tabJournal():tabPartner();
     html=appChrome(inner);
   }
-  root.innerHTML=html;root.scrollTop=0;
+  root.innerHTML=deviceWords(html);root.scrollTop=0;
   if(S.screen==="pairing"&&S.pairPhase==="create")drawQR();
 }
 /* The QR carries the PAIR CODE and nothing else — no URL, no origin. It used
@@ -3659,9 +3788,9 @@ function drawQR(){
   try{
     if(window.QRCode){new QRCode(box,{text:S.code,width:172,height:172,colorDark:"#2B2126",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});return;}
   }catch(e){}
-  box.innerHTML=`<div class="tiny center">Type this code on the other phone:<br/><b>${esc(prettyCode(S.code))}</b></div>`;
+  box.innerHTML=deviceWords(`<div class="tiny center">Type this code on the other phone:<br/><b>${esc(prettyCode(S.code))}</b></div>`);
 }
-function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2800);}
+function toast(msg){const t=document.getElementById("toast");t.textContent=deviceWords(msg);t.classList.add("show");clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2800);}
 
 setInterval(()=>{
   if(S.screen==="session"&&S.session&&S.session.phase==="guide"){

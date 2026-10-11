@@ -67,7 +67,9 @@ p.S.tab = "today"; api.render();
 ok(fails, !!p.w.document.querySelector('.tiles [data-tab="talk"]') && !!p.w.document.querySelector('.tiles [data-tab="try"]'),
    "2: Home does not link straight to Talk and Try");
 const homeCard = p.w.document.querySelector(".deal .deal-text");
-ok(fails, !!homeCard && TALK.some((d) => !d.adult && d.cards.some((c) => homeCard.textContent === c[1])),
+/* The card is dealt at random and may be personalised ("your partner" -> a name), so
+   compare with what the app's own personalizeCard() makes of each candidate. */
+ok(fails, !!homeCard && TALK.some((d) => !d.adult && d.cards.some((c) => homeCard.textContent === api.personalizeCard(c[1]))),
    "2: Home does not show a live conversation card from an everyday deck");
 p.click('[data-action="home-card-next"]');
 ok(fails, !!p.w.document.querySelector(".deal .deal-text"), "2: Another one did not deal a new card on Home");

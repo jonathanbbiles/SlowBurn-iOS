@@ -44,7 +44,7 @@ workflows:
         # Apple's numeric App ID. An identifier, not a secret.
         ASC_APP_ID: "6787719986"
         # Must equal the ASC version string exactly, and release.json's "version".
-        MARKETING_VERSION: "1.1"
+        MARKETING_VERSION: "1.2"
         XCODE_PROJECT: "ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
       node: 22
@@ -120,33 +120,69 @@ workflows:
           else
             echo "No appicon-1024.png found — using Capacitor default icon."
           fi
-      # --- GUIDELINE 4 (iPad) --------------------------------------------------
-      # Slow Burn is an iPhone-only app. It is a TWO-PHONE pairing program: two
-      # people each hold their own phone. On iPad the layout is correct but
-      # more than half the screen is empty, and this app has already taken one
-      # Guideline 4 rejection on iPad. Shipping iPhone-only removes the surface
-      # entirely rather than defending a screen nobody will use.
-      # Capacitor generates the project fresh on every build, so this has to be
-      # forced AFTER `cap add ios` rather than committed.
-      - name: Force iPhone-only (TARGETED_DEVICE_FAMILY = 1)
+      # --- UNIVERSAL: iPhone + iPad (since 1.2) ---------------------------------
+      # Until 1.1 this step forced iPhone-only (TARGETED_DEVICE_FAMILY = 1). Slow Burn
+      # is a TWO-DEVICE pairing program, the iPad layout was then a phone column with
+      # half the screen empty, and the app had already drawn one Guideline 4 (iPad)
+      # rejection — so removing iPad removed the risk. The cost: on an iPad the app ran
+      # in iPhone compatibility mode, a phone-sized window that never rotates.
+      #
+      # Jonathan's decision, 2026-10-11: make it a real iPad (and iPhone Duo) app. The
+      # web layout now fills any width and changes shape from 860px (two columns); an
+      # iPad can be either partner's device, and on an iPad the copy says "iPad", not
+      # "phone" (deviceWords() in www/index.html). `npm run test:layout` renders every
+      # screen at iPhone, Duo and iPad sizes. iPhone orientations are left exactly as
+      # Capacitor generates them; iPad gets all four, which Apple REQUIRES of a universal
+      # app that supports multitasking — without them the upload is rejected (ITMS-90474)
+      # after an otherwise green build.
+      # Capacitor generates the project fresh on every build, so this runs after
+      # `cap add ios`, and reads every value back.
+      - name: Universal app (TARGETED_DEVICE_FAMILY = 1,2) + all four iPad orientations
         script: |
+          set -e
           PBX=ios/App/App.xcodeproj/project.pbxproj
-          # Capacitor emits "1,2" (iPhone + iPad); rewrite every occurrence.
-          sed -i '' 's/TARGETED_DEVICE_FAMILY = "1,2";/TARGETED_DEVICE_FAMILY = "1";/g' "$PBX"
-          sed -i '' 's/TARGETED_DEVICE_FAMILY = 1,2;/TARGETED_DEVICE_FAMILY = "1";/g' "$PBX"
-          if grep -q 'TARGETED_DEVICE_FAMILY = "1,2"' "$PBX" || grep -q 'TARGETED_DEVICE_FAMILY = 1,2' "$PBX"; then
-            echo "FAILED: project still targets iPad."; exit 1
+          PLIST=ios/App/App/Info.plist
+          # Whatever Capacitor emitted ("1", 1, "1,2" or 1,2), make every occurrence "1,2".
+          sed -i '' -E 's/TARGETED_DEVICE_FAMILY = "?1(,2)?"?;/TARGETED_DEVICE_FAMILY = "1,2";/g' "$PBX"
+          if grep -E 'TARGETED_DEVICE_FAMILY = ' "$PBX" | grep -vq 'TARGETED_DEVICE_FAMILY = "1,2";'; then
+            echo "FAILED: a build configuration does not target iPhone + iPad:"; grep -n 'TARGETED_DEVICE_FAMILY' "$PBX"; exit 1
           fi
-          echo "TARGETED_DEVICE_FAMILY now:"; grep -c 'TARGETED_DEVICE_FAMILY = "1";' "$PBX"
+          grep -q 'TARGETED_DEVICE_FAMILY = "1,2";' "$PBX" || { echo "FAILED: TARGETED_DEVICE_FAMILY not found"; exit 1; }
+          echo "TARGETED_DEVICE_FAMILY = \"1,2\" in $(grep -c 'TARGETED_DEVICE_FAMILY = "1,2";' "$PBX") build configuration(s)"
+          /usr/libexec/PlistBuddy -c "Delete :UIDeviceFamily" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily array" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:0 integer 1" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UIDeviceFamily:1 integer 2" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :UISupportedInterfaceOrientations~ipad" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations~ipad array" "$PLIST"
+          i=0
+          for o in UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown \
+                   UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight; do
+            /usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations~ipad:$i string $o" "$PLIST"; i=$((i+1))
+          done
+          # Read back. UIDeviceFamily must be exactly [1, 2]; the iPad list exactly the four.
+          FAM="$(/usr/libexec/PlistBuddy -c 'Print :UIDeviceFamily' "$PLIST" | tr -d ' \n')"
+          [ "$FAM" = "Array{12}" ] || { echo "FAILED: UIDeviceFamily is $FAM, not [1,2]"; exit 1; }
+          IPAD="$(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations~ipad' "$PLIST")"
+          for o in UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown \
+                   UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight; do
+            echo "$IPAD" | grep -qx "[[:space:]]*$o" || { echo "FAILED: iPad orientation $o missing (ITMS-90474)"; exit 1; }
+          done
+          [ "$(echo "$IPAD" | grep -c 'UIInterfaceOrientation')" = "4" ] || { echo "FAILED: iPad orientations are not exactly four"; exit 1; }
+          echo "UIDeviceFamily = [1, 2]"
+          echo "UISupportedInterfaceOrientations~ipad:"; echo "$IPAD"
+          echo "UISupportedInterfaceOrientations (iPhone, unchanged):"
+          /usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations' "$PLIST" || echo "  (not set — iOS defaults)"
       # --- CAMERA (pair-code scanner) ------------------------------------------
       # iOS KILLS the app instantly if it touches the camera with no usage
       # description — this is not optional, and Capacitor does not add it.
       # The string is what the user reads in the permission dialog, so it says
-      # exactly what the camera is for and nothing more.
+      # exactly what the camera is for and nothing more. Since 1.2 it says "this
+      # device", not "your phone": the same string is shown on an iPad.
       - name: Add NSCameraUsageDescription (pair-code scanner)
         script: |
           PLIST=ios/App/App/Info.plist
-          DESC="Slow Burn uses the camera only to read your partner's pair code from their screen. The image stays on your phone — nothing is recorded, saved or sent."
+          DESC="Slow Burn uses the camera only to read your partner's pair code from their screen. The image stays on this device — nothing is recorded, saved or sent."
           # plutil, not PlistBuddy: the string contains an apostrophe and an em
           # dash, which PlistBuddy's -c parser rejects ("Unclosed Quotes").
           # plutil takes the value as its own argument, so it just works.
@@ -155,14 +191,16 @@ workflows:
             || { echo "FAILED: NSCameraUsageDescription not set — the scanner would crash the app."; exit 1; }
       # --- MARKETING VERSION ---------------------------------------------------
       # 1.0 is live (released 2026-09-06), and an approved version takes no more
-      # binaries (ITMS-90062). 1.1 adds the Together tab (Talk cards + Try
-      # something new). Must equal the App Store Connect version string exactly.
-      - name: Set marketing version (1.1)
+      # binaries (ITMS-90062). 1.1 added the Together tab (Talk cards + Try
+      # something new) and went to review 2026-10-07. 1.2 makes Slow Burn a
+      # universal app: iPad and iPhone Duo. Must equal the App Store Connect
+      # version string exactly.
+      - name: Set marketing version (1.2)
         script: |
           PLIST=ios/App/App/Info.plist
           plutil -replace CFBundleShortVersionString -string "$MARKETING_VERSION" "$PLIST"
-          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")" = "1.1" ] \
-            || { echo "FAILED: version string is not 1.1"; exit 1; }
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")" = "1.2" ] \
+            || { echo "FAILED: version string is not 1.2"; exit 1; }
           echo "CFBundleShortVersionString = $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PLIST")"
       - name: Set build number + export-compliance flag
         script: |

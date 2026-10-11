@@ -85,12 +85,49 @@ fi
   && pass "QR decoder vendored locally with its licence (pairing does not depend on a CDN)" \
   || block "www/vendor/jsQR.js or its licence is missing"
 
-sec "3. Guideline 4 — iPad"
-if grep -q 'TARGETED_DEVICE_FAMILY = "1"' "$CM"; then
-  pass "build lane forces iPhone-only (TARGETED_DEVICE_FAMILY = 1)"
+sec "3. Guideline 4 — iPad (universal since 1.2)"
+# History: 1.0 took a Guideline 4 rejection on iPad (a phone mockup floating on the
+# big screen), so 1.0-1.1 shipped iPhone-only. Jonathan made it a real iPad app on
+# 2026-10-11: the lane now builds "1,2" with all four iPad orientations, and the web
+# layout changes shape on big screens. Apple reviews on an iPad Air 11", so the iPad
+# is now IN the review, not around it — these checks are what keeps that honest.
+if grep -q 'TARGETED_DEVICE_FAMILY = "1,2";' "$CM" && ! grep -q 'TARGETED_DEVICE_FAMILY = "1";' "$CM"; then
+  pass "build lane makes a universal app (TARGETED_DEVICE_FAMILY = \"1,2\", UIDeviceFamily [1,2])"
 else
-  block "build lane does not force iPhone-only — Capacitor defaults to \"1,2\" (iPad), which took a Guideline 4 rejection before"
+  block "build lane is not universal, or still rewrites anything to iPhone-only — 1.2 ships iPhone + iPad"
 fi
+MISSING=""
+for o in UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown \
+         UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight; do
+  grep -q "$o" "$CM" || MISSING="$MISSING $o"
+done
+if grep -q 'UISupportedInterfaceOrientations~ipad' "$CM" && [ -z "$MISSING" ]; then
+  pass "build lane lists all four iPad orientations and reads them back (else ITMS-90474 at upload)"
+else
+  block "iPad orientations incomplete in the build lane:${MISSING:- UISupportedInterfaceOrientations~ipad not set} — a universal upload is rejected (ITMS-90474)"
+fi
+grep -q '@media(min-width:860px)' "$APP" && grep -q '\.lay-home' "$APP" \
+  && pass "big-screen layout present: fills the width from 600px, two columns from 860px (no device sniffing)" \
+  || block "no big-screen layout in $APP — on iPad it would be a phone column on an empty screen, which is the Guideline 4 rejection"
+grep -q 'function deviceWords' "$APP" && grep -q 'root.innerHTML=deviceWords(' "$APP" \
+  && pass "on an iPad the copy says \"iPad\", never \"phone\" (deviceWords)" \
+  || block "the copy would tell an iPad user \"this phone\" — deviceWords() is missing or not applied in render()"
+if command -v node >/dev/null && [ -d node_modules/puppeteer-core ] && [ -x "${CHROME_PATH:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}" ]; then
+  if npm run --silent test:layout >/tmp/sb-audit-layout.log 2>&1; then
+    pass "layout test green — every screen at iPhone, iPhone Duo and iPad sizes: no overflow, last control reachable, two columns from 860px, no \"phone\" on iPad"
+  else
+    block "layout test FAILED — see /tmp/sb-audit-layout.log"
+  fi
+else
+  warn "skipped the layout test (needs Chrome + puppeteer-core) — run \`npm run test:layout\` before shipping"
+fi
+NOTES_NEW=$(ls store/review-notes-*.txt 2>/dev/null | sort -V | tail -1)
+if [ -n "$NOTES_NEW" ] && grep -qi 'ipad' "$NOTES_NEW"; then
+  pass "latest review notes ($NOTES_NEW) tell the iPad reviewer how to see the whole app on one device"
+else
+  warn "latest review notes do not mention iPad — the reviewer has ONE iPad; point them at \"Share this one device\" / the sample walkthrough"
+fi
+warn "REMAINING RISK (by design): a two-device pairing app on iPad. Live pairing needs a second device; the reviewer can only reach it via the one-device paths. 1.0 was rejected on iPad once."
 if grep -q 'class="notch"' "$APP" && ! grep -q '\.notch{display:none}' "$APP"; then
   block "the fake device notch/bezel is visible again — that WAS the Guideline 4 rejection"
 else
@@ -194,7 +231,6 @@ if [ "$SUPPORTED_READS" = "1" ]; then
 else
   block "\"sb_supported\" appears $SUPPORTED_READS times in code — more than one reader means a tip unlocks something"
 fi
-rm -f "$APP_CODE"
 
 # --- the plugin must be a dependency, or the buttons cannot work -------------
 if grep -q 'cordova-plugin-purchase' package.json; then
@@ -212,6 +248,9 @@ for phrase in 'Slow Burn Pro' 'subscription' 'restore purchase' 'premium' 'free 
   fi
 done
 pass "no subscription / tier / restore wording in app copy"
+# Removed only now: the wording check above reads it too (it used to be deleted first,
+# which made that check grep a missing file and pass vacuously).
+rm -f "$APP_CODE"
 # "unlock" survives ON PURPOSE: it is the consent gate between two people.
 UNLOCKS=$(grep -c 'unlock' "$APP" || true)
 pass "\"unlock\" appears $UNLOCKS times, all consent-gate copy (\"Stage N unlocks once you have both confirmed\") — a progress gate, not a price"
@@ -248,7 +287,12 @@ need_shot(){ # label WxH
 if [ -d "$SHOTS" ]; then
   need_shot "iPhone 6.9\"" "1290x2796"
   need_shot "iPhone 6.5\"" "1284x2778"
-  IPAD=$(find "$SHOTS" -name 'ipad*' 2>/dev/null | wc -l | tr -d ' ')
+  # Universal app: the 13" iPad set (APP_IPAD_PRO_3GEN_129) is mandatory for submission.
+  IPAD_P=$(find "$SHOTS" -name 'ipad13*.png' 2>/dev/null | while read -r f; do
+    d=$(sips -g pixelWidth -g pixelHeight "$f" 2>/dev/null | awk '/pixelWidth/{w=$2}/pixelHeight/{h=$2}END{print w"x"h}')
+    case "$d" in 2064x2752|2752x2064|2048x2732|2732x2048) echo "$f";; esac; done | wc -l | tr -d ' ')
+  if [ "${IPAD_P:-0}" -ge 3 ]; then pass "iPad 13\": $IPAD_P screenshots at an accepted 13\" size"
+  else block "iPad 13\": only ${IPAD_P:-0} screenshot(s) at 2064x2752/2752x2064/2048x2732 — a universal app cannot be submitted without them (\`ONLY=ipad13 npm run shots\`)"; fi
   # A screenshot of a paywall would be uploaded to the App Store and would
   # re-raise the exact business-model question that caused the rejection.
   # Match the paywall scene's own suffix, not any "pro" substring — otherwise
@@ -256,8 +300,6 @@ if [ -d "$SHOTS" ]; then
   PAYSHOTS=$(find "$SHOTS" \( -name '*_pro.png' -o -name '*paywall*' -o -name '*unlock*' -o -name '*upgrade*' -o -name '*purchase*' \) 2>/dev/null | wc -l | tr -d ' ')
   [ "$PAYSHOTS" = "0" ] && pass "no paywall/Pro screenshots staged for the App Store" \
     || block "$PAYSHOTS screenshot(s) look like a paywall — they would be uploaded to the App Store"
-  [ "$IPAD" = "0" ] && pass "no iPad screenshots (correct for an iPhone-only app)" \
-    || warn "$IPAD iPad screenshot(s) present but the app ships iPhone-only — remove them from App Store Connect"
   # Screenshots must show the SHIPPING copy. They go stale only when the app
   # itself changes, so compare against the last commit that touched www/.
   if [ -f "$SHOTS/MANIFEST.txt" ]; then
@@ -265,10 +307,12 @@ if [ -d "$SHOTS" ]; then
     APPREV=$(git log -1 --format=%h -- "$APP" 2>/dev/null || echo "")
     if [ -z "$APPREV" ]; then
       warn "not a git checkout — cannot verify the screenshots match the app"
-    elif grep -q "$APPREV" "$SHOTS/MANIFEST.txt" 2>/dev/null; then
-      pass "screenshots match the current $APP ($APPREV)"
     else
-      warn "$APP changed since the screenshots were taken — re-run \`npm run shots\` and re-read the copy in them"
+      # One "device <set> commit <hash>" line per set since 1.2.
+      while read -r _ dev _ rev _; do
+        if [ "$rev" = "$APPREV" ]; then pass "$dev screenshots match the current $APP ($APPREV)"
+        else warn "$dev screenshots were taken at $rev; $APP is now $APPREV — re-run \`ONLY=$dev npm run shots\` if the screens changed"; fi
+      done < <(grep '^device ' "$SHOTS/MANIFEST.txt")
     fi
   else
     warn "no $SHOTS/MANIFEST.txt — cannot tell which build the screenshots came from"
@@ -280,8 +324,13 @@ fi
 
 sec "9. Version + config sanity"
 if grep -q 'CFBundleShortVersionString -string' "$CM"; then
-  VER=$(grep -o 'CFBundleShortVersionString -string "[^"]*"' "$CM" | head -1 | sed 's/.*"\(.*\)"/\1/')
-  pass "marketing version is $VER (1.0 was rejected, not released — a new build against the same version record is the normal resubmission)"
+  VER=$(grep -o 'MARKETING_VERSION: *"[^"]*"' "$CM" | head -1 | sed 's/.*"\(.*\)"/\1/')
+  pass "marketing version is $VER (MARKETING_VERSION)"
+  grep -q "class=\"k\">Version</span><span class=\"v\">$VER<" "$APP" \
+    && pass "Settings → About shows the same version ($VER)" \
+    || warn "Settings → About does not show $VER"
+  [ -f "release-notes/$VER.txt" ] && pass "What's New for $VER present (release-notes/$VER.txt)" \
+    || warn "no release-notes/$VER.txt — the release lane needs What's New"
 else
   warn "the lane does not set CFBundleShortVersionString — it will inherit whatever Xcode defaults to"
 fi

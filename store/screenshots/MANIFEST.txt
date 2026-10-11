@@ -1,7 +1,8 @@
 Slow Burn — App Store screenshots
-captured from www/index.html at commit: 3c4272d
 source: www/index.html rendered in Chrome at the exact required pixel sizes
-devices: iPhone 6.9" (1290x2796), iPhone 6.5" (1284x2778) — iPhone-only app, no iPad
+device iphone69 commit 3c4272d  iPhone 6.9" (1290x2796)
+device iphone65 commit 3c4272d  iPhone 6.5" (1284x2778)
+device ipad13 commit 55e56be  iPad 13" (2752x2064, landscape)
 screens: 1. home  2. try  3. match  4. talk  5. settings-dark  6. program  7. consent  8. journal  9. pairing-choice  10. pair-code
 
-Regenerate with:  node store/capture-screenshots.mjs
+Regenerate with:  node store/capture-screenshots.mjs        (ONLY=ipad13 for one set)

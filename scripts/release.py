@@ -13,7 +13,7 @@ release.json (committed at the repo root; committing it IS the "ship"):
       "build": "202609231200",          # the 12-digit build that was tap-tested on a device
       "submit": true,                   # false = do every write, stop before submitted:true
       "iaps": ["6797705239"],           # IAP ids or product ids that ride with this version
-      "screenshots": true,              # replace the iPhone 6.9" set from store/screenshots
+      "screenshots": true,              # replace the iPhone 6.9" (+ 6.5", iPad 13") sets from store/screenshots
       "whatsNew": "…",                  # or omit and keep release-notes/<version>.txt
       "copy": "store/listing-2.1.json", # optional: description / keywords / promotionalText / subtitle
       "reviewNotes": "store/review-notes-2.1.txt",  # optional: App Review Information → Notes
@@ -90,9 +90,13 @@ LIMITS = {'whatsNew': 4000, 'description': 4000, 'keywords': 100, 'promotionalTe
           'subtitle': 30}
 # Display type -> filename patterns under store/screenshots, first match wins.
 # APP_IPHONE_67 is the top of Apple's enum (the 6.9" set); 6.5" inherits from it.
+# APP_IPAD_PRO_3GEN_129 is the 13" iPad set (2064x2752 / 2048x2732, or landscape) that a
+# universal app cannot be submitted without; smaller iPads inherit from it. Slow Burn is
+# universal since 1.2 (store/capture-screenshots.mjs renders ipad13_*.png).
 SHOT_SETS = {'APP_IPHONE_67': ['6.9in-*.png', 'iphone69_*.png', 'iphone69-*.png'],
-             'APP_IPHONE_65': ['6.5in-*.png', 'iphone65_*.png']}
-SHOT_REQUIRED = ('APP_IPHONE_67',)          # the 6.5" set is replaced only when files for it exist
+             'APP_IPHONE_65': ['6.5in-*.png', 'iphone65_*.png'],
+             'APP_IPAD_PRO_3GEN_129': ['13in-*.png', 'ipad13_*.png', 'ipad13-*.png']}
+SHOT_REQUIRED = ('APP_IPHONE_67',)          # the others are replaced only when files for them exist
 IAP_LIMITS = {'name': 30, 'description': 55, 'reviewNote': 4000}
 
 

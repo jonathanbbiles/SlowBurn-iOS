@@ -77,6 +77,11 @@ function fakeAsc(opts) {
       }
       if (req.method === 'GET' && m(/\/appStoreVersionLocalizations$/)) return json(res, 200, { data: [{ type: 'appStoreVersionLocalizations', id: 'l1', attributes: { locale: 'en-US' } }] });
       if (req.method === 'GET' && p === '/v1/appStoreVersionLocalizations/l1/appScreenshotSets') return json(res, 200, { data: [{ type: 'appScreenshotSets', id: 'set67', attributes: { screenshotDisplayType: 'APP_IPHONE_67' } }] });
+      if (req.method === 'POST' && p === '/v1/appScreenshotSets') {
+        const t = body.data.attributes.screenshotDisplayType;
+        return json(res, 201, { data: { type: 'appScreenshotSets', id: 'set-' + t, attributes: { screenshotDisplayType: t } } });
+      }
+      if (req.method === 'GET' && m(/^\/v1\/appScreenshotSets\/set-[A-Z0-9_]+\/appScreenshots$/)) return json(res, 200, { data: [] });
       if (req.method === 'GET' && p === '/v1/appScreenshotSets/set67/appScreenshots') {
         const sums = opts.shotsOnAsc === 'same' ? SHOT_SUMS : ['aaa', 'bbb'];
         return json(res, 200, { data: sums.map((c, i) => ({ type: 'appScreenshots', id: 'as' + i, attributes: { sourceFileChecksum: c, assetDeliveryState: { state: 'COMPLETE' } } })) });
@@ -224,6 +229,9 @@ const SHOT = path.join(os.tmpdir(), 'release-gate-iap-review.png');
 const SHOTDIR = fs.mkdtempSync(path.join(os.tmpdir(), 'release-gate-shots-'));
 ['6.9in-a_1.png', '6.9in-a_2.png'].forEach((f, i) => fs.writeFileSync(path.join(SHOTDIR, f), Buffer.from('shot' + i)));
 const SHOT_SUMS = ['6.9in-a_1.png', '6.9in-a_2.png'].map((f) => require('crypto').createHash('md5').update(fs.readFileSync(path.join(SHOTDIR, f))).digest('hex'));
+/* A universal app's set: the iPhone files plus a 13" iPad set, which ASC does not have yet. */
+const SHOTDIR_IPAD = fs.mkdtempSync(path.join(os.tmpdir(), 'release-gate-shots-ipad-'));
+['iphone69_01_a.png', 'ipad13_01_a.png', 'ipad13_02_b.png'].forEach((f, i) => fs.writeFileSync(path.join(SHOTDIR_IPAD, f), Buffer.from('ipad' + i)));
 const NOTES = path.join(os.tmpdir(), 'release-gate-notes.txt');
 fs.writeFileSync(NOTES, 'Tax Pro tab → Get Tax Pro.\n');
 fs.writeFileSync(SHOT, Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex'));
@@ -295,6 +303,16 @@ const SCENARIOS = [
     { ...base, screenshots: true, screenshotsDir: SHOTDIR }, (r, S) => {
       check('exit 0', r.code === 0, r.out);
       check('no screenshot delete or upload', !S.log.some((e) => e.method !== 'GET' && /appScreenshot/.test(e.path)), JSON.stringify(writes(S).map((e) => e.method + ' ' + e.path)));
+    }],
+  ['universal app: the iPad 13" set is created and filled next to the iPhone set', { shotsOnAsc: 'other' },
+    { ...base, screenshots: true, screenshotsDir: SHOTDIR_IPAD }, (r, S) => {
+      const mk = S.log.filter((e) => e.method === 'POST' && e.path === '/v1/appScreenshotSets');
+      const up = S.log.filter((e) => e.method === 'POST' && e.path === '/v1/appScreenshots');
+      check('exit 0', r.code === 0, r.out);
+      check('created exactly one set, APP_IPAD_PRO_3GEN_129', mk.length === 1 && mk[0].body.data.attributes.screenshotDisplayType === 'APP_IPAD_PRO_3GEN_129',
+        JSON.stringify(mk.map((e) => e.body)));
+      check('uploaded 1 iPhone + 2 iPad screenshots', up.length === 3, String(up.length));
+      check('the iPad files went to the iPad set', up.filter((e) => e.body.data.relationships.appScreenshotSet.data.id === 'set-APP_IPAD_PRO_3GEN_129').length === 2);
     }],
   ['screenshots differ: old deleted first, new uploaded', { shotsOnAsc: 'other' },
     { ...base, screenshots: true, screenshotsDir: SHOTDIR }, (r, S) => {
@@ -470,6 +488,12 @@ const SCENARIOS = [
   check('ios-testflight never builds on a release.json commit', /excludes:[\s\S]*'(apps\/[\w-]+\/)?release\.json'/.test(tf));
   check('ios-testflight emails its result', /email:[\s\S]*jonathanbbiles@gmail\.com/.test(tf));
   check('nothing declares submit_to_app_store: true', !/^\s*submit_to_app_store: *true/m.test(cm));
+  if (/TARGETED_DEVICE_FAMILY = "1,2"/.test(tf)) {
+    // A universal build cannot be submitted without the 13" iPad set.
+    const dir = path.join(ROOT, 'store', 'screenshots');
+    const ipad = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /^(ipad13[_-]|13in-).*\.png$/.test(f)) : [];
+    check(`universal app: store/screenshots has an iPad 13" set (${ipad.length} files)`, ipad.length >= 3);
+  }
   if (fs.existsSync(path.join(ROOT, 'release.json'))) {
     const r = JSON.parse(fs.readFileSync(path.join(ROOT, 'release.json'), 'utf8'));
     check(`release.json version ${r.version} matches MARKETING_VERSION`, (cm.match(/MARKETING_VERSION: *"([^"]+)"/) || [])[1] === r.version);
